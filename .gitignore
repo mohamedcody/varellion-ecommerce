@@ -13,6 +13,7 @@
 .env.production.local
 *.env
 *.env.local
+client_secret*.json
 
 # Allow example files so others know what variables to configure
 !.env.example
