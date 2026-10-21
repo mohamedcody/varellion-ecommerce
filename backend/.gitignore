@@ -1,0 +1,48 @@
+# ==============================================================================
+# VARELLION Backend .gitignore
+# ==============================================================================
+
+# Environment & Secrets (NEVER COMMIT)
+.env
+.env.*
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.env
+*.env.local
+
+# Allow example file for documentation
+!.env.example
+!.env.*.example
+
+# Maven Build Artifacts
+target/
+**/target/
+*.class
+*.jar
+*.war
+!.mvn/wrapper/maven-wrapper.jar
+
+# IDE Configurations
+.idea/
+*.iml
+*.iws
+*.ipr
+.vscode/
+.project
+.classpath
+.settings/
+.springBeans
+.sts4-cache
+.apt_generated
+.factorypath
+
+# Logs
+*.log
+logs/
+**/logs/
+
+# OS Files
+.DS_Store
+Thumbs.db

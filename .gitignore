@@ -1,0 +1,96 @@
+# ==============================================================================
+# VARELLION - Root Git Ignore Configuration
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# 1. Environment & Secrets (CRITICAL: Never commit credentials or secrets)
+# ------------------------------------------------------------------------------
+.env
+.env.*
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.env
+*.env.local
+
+# Allow example files so others know what variables to configure
+!.env.example
+!.env.*.example
+
+# ------------------------------------------------------------------------------
+# 2. Operating System Files
+# ------------------------------------------------------------------------------
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# ------------------------------------------------------------------------------
+# 3. IDE & Editor Files
+# ------------------------------------------------------------------------------
+.idea/
+*.iml
+*.iws
+*.ipr
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.sublime-project
+*.sublime-workspace
+.project
+.classpath
+.settings/
+.springBeans
+.sts4-cache
+
+# ------------------------------------------------------------------------------
+# 4. Java & Spring Boot (Backend)
+# ------------------------------------------------------------------------------
+target/
+**/target/
+*.class
+*.jar
+*.war
+*.ear
+*.zip
+*.tar.gz
+*.rar
+hs_err_pid*
+replay_pid*
+.mvn/timing.properties
+!.mvn/wrapper/maven-wrapper.jar
+
+# ------------------------------------------------------------------------------
+# 5. Node.js & Next.js (Frontend)
+# ------------------------------------------------------------------------------
+node_modules/
+**/node_modules/
+.next/
+**/build/
+**/dist/
+**/out/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.pnpm-debug.log*
+.turbo/
+
+# ------------------------------------------------------------------------------
+# 6. Logs & Database / Temporary Files
+# ------------------------------------------------------------------------------
+*.log
+logs/
+**/logs/
+*.sqlite
+*.sqlite3
+*.db
+tmp/
+temp/

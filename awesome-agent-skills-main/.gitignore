@@ -1,0 +1,8 @@
+.playwright-mcp/
+.claude/
+.codex/
+.gemini/
+.mcp/
+rtk/
+*.code-profile
+__pycache__

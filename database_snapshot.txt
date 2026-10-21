@@ -1,0 +1,186 @@
+VARELLION DATABASE SNAPSHOT
+================================================================================
+Generated: 2026-10-18T21:13:00+03:00
+Target File: database_snapshot.txt
+Inspection Source: Live Supabase PostgreSQL Database (PostgreSQL 17.11 on AWS EU-West-1)
+Live Database Verification Performed: YES (Verified directly via psql query against live database)
+Flyway Migrations Status: 5/5 Migrations Successfully Applied (v1 to v5)
+================================================================================
+
+--------------------------------------------------------------------------------
+1. VERIFIED LIVE TABLES & SCHEMAS
+--------------------------------------------------------------------------------
+Schema: public
+Total Live Tables: 11 (10 Business Tables + 1 Flyway Migration History)
+
+  1. public.customers           [Applied via V1__create_customers_and_addresses.sql]
+  2. public.customer_addresses  [Applied via V1__create_customers_and_addresses.sql]
+  3. public.categories          [Applied via V2__create_categories.sql]
+  4. public.products            [Applied via V2 & V3 migrations]
+  5. public.product_images      [Applied via V2__create_categories.sql]
+  6. public.carts               [Applied via V4__create_carts_and_cart_items.sql]
+  7. public.cart_items          [Applied via V4__create_carts_and_cart_items.sql]
+  8. public.orders              [Applied via V5__create_orders_module.sql]
+  9. public.order_items         [Applied via V5__create_orders_module.sql]
+  10. public.order_status_history [Applied via V5__create_orders_module.sql]
+  11. public.flyway_schema_history [Managed by Flyway]
+
+--------------------------------------------------------------------------------
+2. DETAILED TABLE COLUMNS & ATTRIBUTES (LIVE DATABASE VERIFIED)
+--------------------------------------------------------------------------------
+
+TABLE: public.customers
+  - user_id: UUID | NOT NULL | PK | REFERENCES: auth.users(id) ON DELETE RESTRICT
+  - full_name: VARCHAR(150) | NULLABLE
+  - phone_number: VARCHAR(30) | NULLABLE
+  - is_active: BOOLEAN | NOT NULL | DEFAULT: TRUE
+  - created_at: TIMESTAMPTZ | NOT NULL | DEFAULT: NOW()
+  - updated_at: TIMESTAMPTZ | NOT NULL | DEFAULT: NOW()
+
+TABLE: public.customer_addresses
+  - address_id: UUID | NOT NULL | PK | DEFAULT: gen_random_uuid()
+  - customer_id: UUID | NOT NULL | REFERENCES: public.customers(user_id) ON DELETE CASCADE
+  - governorate: TEXT | NOT NULL
+  - city_area: TEXT | NOT NULL
+  - detailed_address: TEXT | NOT NULL
+  - created_at: TIMESTAMPTZ | NOT NULL | DEFAULT: NOW()
+
+TABLE: public.categories
+  - category_id: UUID | NOT NULL | PK | DEFAULT: gen_random_uuid()
+  - name_ar: TEXT | NOT NULL
+  - name_en: TEXT | NOT NULL
+  - slug: TEXT | NOT NULL | UNIQUE
+  - description_ar: TEXT | NULLABLE
+  - description_en: TEXT | NULLABLE
+  - is_active: BOOLEAN | NOT NULL | DEFAULT: TRUE
+  - created_at: TIMESTAMPTZ | NOT NULL | DEFAULT: NOW()
+  - updated_at: TIMESTAMPTZ | NOT NULL | DEFAULT: NOW()
+
+TABLE: public.products
+  - product_id: UUID | NOT NULL | PK | DEFAULT: gen_random_uuid()
+  - category_id: UUID | NOT NULL | REFERENCES: public.categories(category_id) ON DELETE RESTRICT
+  - name_ar: TEXT | NOT NULL
+  - name_en: TEXT | NOT NULL
+  - description_ar: TEXT | NULLABLE
+  - description_en: TEXT | NULLABLE
+  - price: NUMERIC(10, 2) | NOT NULL | DEFAULT: 0.00
+  - cost_price: NUMERIC(10, 2) | NOT NULL | DEFAULT: 0.00
+  - stock_quantity: INTEGER | NOT NULL | DEFAULT: 0
+  - reserved_quantity: INTEGER | NOT NULL | DEFAULT: 0
+  - sku: VARCHAR(100) | NULLABLE
+  - is_active: BOOLEAN | NOT NULL | DEFAULT: TRUE
+  - created_at: TIMESTAMPTZ | NOT NULL | DEFAULT: NOW()
+  - updated_at: TIMESTAMPTZ | NOT NULL | DEFAULT: NOW()
+
+TABLE: public.product_images
+  - image_id: UUID | NOT NULL | PK | DEFAULT: gen_random_uuid()
+  - product_id: UUID | NOT NULL | REFERENCES: public.products(product_id) ON DELETE CASCADE
+  - image_url: TEXT | NOT NULL
+  - is_main: BOOLEAN | NOT NULL | DEFAULT: FALSE
+  - display_order: INTEGER | NOT NULL | DEFAULT: 0
+  - created_at: TIMESTAMPTZ | NOT NULL | DEFAULT: NOW()
+
+TABLE: public.carts
+  - cart_id: UUID | NOT NULL | PK | DEFAULT: gen_random_uuid()
+  - customer_id: UUID | NOT NULL | UNIQUE | REFERENCES: public.customers(user_id) ON DELETE CASCADE
+  - created_at: TIMESTAMPTZ | NOT NULL | DEFAULT: NOW()
+  - updated_at: TIMESTAMPTZ | NOT NULL | DEFAULT: NOW()
+
+TABLE: public.cart_items
+  - cart_item_id: UUID | NOT NULL | PK | DEFAULT: gen_random_uuid()
+  - cart_id: UUID | NOT NULL | REFERENCES: public.carts(cart_id) ON DELETE CASCADE
+  - product_id: UUID | NOT NULL | REFERENCES: public.products(product_id) ON DELETE CASCADE
+  - quantity: INTEGER | NOT NULL | CHECK (quantity > 0)
+  - created_at: TIMESTAMPTZ | NOT NULL | DEFAULT: NOW()
+  - updated_at: TIMESTAMPTZ | NOT NULL | DEFAULT: NOW()
+
+TABLE: public.orders
+  - order_id: UUID | NOT NULL | PK | DEFAULT: gen_random_uuid()
+  - order_number: VARCHAR(32) | NOT NULL | UNIQUE | CHECK (LENGTH(TRIM(order_number)) >= 6)
+  - customer_id: UUID | NOT NULL | REFERENCES: public.customers(user_id) ON DELETE RESTRICT
+  - customer_name: VARCHAR(150) | NOT NULL
+  - customer_phone: VARCHAR(30) | NOT NULL
+  - shipping_governorate: VARCHAR(100) | NOT NULL
+  - shipping_city_area: VARCHAR(100) | NOT NULL
+  - shipping_detailed_address: TEXT | NOT NULL
+  - currency: VARCHAR(3) | NOT NULL | DEFAULT: 'EGP' | CHECK (currency = 'EGP')
+  - subtotal: NUMERIC(10, 2) | NOT NULL | CHECK (subtotal >= 0)
+  - discount_total: NUMERIC(10, 2) | NOT NULL | DEFAULT: 0.00 | CHECK (discount_total >= 0)
+  - shipping_fee: NUMERIC(10, 2) | NULLABLE | CHECK (shipping_fee IS NULL OR shipping_fee >= 0)
+  - total_amount: NUMERIC(10, 2) | NULLABLE | CHECK (total_amount IS NULL OR total_amount >= 0)
+  - order_status: VARCHAR(50) | NOT NULL | DEFAULT: 'PENDING_CUSTOMER_CONFIRMATION'
+  - shipping_fee_status: VARCHAR(30) | NOT NULL | DEFAULT: 'PENDING'
+  - confirmation_deadline: TIMESTAMPTZ | NULLABLE
+  - customer_notes: TEXT | NULLABLE
+  - admin_notes: TEXT | NULLABLE
+  - created_at: TIMESTAMPTZ | NOT NULL | DEFAULT: NOW()
+  - updated_at: TIMESTAMPTZ | NOT NULL | DEFAULT: NOW()
+
+TABLE: public.order_items
+  - order_item_id: UUID | NOT NULL | PK | DEFAULT: gen_random_uuid()
+  - order_id: UUID | NOT NULL | REFERENCES: public.orders(order_id) ON DELETE CASCADE
+  - product_id: UUID | NULLABLE | REFERENCES: public.products(product_id) ON DELETE RESTRICT
+  - product_name_ar: TEXT | NOT NULL
+  - product_name_en: TEXT | NOT NULL
+  - sku: VARCHAR(100) | NOT NULL
+  - unit_price: NUMERIC(10, 2) | NOT NULL | CHECK (unit_price >= 0)
+  - unit_cost: NUMERIC(10, 2) | NOT NULL | DEFAULT: 0.00 | CHECK (unit_cost >= 0)
+  - quantity: INTEGER | NOT NULL | CHECK (quantity > 0)
+  - line_total: NUMERIC(10, 2) | NOT NULL | CHECK (line_total >= 0)
+  - created_at: TIMESTAMPTZ | NOT NULL | DEFAULT: NOW()
+
+TABLE: public.order_status_history
+  - history_id: UUID | NOT NULL | PK | DEFAULT: gen_random_uuid()
+  - order_id: UUID | NOT NULL | REFERENCES: public.orders(order_id) ON DELETE CASCADE
+  - previous_status: VARCHAR(50) | NULLABLE
+  - new_status: VARCHAR(50) | NOT NULL
+  - reason: TEXT | NULLABLE
+  - actor_id: UUID | NULLABLE | REFERENCES: auth.users(id) ON DELETE SET NULL
+  - created_at: TIMESTAMPTZ | NOT NULL | DEFAULT: NOW()
+
+--------------------------------------------------------------------------------
+3. FOREIGN KEYS & REFERENTIAL INTEGRITY (LIVE VERIFIED)
+--------------------------------------------------------------------------------
+- customers.user_id -> auth.users.id [ON DELETE RESTRICT]
+- customer_addresses.customer_id -> customers.user_id [ON DELETE CASCADE]
+- products.category_id -> categories.category_id [ON DELETE RESTRICT]
+- product_images.product_id -> products.product_id [ON DELETE CASCADE]
+- carts.customer_id -> customers.user_id [ON DELETE CASCADE]
+- cart_items.cart_id -> carts.cart_id [ON DELETE CASCADE]
+- cart_items.product_id -> products.product_id [ON DELETE CASCADE]
+- orders.customer_id -> customers.user_id [ON DELETE RESTRICT]
+- order_items.order_id -> orders.order_id [ON DELETE CASCADE]
+- order_items.product_id -> products.product_id [ON DELETE RESTRICT]
+- order_status_history.order_id -> orders.order_id [ON DELETE CASCADE]
+- order_status_history.actor_id -> auth.users.id [ON DELETE SET NULL]
+
+--------------------------------------------------------------------------------
+4. CONSTRAINTS & CHECK RULES (LIVE VERIFIED)
+--------------------------------------------------------------------------------
+- uq_cart_product UNIQUE (cart_id, product_id)
+- uq_order_product UNIQUE (order_id, product_id)
+- chk_stock_available CHECK (reserved_quantity <= stock_quantity)
+- price >= 0, cost_price >= 0, stock_quantity >= 0, reserved_quantity >= 0
+- currency = 'EGP'
+- subtotal >= 0, discount_total >= 0, unit_price >= 0, unit_cost >= 0, line_total >= 0
+- order_status validated against allowed lifecycle transitions
+- shipping_fee_status in ('PENDING', 'CONFIRMED')
+- length constraints on all mandatory textual fields
+
+--------------------------------------------------------------------------------
+5. ROW LEVEL SECURITY (RLS) & PRIVILEGE STATUS (LIVE VERIFIED)
+--------------------------------------------------------------------------------
+- RLS Enabled: carts, cart_items, orders, order_items, order_status_history
+- Direct Anon Client Privileges: REVOKED (Protected from unauthorized PostgREST access)
+- Authenticated Customer Policies: Users can view/manage only their own cart, orders, and order items
+- Backend Spring Boot Access: Mediated securely via PostgreSQL direct pooler connection
+
+--------------------------------------------------------------------------------
+6. FLYWAY SCHEMA HISTORY EXECUTION LOG (LIVE VERIFIED)
+--------------------------------------------------------------------------------
+Rank 1: V1__create_customers_and_addresses.sql         | Success: TRUE
+Rank 2: V2__create_categories.sql                      | Success: TRUE
+Rank 3: V3__create_product_inventory_and_movements.sql | Success: TRUE
+Rank 4: V4__create_carts_and_cart_items.sql            | Success: TRUE
+Rank 5: V5__create_orders_module.sql                   | Success: TRUE
+================================================================================

@@ -1,0 +1,299 @@
+VARELLION DATABASE AUDIT CONTEXT REPORT
+================================================================================
+Generated: 2026-10-18T15:20:00+03:00
+Target File: database_audit_context.txt
+Target Audience: AI Systems & Technical Reviewers
+Audited Path: backend/src/main/resources/db/migration/
+Verification Status: File-based analysis of Git repository SQL migrations.
+Live DB Status: UNVERIFIED (Live connection to Supabase pooler failed authentication / direct host unreachable; report reflects SQL source files only).
+================================================================================
+
+--------------------------------------------------------------------------------
+1. MIGRATION FILES INVENTORY
+--------------------------------------------------------------------------------
+Location: backend/src/main/resources/db/migration/
+
+1. V1__create_customers_and_addresses.sql
+   - Status: NON-EMPTY (1,740 bytes, 67 lines)
+   - Flyway Naming: VALID (V1__...)
+   - Tables Created: public.customers, public.customer_addresses
+
+2. V2__create_categories.sql
+   - Status: NON-EMPTY (2,662 bytes, 118 lines)
+   - Flyway Naming: VALID (V2__...)
+   - Tables Created: public.categories, public.products, public.product_images
+   - Functions Created: public.set_updated_at()
+   - Triggers Created: trg_categories_updated_at, trg_products_updated_at
+
+3. V3__create_product_inventory_and_movements.sql
+   - Status: EMPTY (0 bytes, 1 line)
+   - Flyway Naming: VALID (V3__...)
+   - Tables Created: NONE
+
+4. V4_carts_and_cart_items.sql.sql
+   - Status: EMPTY (0 bytes, 1 line)
+   - Flyway Naming: MALFORMED (Single underscore 'V4_' instead of 'V4__', double extension '.sql.sql')
+   - Tables Created: NONE
+   - Impact: Will cause Flyway validation or execution failure at application startup.
+
+5. V5__create_orders_module.sql
+   - Status: EMPTY (0 bytes, 1 line)
+   - Flyway Naming: VALID (V5__...)
+   - Tables Created: NONE
+
+Total Verified Tables in Migration Files: 5
+
+--------------------------------------------------------------------------------
+2. COMPLETE SCHEMA OF EXISTING TABLES (DEFINED IN V1 & V2)
+--------------------------------------------------------------------------------
+
+TABLE: public.customers
+  Schema: public
+  File: V1__create_customers_and_addresses.sql
+  Columns:
+    - user_id: UUID | NOT NULL | PK | REFERENCES auth.users(id) ON DELETE RESTRICT
+    - full_name: VARCHAR(150) | NULLABLE | DEFAULT: none
+    - phone_number: VARCHAR(30) | NULLABLE | DEFAULT: none
+    - is_active: BOOLEAN | NOT NULL | DEFAULT: TRUE
+    - created_at: TIMESTAMPTZ | NOT NULL | DEFAULT: NOW()
+    - updated_at: TIMESTAMPTZ | NOT NULL | DEFAULT: NOW()
+  Constraints:
+    - PK: customers_pkey ON (user_id)
+    - FK: customers_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE RESTRICT ON UPDATE NO ACTION
+    - NOT NULL: user_id, is_active, created_at, updated_at
+  Indexes:
+    - customers_pkey ON (user_id) [Implicit PK Index]
+  Triggers/Functions: None
+
+TABLE: public.customer_addresses
+  Schema: public
+  File: V1__create_customers_and_addresses.sql
+  Columns:
+    - address_id: UUID | NOT NULL | PK | DEFAULT: gen_random_uuid()
+    - customer_id: UUID | NOT NULL | REFERENCES public.customers(user_id) ON DELETE CASCADE
+    - governorate: TEXT | NOT NULL | DEFAULT: none
+    - city_area: TEXT | NOT NULL | DEFAULT: none
+    - detailed_address: TEXT | NOT NULL | DEFAULT: none
+    - created_at: TIMESTAMPTZ | NOT NULL | DEFAULT: NOW()
+  Constraints:
+    - PK: customer_addresses_pkey ON (address_id)
+    - FK: customer_addresses_customer_id_fkey FOREIGN KEY (customer_id) REFERENCES public.customers(user_id) ON DELETE CASCADE ON UPDATE NO ACTION
+    - CHECK: length(trim(governorate)) > 0
+    - CHECK: length(trim(city_area)) > 0
+    - CHECK: length(trim(detailed_address)) > 0
+    - NOT NULL: address_id, customer_id, governorate, city_area, detailed_address, created_at
+  Indexes:
+    - customer_addresses_pkey ON (address_id) [Implicit PK Index]
+    - idx_customer_addresses_customer_id ON (customer_id) [Explicit B-Tree]
+  Triggers/Functions: None
+
+TABLE: public.categories
+  Schema: public
+  File: V2__create_categories.sql
+  Columns:
+    - category_id: UUID | NOT NULL | PK | DEFAULT: gen_random_uuid()
+    - name_ar: TEXT | NOT NULL | DEFAULT: none
+    - name_en: TEXT | NOT NULL | DEFAULT: none
+    - slug: TEXT | NOT NULL | UNIQUE | DEFAULT: none
+    - description_ar: TEXT | NULLABLE | DEFAULT: none
+    - description_en: TEXT | NULLABLE | DEFAULT: none
+    - is_active: BOOLEAN | NOT NULL | DEFAULT: TRUE
+    - created_at: TIMESTAMPTZ | NOT NULL | DEFAULT: NOW()
+    - updated_at: TIMESTAMPTZ | NOT NULL | DEFAULT: NOW()
+  Constraints:
+    - PK: categories_pkey ON (category_id)
+    - UNIQUE: categories_slug_key ON (slug)
+    - CHECK: length(trim(name_ar)) > 0
+    - CHECK: length(trim(name_en)) > 0
+    - CHECK: slug ~ '^[a-z0-9]+(-[a-z0-9]+)*$'
+    - NOT NULL: category_id, name_ar, name_en, slug, is_active, created_at, updated_at
+  Indexes:
+    - categories_pkey ON (category_id) [Implicit PK Index]
+    - categories_slug_key ON (slug) [Implicit Unique Index]
+  Triggers/Functions:
+    - Function: public.set_updated_at() (plpgsql, sets NEW.updated_at = NOW(); RETURN NEW;)
+    - Trigger: trg_categories_updated_at BEFORE UPDATE FOR EACH ROW EXECUTE FUNCTION public.set_updated_at()
+
+TABLE: public.products
+  Schema: public
+  File: V2__create_categories.sql
+  Columns:
+    - product_id: UUID | NOT NULL | PK | DEFAULT: gen_random_uuid()
+    - category_id: UUID | NOT NULL | REFERENCES public.categories(category_id) ON DELETE RESTRICT
+    - name_ar: TEXT | NOT NULL | DEFAULT: none
+    - name_en: TEXT | NOT NULL | DEFAULT: none
+    - description_ar: TEXT | NULLABLE | DEFAULT: none
+    - description_en: TEXT | NULLABLE | DEFAULT: none
+    - price: NUMERIC(10, 2) | NOT NULL | DEFAULT: 0
+    - is_active: BOOLEAN | NOT NULL | DEFAULT: TRUE
+    - created_at: TIMESTAMPTZ | NOT NULL | DEFAULT: NOW()
+    - updated_at: TIMESTAMPTZ | NOT NULL | DEFAULT: NOW()
+  Constraints:
+    - PK: products_pkey ON (product_id)
+    - FK: products_category_id_fkey FOREIGN KEY (category_id) REFERENCES public.categories(category_id) ON DELETE RESTRICT ON UPDATE NO ACTION
+    - CHECK: LENGTH(TRIM(name_ar)) > 0
+    - CHECK: LENGTH(TRIM(name_en)) > 0
+    - CHECK: price >= 0
+    - NOT NULL: product_id, category_id, name_ar, name_en, price, is_active, created_at, updated_at
+  Indexes:
+    - products_pkey ON (product_id) [Implicit PK Index]
+    - idx_products_category_id ON (category_id) [Explicit B-Tree]
+  Triggers/Functions:
+    - Trigger: trg_products_updated_at BEFORE UPDATE FOR EACH ROW EXECUTE FUNCTION public.set_updated_at()
+
+TABLE: public.product_images
+  Schema: public
+  File: V2__create_categories.sql
+  Columns:
+    - image_id: UUID | NOT NULL | PK | DEFAULT: gen_random_uuid()
+    - product_id: UUID | NOT NULL | REFERENCES public.products(product_id) ON DELETE CASCADE
+    - image_url: TEXT | NOT NULL | DEFAULT: none
+    - is_main: BOOLEAN | NOT NULL | DEFAULT: FALSE
+    - display_order: INTEGER | NOT NULL | DEFAULT: 0
+    - created_at: TIMESTAMPTZ | NOT NULL | DEFAULT: NOW()
+  Constraints:
+    - PK: product_images_pkey ON (image_id)
+    - FK: product_images_product_id_fkey FOREIGN KEY (product_id) REFERENCES public.products(product_id) ON DELETE CASCADE ON UPDATE NO ACTION
+    - CHECK: LENGTH(TRIM(image_url)) > 0
+    - CHECK: display_order >= 0
+    - NOT NULL: image_id, product_id, image_url, is_main, display_order, created_at
+  Indexes:
+    - product_images_pkey ON (image_id) [Implicit PK Index]
+    - idx_product_images_product_id ON (product_id) [Explicit B-Tree]
+    - idx_product_images_one_main ON (product_id) WHERE is_main = TRUE [Explicit Partial Unique Index]
+  Triggers/Functions: None
+
+--------------------------------------------------------------------------------
+3. INVENTORY, CART, AND ORDER MODULES AUDIT
+--------------------------------------------------------------------------------
+Status across all project SQL files:
+  - orders: NOT DEFINED in any SQL file (0 bytes in V5).
+  - order_items: NOT DEFINED in any SQL file (0 bytes in V5).
+  - order_status_history: NOT DEFINED in any SQL file.
+  - carts: NOT DEFINED in any SQL file (0 bytes in V4).
+  - cart_items: NOT DEFINED in any SQL file (0 bytes in V4).
+  - product_inventory / inventory_items: NOT DEFINED in any SQL file (0 bytes in V3).
+  - stock_reservations: NOT DEFINED in any SQL file.
+  - inventory_movements: NOT DEFINED in any SQL file.
+
+Evidence: All related migration files (V3, V4, V5) exist on disk with 0 bytes. No DDL commands have been committed for these entities. They exist strictly as architectural designs in project documentation.
+
+--------------------------------------------------------------------------------
+4. TRIGGERS, FUNCTIONS, RLS POLICIES & PERMISSIONS SUMMARY
+--------------------------------------------------------------------------------
+Functions Defined:
+  - public.set_updated_at() in V2__create_categories.sql
+    Language: plpgsql
+    Returns: trigger
+    Action: Sets NEW.updated_at = NOW(); RETURN NEW;
+
+Triggers Defined:
+  - trg_categories_updated_at (BEFORE UPDATE ON public.categories)
+  - trg_products_updated_at (BEFORE UPDATE ON public.products)
+
+Row Level Security (RLS) Status:
+  - public.customers: RLS statement ABSENT in migration files.
+  - public.customer_addresses: RLS statement ABSENT in migration files.
+  - public.categories: RLS statement ABSENT in migration files.
+  - public.products: RLS statement ABSENT in migration files.
+  - public.product_images: RLS statement ABSENT in migration files.
+  Summary: RLS is disabled by default in PostgreSQL unless ALTER TABLE ... ENABLE ROW LEVEL SECURITY is executed.
+
+Policies Defined:
+  - Zero (0) CREATE POLICY statements exist in any migration file.
+
+GRANT / REVOKE Statements:
+  - Zero (0) GRANT or REVOKE statements exist in any migration file.
+
+--------------------------------------------------------------------------------
+5. RELATIONSHIP MAP & INCONSISTENCIES
+--------------------------------------------------------------------------------
+Current Documented Relationship Structure:
+
+  auth.users (Managed Supabase Schema)
+       │
+       │ (1:1) PK/FK: user_id -> auth.users.id
+       │       ON DELETE RESTRICT, ON UPDATE NO ACTION
+       ▼
+  public.customers
+       │
+       │ (1:N) FK: customer_id -> public.customers.user_id
+       │       ON DELETE CASCADE, ON UPDATE NO ACTION
+       ▼
+  public.customer_addresses
+
+  public.categories
+       │
+       │ (1:N) FK: category_id -> public.categories.category_id
+       │       ON DELETE RESTRICT, ON UPDATE NO ACTION
+       ▼
+  public.products
+       │
+       │ (1:N) FK: product_id -> public.products.product_id
+       │       ON DELETE CASCADE, ON UPDATE NO ACTION
+       ▼
+  public.product_images
+
+Identified Discrepancies & Disconnections:
+1. Disconnected Islands:
+   - The Customer domain (customers, customer_addresses) and the Catalog domain (categories, products, product_images) are completely isolated from each other.
+   - There are no bridge tables (orders, order_items, carts, cart_items) implemented in SQL to link customers with products.
+
+2. Deletion Action Risks:
+   - customers -> auth.users uses ON DELETE RESTRICT: If a user is deleted from auth.users, deletion fails if a customer record exists.
+   - products -> categories uses ON DELETE RESTRICT: Categories containing products cannot be deleted unless products are reassigned or removed first.
+
+3. Customer PK Naming:
+   - Table customers uses user_id as its PK, while customer_addresses uses customer_id as the referencing FK column. This is functionally valid but requires careful mapping in JPA (@JoinColumn(name = "customer_id", referencedColumnName = "user_id")).
+
+--------------------------------------------------------------------------------
+6. CONFIRMED BUSINESS RULES (FROM PROJECT ARCHITECTURE SPECIFICATIONS)
+--------------------------------------------------------------------------------
+Sources: 08_VARELLION_BACKEND_DATABASE_SECURITY_SPEC.md, 06_VARELLION_INITIAL_CATALOG_AND_SITE_DATA.md, application.properties
+
+1. Commercial Model:
+   - Primary launch mode: Guest Checkout + Cash on Delivery (COD) + WhatsApp handoff coordination.
+   - Orders must support guests who do NOT possess an account in auth.users or public.customers.
+   - Consequently, in any future orders table, customer_id MUST be NULLABLE with ON DELETE SET NULL.
+   - Customer identity snapshot (customer_name, customer_phone) and shipping snapshot (governorate, city_area, detailed_address) MUST be stored directly on the order record, never relying on a foreign key to customer_addresses.
+
+2. Monetary Rules & Currency:
+   - Standard currency: EGP (Egyptian Pound).
+   - Numerical precision: NUMERIC(10, 2) exact decimal, non-negative CHECK bounds.
+   - Subtotal must be calculated server-side; client pricing is never authoritative.
+
+3. Shipping Fee & Pending Totals:
+   - If shipping rate for a selected governorate is not configured, the order is accepted with shipping_fee = NULL, shipping_fee_status = 'PENDING', and total_amount = NULL.
+   - Final total is confirmed by administration via WhatsApp before fulfilment.
+
+4. Stock Reservation & 24-Hour Expiration:
+   - Default reservation window: 24 hours (configured in application.properties: varellion.store.reservation-hours=24).
+   - Timestamp confirmation_deadline generated server-side at order creation.
+   - Stock reservation must be atomic; reservations transition from ACTIVE -> CONSUMED (on confirmation) or RELEASED (on expiration/cancellation).
+   - Expiration and cancellation must share an idempotent release mechanism to prevent double stock restoration.
+
+5. Product Variants & Attributes:
+   - Colors and sizes are treated as separate standalone products or sellable variants with their own SKUs, never virtual options that share unreserved stock.
+
+6. Historical Snapshot Integrity:
+   - order_items must capture product_name_ar, product_name_en, sku, unit_price, quantity, and line_total as immutable snapshots to prevent subsequent catalog edits from altering historical receipts.
+   - product_id in order_items must use ON DELETE RESTRICT (or SET NULL) to prevent catalog purges from cascading into sales history.
+
+--------------------------------------------------------------------------------
+7. VERIFIED REPOSITORY FACTS VS. UNVERIFIABLE LIVE DATABASE FACTS
+--------------------------------------------------------------------------------
+VERIFIED FACTS (In Local Git Repository):
+  [x] Flyway migrations V1 and V2 are present, valid SQL, and define exactly 5 tables.
+  [x] Migration files V3, V4, V5 exist as 0-byte placeholders.
+  [x] Migration file V4 has an invalid Flyway filename (V4_carts_and_cart_items.sql.sql).
+  [x] No SQL DDL exists anywhere in the repository for orders, order_items, order_status_history, inventory, or carts.
+  [x] No RLS policies or GRANT statements exist in the repository SQL files.
+  [x] application.properties enforces spring.jpa.hibernate.ddl-auto=validate and spring.flyway.validate-on-migrate=true.
+
+UNVERIFIABLE FACTS (Live Supabase Database):
+  [?] Whether migrations V1 and V2 have actually been executed against the live database.
+  [?] Whether tables were created manually or via the Supabase Web UI Table Editor without migrations.
+  [?] Whether RLS has been enabled on the live tables via Supabase UI defaults.
+  [?] Whether custom Postgres extensions (e.g., pgcrypto, uuid-ossp) or custom schemas exist in live Postgres.
+  [?] Current row counts, sequences, and actual production table health (Connection to pooler failed authentication).
+================================================================================
