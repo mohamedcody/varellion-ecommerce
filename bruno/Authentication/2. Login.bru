@@ -1,0 +1,34 @@
+meta {
+  name: 2. Login User
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/auth/login
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "identifier": "mohamed@varellion.com",
+    "password": "Password123!"
+  }
+}
+
+script:post-response {
+  // حفظ التوكن تلقائياً في المتغيرات لاستخدامه في باقي الطلبات
+  if (res.status === 200) {
+    if (res.body.accessToken) {
+      bru.setEnvVar("accessToken", res.body.accessToken);
+    }
+    if (res.body.refreshToken) {
+      bru.setEnvVar("refreshToken", res.body.refreshToken);
+    }
+  }
+}

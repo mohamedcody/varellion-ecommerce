@@ -1,0 +1,9 @@
+{
+  "version": "1",
+  "name": "VARELLION E-Commerce API",
+  "type": "collection",
+  "ignore": [
+    "node_modules",
+    ".git"
+  ]
+}

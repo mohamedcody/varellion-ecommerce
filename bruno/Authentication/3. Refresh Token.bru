@@ -1,0 +1,33 @@
+meta {
+  name: 3. Refresh Access Token
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/api/auth/refresh
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "refreshToken": "{{refreshToken}}"
+  }
+}
+
+script:post-response {
+  // تحديث التوكن الجديد في المتغيرات
+  if (res.status === 200) {
+    if (res.body.accessToken) {
+      bru.setEnvVar("accessToken", res.body.accessToken);
+    }
+    if (res.body.refreshToken) {
+      bru.setEnvVar("refreshToken", res.body.refreshToken);
+    }
+  }
+}
