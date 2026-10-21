@@ -71,8 +71,9 @@ public class AuthService {
             }
 
             userRepository.save(user);
-            int remainingAttempts = MAX_FAILED_ATTEMPTS - attempts;
-            throw new BadCredentialsException("Invalid username or password. Remaining attempts before lockout: " + remainingAttempts);
+            // SECURITY FIX (F6): Uniform error message prevents account enumeration.
+            // Do NOT reveal remaining attempts count to the client.
+            throw new BadCredentialsException("Invalid username or password");
         }
 
         if (!user.isEnabled()) {
@@ -110,8 +111,10 @@ public class AuthService {
             throw new IllegalArgumentException("Username is already taken: " + username);
         }
 
-        // Assign ADMIN role if email matches pre-configured admin list, otherwise USER
-        String role = isAdminEmail(email) ? "ADMIN" : "USER";
+        // SECURITY: Public registration always assigns USER role only.
+        // Admin accounts must be created through a protected channel (seed migration or Google OAuth).
+        // See 00_VARELLION_MASTER_BUILD_PROMPT.md — "Public administrator registration" is explicitly excluded.
+        String role = "USER";
 
         User newUser = User.builder()
                 .email(email)

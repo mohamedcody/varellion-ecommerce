@@ -109,7 +109,7 @@ class AuthServiceTest {
 
         assertThatThrownBy(() -> authService.login(request))
                 .isInstanceOf(BadCredentialsException.class)
-                .hasMessageContaining("Remaining attempts");
+                .hasMessageContaining("Invalid username or password");
 
         assertThat(testUser.getFailedAttempts()).isEqualTo(1);
         verify(userRepository).save(testUser);

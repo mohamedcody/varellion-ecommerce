@@ -28,7 +28,7 @@ public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
         Map<String, Object> errorBody = Map.of(
                 "status", HttpStatus.UNAUTHORIZED.value(),
                 "error", "Unauthorized",
-                "message", "Full authentication is required to access this resource: " + authException.getMessage(),
+                "message", "Full authentication is required to access this resource",
                 "path", request.getRequestURI()
         );
 

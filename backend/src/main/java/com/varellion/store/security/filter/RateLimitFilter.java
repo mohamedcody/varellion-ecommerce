@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.lang.NonNull;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -21,9 +22,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Slf4j
 public class RateLimitFilter extends OncePerRequestFilter {
 
-    private static final int AUTH_LIMIT_PER_MINUTE = 20; // 20 requests per minute for auth endpoints
-    private static final int EXPENSIVE_LIMIT_PER_MINUTE = 5; // 5 requests per minute for heavy operations (Upload/AI)
-    private static final long WINDOW_MS = 60_000L; // 60 seconds rolling window
+    private static final int AUTH_LIMIT_PER_MINUTE = 20;
+    private static final int EXPENSIVE_LIMIT_PER_MINUTE = 5;
+    private static final long WINDOW_MS = 60_000L;
+    private static final int MAX_TRACKED_IPS = 50_000; // Prevent unbounded memory growth
 
     private final ConcurrentHashMap<String, RateLimitEntry> requestCounts = new ConcurrentHashMap<>();
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -55,13 +57,23 @@ public class RateLimitFilter extends OncePerRequestFilter {
         String bucketKey = clientIp + ":" + bucketType;
         long now = System.currentTimeMillis();
 
+        // SECURITY: If map is at capacity, reject new IPs to prevent memory exhaustion
         RateLimitEntry entry = requestCounts.compute(bucketKey, (key, existing) -> {
             if (existing == null || (now - existing.windowStart) > WINDOW_MS) {
+                if (existing == null && requestCounts.size() >= MAX_TRACKED_IPS) {
+                    return null; // Don't track new IPs when at capacity
+                }
                 return new RateLimitEntry(now, new AtomicInteger(1));
             }
             existing.count.incrementAndGet();
             return existing;
         });
+
+        if (entry == null) {
+            // At capacity — allow request but don't track (fail-open for legitimate users)
+            filterChain.doFilter(request, response);
+            return;
+        }
 
         // If threshold exceeded: respond immediately with 429 Too Many Requests
         if (entry.count.get() > limit) {
@@ -83,12 +95,30 @@ public class RateLimitFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 
+    /**
+     * SECURITY FIX (F4): Use only request.getRemoteAddr() to prevent IP spoofing
+     * via X-Forwarded-For header. If running behind a trusted reverse proxy (Nginx,
+     * Cloudflare), configure server.forward-headers-strategy=native in Spring Boot
+     * which will set remoteAddr correctly from the trusted proxy chain.
+     */
     private String getClientIp(HttpServletRequest request) {
-        String xfHeader = request.getHeader("X-Forwarded-For");
-        if (xfHeader != null && !xfHeader.isEmpty()) {
-            return xfHeader.split(",")[0].trim();
-        }
         return request.getRemoteAddr();
+    }
+
+    /**
+     * SECURITY FIX (F5): Periodically clean up expired entries to prevent
+     * unbounded memory growth. Runs every 2 minutes.
+     */
+    @Scheduled(fixedRate = 120_000)
+    public void cleanupExpiredEntries() {
+        long now = System.currentTimeMillis();
+        int before = requestCounts.size();
+        requestCounts.entrySet().removeIf(entry ->
+                (now - entry.getValue().windowStart) > WINDOW_MS);
+        int removed = before - requestCounts.size();
+        if (removed > 0) {
+            log.debug("Rate limiter cleanup: removed {} expired entries", removed);
+        }
     }
 
     private static class RateLimitEntry {
