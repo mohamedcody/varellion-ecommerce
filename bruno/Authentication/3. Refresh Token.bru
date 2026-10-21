@@ -5,7 +5,7 @@ meta {
 }
 
 post {
-  url: {{baseUrl}}/api/auth/refresh
+  url: http://localhost:8080/api/auth/refresh
   body: json
   auth: none
 }
@@ -21,12 +21,13 @@ body:json {
 }
 
 script:post-response {
-  // تحديث التوكن الجديد في المتغيرات
   if (res.status === 200) {
     if (res.body.accessToken) {
+      bru.setVar("accessToken", res.body.accessToken);
       bru.setEnvVar("accessToken", res.body.accessToken);
     }
     if (res.body.refreshToken) {
+      bru.setVar("refreshToken", res.body.refreshToken);
       bru.setEnvVar("refreshToken", res.body.refreshToken);
     }
   }
