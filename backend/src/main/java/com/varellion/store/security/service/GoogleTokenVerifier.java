@@ -24,6 +24,10 @@ public class GoogleTokenVerifier {
     }
 
     public GoogleIdentity verify(String idTokenString) {
+        if (idTokenString == null || idTokenString.isBlank()) {
+            throw new IllegalArgumentException("Google ID token cannot be null or empty.");
+        }
+
         try {
             GoogleIdToken idToken = verifier.verify(idTokenString);
             if (idToken != null) {

@@ -19,19 +19,15 @@ public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
 
     @Override
     public void commence(HttpServletRequest request,
-                         HttpServletResponse response,
-                         AuthenticationException authException) throws IOException {
-
+            HttpServletResponse response,
+            AuthenticationException authException) throws IOException {
         response.setStatus(HttpStatus.UNAUTHORIZED.value());
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-
         Map<String, Object> errorBody = Map.of(
                 "status", HttpStatus.UNAUTHORIZED.value(),
                 "error", "Unauthorized",
                 "message", "Full authentication is required to access this resource",
-                "path", request.getRequestURI()
-        );
-
+                "path", request.getRequestURI());
         objectMapper.writeValue(response.getOutputStream(), errorBody);
     }
 }

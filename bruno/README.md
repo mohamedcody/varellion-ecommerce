@@ -32,6 +32,8 @@
    - بيجرب باسوورد غلط عشان تشوف رسالة الأمان الموحدة (`401 Unauthorized`).
 6. **`6. Security Test - Weak Password`** ➡️ `POST http://localhost:8080/api/auth/register`
    - بيجرب باسوورد أقل من 8 حروف عشان تشوف الـ Validation بيرفضه إزاي (`400 Bad Request`).
+7. **`7. Google Login`** ➡️ `POST http://localhost:8080/api/auth/google`
+   - بيسجل الدخول بجوجل ويوثق الحساب ويحفظ الـ Tokens تلقائياً في Bruno!
 
 ---
 

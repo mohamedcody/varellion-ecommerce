@@ -1,0 +1,34 @@
+meta {
+  name: 7. Google Login
+  type: http
+  seq: 5
+}
+
+post {
+  url: http://localhost:8080/api/auth/google
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "idToken": "eyJhbGciOiJSUzI1NiIsImtpZCI6Ijk0M2EzYTVkN2Q5MTk2MjVhNDU0ZTQ4OWI3NWMyOWFkYWI1N2FjYmEiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL2FjY291bnRzLmdvb2dsZS5jb20iLCJhenAiOiIxMDAzNTU5NTM3NDU0LWM5M3JyZmoxa2EwcGphYmoxMGcwMmVhZG8zYzlyMmpnLmFwcHMuZ29vZ2xldXNlcmNvbnRlbnQuY29tIiwiYXVkIjoiMTAwMzU1OTUzNzQ1NC1jOTNycmZqMWthMHBqYWJqMTBnMDJlYWRvM2M5cjJqZy5hcHBzLmdvb2dsZXVzZXJjb250ZW50LmNvbSIsInN1YiI6IjEwNDI5MTIzMTI2NDYwMjYxNzY1NSIsImVtYWlsIjoibW9oYW1lZGNvZHkxOEBnbWFpbC5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwibmJmIjoxNzkyNjczMzc1LCJuYW1lIjoibW9oYW1lZCBjb2R5IiwicGljdHVyZSI6Imh0dHBzOi8vbGgzLmdvb2dsZXVzZXJjb250ZW50LmNvbS9hL0FDZzhvY0wtVVBFSnN4SEFQVGpRcmdGY25mN0MwYU5uNTcyQW9KYUtVVUZyQ1BJMG1YRzh5SzQ9czk2LWMiLCJnaXZlbl9uYW1lIjoibW9oYW1lZCIsImZhbWlseV9uYW1lIjoiY29keSIsImlhdCI6MTc5MjY3MzY3NSwiZXhwIjoxNzkyNjc3Mjc1LCJqdGkiOiI0ZWJkOTk3MDE1Y2NmYzEwYmQxZjRmMGQ5ZDI1MmZkZjVmYjBhMTU5In0.a7eDj3kJohWjZXSQHgqV3rug7IY0fmbVLdqZw9CMQWHRu_EC09p7EDnt_in8Vmo7DPKJgIpx6x0eEfGcsf0ZiliciiJcDgbRkXbwxk7ZkWUZpcUmDU2cbFTF9nH5JCaZK_ERRdg2ZKEMMm48vdvP_Qw5vkwrMimUwrizn3A-sQ4n2VZrZeTUXW030-xHL2gic8dM2WM2cFx400gU1SieNpPLODprnxnQiT8vJuw2EvAtI585168npvWsGUox5wVN6_TikNMA7iCy_TnRNwY4199AiYqXl91fi0oWEOlcvTggwj8BOFUe4mgBZFkcgkBZCsemh1x-qB_9tieDyTYLhw"
+  }
+}
+
+script:post-response {
+  if (res.status === 200) {
+    if (res.body.accessToken) {
+      bru.setVar("accessToken", res.body.accessToken);
+      bru.setEnvVar("accessToken", res.body.accessToken);
+    }
+    if (res.body.refreshToken) {
+      bru.setVar("refreshToken", res.body.refreshToken);
+      bru.setEnvVar("refreshToken", res.body.refreshToken);
+    }
+  }
+}
