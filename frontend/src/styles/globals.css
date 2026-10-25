@@ -1,0 +1,62 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    /* Brand palette tokens */
+    --color-primary-900: #12363B;
+    --color-primary-700: #17565D;
+    --color-primary-500: #2D7F83;
+    --color-primary-300: #79B8B8;
+    --color-primary-100: #E6F3F2;
+    --color-primary-50: #F4FAF9;
+
+    /* Neutral palette tokens */
+    --color-neutral-900: #1C2426;
+    --color-neutral-800: #2C3537;
+    --color-neutral-700: #465154;
+    --color-neutral-500: #717F82;
+    --color-neutral-300: #CAD2D2;
+    --color-neutral-200: #E2E7E7;
+    --color-neutral-100: #F0F3F3;
+    --color-neutral-50: #F8FAFA;
+    --color-neutral-0: #FFFFFF;
+
+    /* Luxury Accent */
+    --color-accent-gold: #C5A059;
+    --color-accent-gold-light: #FDF8ED;
+
+    /* Shadcn semantic tokens mapped to VARELLION design system */
+    --background: 195 20% 98%;        /* #F8FAFA */
+    --foreground: 192 15% 13%;        /* #1C2426 */
+    --card: 0 0% 100%;                /* #FFFFFF */
+    --card-foreground: 192 15% 13%;   /* #1C2426 */
+    --popover: 0 0% 100%;             /* #FFFFFF */
+    --popover-foreground: 192 15% 13%;/* #1C2426 */
+    --primary: 187 53% 15%;           /* #12363B */
+    --primary-foreground: 0 0% 100%;  /* #FFFFFF */
+    --secondary: 180 8% 95%;          /* #F0F3F3 */
+    --secondary-foreground: 192 15% 13%;
+    --muted: 180 8% 95%;              /* #F0F3F3 */
+    --muted-foreground: 188 7% 48%;   /* #717F82 */
+    --accent: 173 40% 97%;            /* #F4FAF9 */
+    --accent-foreground: 187 53% 15%; /* #12363B */
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 180 8% 90%;             /* #E2E7E7 */
+    --input: 180 8% 90%;              /* #E2E7E7 */
+    --ring: 183 49% 35%;              /* #2D7F83 */
+    --radius: 0.5rem;
+  }
+
+  * {
+    border-color: hsl(var(--border));
+  }
+
+  body {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    font-feature-settings: "rlig" 1, "calt" 1;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}

@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VARELLION — تجربة تسجيل الدخول بجوجل</title>
+  <!-- Google Identity Services Library -->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: #090d16;
+      color: #e2e8f0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    .container {
+      background: #111827;
+      border: 1px solid #1f2937;
+      border-radius: 16px;
+      padding: 40px;
+      max-width: 680px;
+      width: 100%;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+      text-align: center;
+    }
+    .badge {
+      display: inline-block;
+      background: rgba(14, 165, 233, 0.15);
+      color: #38bdf8;
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      padding: 4px 14px;
+      border-radius: 9999px;
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 16px;
+    }
+    h1 {
+      font-size: 26px;
+      font-weight: 700;
+      color: #ffffff;
+      margin-bottom: 12px;
+    }
+    p.desc {
+      color: #94a3b8;
+      font-size: 15px;
+      line-height: 1.6;
+      margin-bottom: 28px;
+    }
+    .btn-container {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 30px;
+    }
+    .card-result {
+      display: none;
+      text-align: right;
+      background: #0d131f;
+      border: 1px solid #374151;
+      border-radius: 12px;
+      padding: 24px;
+      margin-top: 24px;
+      animation: fadeIn 0.4s ease-out;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .result-title {
+      font-size: 17px;
+      font-weight: 700;
+      color: #10b981;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+    .field-label {
+      font-size: 13px;
+      color: #94a3b8;
+      font-weight: 600;
+      margin-top: 14px;
+      margin-bottom: 6px;
+    }
+    textarea {
+      width: 100%;
+      height: 90px;
+      background: #030712;
+      border: 1px solid #374151;
+      border-radius: 8px;
+      padding: 10px;
+      color: #60a5fa;
+      font-family: monospace;
+      font-size: 12px;
+      direction: ltr;
+      resize: vertical;
+    }
+    .btn-copy {
+      background: #2563eb;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 8px;
+      transition: background 0.2s;
+    }
+    .btn-copy:hover { background: #1d4ed8; }
+    .server-status {
+      margin-top: 18px;
+      padding: 14px;
+      border-radius: 8px;
+      background: #1e293b;
+      border: 1px solid #334155;
+      font-size: 14px;
+    }
+    .tag {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: bold;
+    }
+    .tag-success { background: #064e3b; color: #34d399; }
+    .tag-error { background: #7f1d1d; color: #f87171; }
+    pre {
+      background: #030712;
+      border: 1px solid #1f2937;
+      padding: 12px;
+      border-radius: 8px;
+      overflow-x: auto;
+      font-size: 12px;
+      direction: ltr;
+      color: #a7f3d0;
+      margin-top: 8px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <div class="badge">VARELLION E-COMMERCE</div>
+    <h1>واجهة اختبار Google Sign-In</h1>
+    <p class="desc">
+      اضغط على زر Google بالأسفل وسجل دخولك بحسابك؛<br>
+      ستقوم الواجهة باستلام التوكن وإرساله تلقائياً للباك إند لعرض النتيجة فوراً، مع إمكانية نسخ التوكن لـ Bruno.
+    </p>
+
+    <!-- Google Button Container -->
+    <div class="btn-container">
+      <div id="g_id_onload"
+           data-client_id="1003559537454-c93rrfj1ka0pjabj10g02eado3c9r2jg.apps.googleusercontent.com"
+           data-callback="handleCredentialResponse"
+           data-auto_prompt="false">
+      </div>
+      <div class="g_id_signin"
+           data-type="standard"
+           data-shape="rectangular"
+           data-theme="outline"
+           data-text="signin_with"
+           data-size="large"
+           data-logo_alignment="left">
+      </div>
+    </div>
+
+    <!-- Results Section -->
+    <div id="resultsCard" class="card-result">
+      <div class="result-title">
+        <span>🎉</span> تم استلام الـ Google ID Token بنجاح!
+      </div>
+
+      <div class="field-label">1. الـ Google ID Token (يمكنك نسخه لاستخدامه في Bruno):</div>
+      <textarea id="tokenBox" readonly></textarea>
+      <button class="btn-copy" onclick="copyToken()">📋 نسخ التوكن للحافظة</button>
+      <span id="copyMsg" style="color: #34d399; font-size: 13px; margin-right: 10px; display: none;">تم النسخ! ✅</span>
+
+      <div class="field-label" style="margin-top: 20px;">2. نتيجة استجابة الباك إند (POST /api/auth/google):</div>
+      <div id="backendStatus" class="server-status">
+        جاري إرسال التوكن إلى <code>http://localhost:8080/api/auth/google</code>... ⏳
+      </div>
+    </div>
+  </div>
+
+  <script>
+    async function handleCredentialResponse(response) {
+      const idToken = response.credential;
+      document.getElementById('tokenBox').value = idToken;
+      document.getElementById('resultsCard').style.display = 'block';
+
+      const statusBox = document.getElementById('backendStatus');
+      statusBox.innerHTML = '<span style="color: #38bdf8;">⏳ جاري الاتصال بالـ Backend والتحقق من التوكن...</span>';
+
+      try {
+        const res = await fetch('http://localhost:8080/api/auth/google', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ idToken: idToken })
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+          statusBox.innerHTML = `
+            <div style="margin-bottom: 8px;">
+              <span class="tag tag-success">200 OK</span>
+              <strong style="color: #34d399; margin-right: 6px;">نجح تسجيل الدخول في الباك إند!</strong>
+            </div>
+            <div style="font-size: 13px; color: #cbd5e1; line-height: 1.8;">
+              👤 <b>الاسم:</b> ${data.username || 'مستخدم'}<br>
+              📧 <b>البريد:</b> ${data.email}<br>
+              🛡️ <b>الدور (Role):</b> ${data.role}
+            </div>
+            <pre>${JSON.stringify(data, null, 2)}</pre>
+          `;
+        } else {
+          statusBox.innerHTML = `
+            <div style="margin-bottom: 8px;">
+              <span class="tag tag-error">${res.status} Error</span>
+              <strong style="color: #f87171; margin-right: 6px;">فشل التحقق في الباك إند!</strong>
+            </div>
+            <pre>${JSON.stringify(data, null, 2)}</pre>
+          `;
+        }
+      } catch (err) {
+        statusBox.innerHTML = `
+          <div style="color: #f87171;">
+            ❌ تعذر الاتصال بالباك إند (تأكد من تشغيل السيرفر على المنفذ 8080):<br>
+            <small>${err.message}</small>
+          </div>
+        `;
+      }
+    }
+
+    function copyToken() {
+      const box = document.getElementById('tokenBox');
+      box.select();
+      navigator.clipboard.writeText(box.value).then(() => {
+        const msg = document.getElementById('copyMsg');
+        msg.style.display = 'inline';
+        setTimeout(() => msg.style.display = 'none', 3000);
+      });
+    }
+  </script>
+</body>
+</html>
