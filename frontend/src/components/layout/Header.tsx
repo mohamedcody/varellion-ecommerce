@@ -12,12 +12,14 @@ import {
   Truck,
   RotateCcw,
   Sparkles,
+  LogOut,
 } from 'lucide-react';
 import { siteConfig } from '@/config/site';
 import { Badge } from '@/components/ui/Badge';
 import { MobileNav } from '@/components/layout/MobileNav';
 import { SearchDialog } from '@/components/layout/SearchDialog';
 import { useCart } from '@/context/CartContext';
+import { useAuth } from '@/context/AuthContext';
 import { cn } from '@/lib/utils';
 
 interface HeaderProps {
@@ -31,6 +33,8 @@ export function Header({ cartItemCount, onOpenCart }: HeaderProps) {
   const [isSearchOpen, setIsSearchOpen] = React.useState(false);
 
   const { totalItems, openCart } = useCart();
+  const { user, isAuthenticated, logout } = useAuth();
+  const [isUserMenuOpen, setIsUserMenuOpen] = React.useState(false);
   const effectiveCartCount = cartItemCount !== undefined ? cartItemCount : totalItems;
   const handleCartClick = onOpenCart || openCart;
 
@@ -152,15 +156,65 @@ export function Header({ cartItemCount, onOpenCart }: HeaderProps) {
               </kbd>
             </button>
 
-            {/* Account / Admin Trigger */}
-            <Link
-              href="/admin"
-              className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer"
-              aria-label="حسابي أو لوحة التحكم"
-              title="لوحة الإدارة"
-            >
-              <User className="h-5 w-5" aria-hidden="true" />
-            </Link>
+            {/* Account / User Trigger */}
+            {isAuthenticated && user ? (
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setIsUserMenuOpen((prev) => !prev)}
+                  className="flex min-h-[44px] items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-bold text-foreground hover:bg-muted transition-colors border border-border/70 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  aria-expanded={isUserMenuOpen}
+                  aria-label={`قائمة المستخدم: ${user.username}`}
+                >
+                  <User className="h-4 w-4 text-[#C5A059]" aria-hidden="true" />
+                  <span className="hidden md:inline max-w-[100px] truncate">{user.username}</span>
+                </button>
+
+                {/* Dropdown Menu */}
+                {isUserMenuOpen && (
+                  <div
+                    className="absolute left-0 mt-2 w-48 rounded-xl border border-border/80 bg-card p-2 shadow-xl z-50 animate-in fade-in zoom-in-95 text-xs space-y-1"
+                  >
+                    <div className="px-3 py-2 border-b border-border/60">
+                      <p className="font-bold text-foreground truncate">{user.username}</p>
+                      <p className="text-[10px] text-muted-foreground truncate">{user.email}</p>
+                    </div>
+
+                    {user.role === 'ADMIN' && (
+                      <Link
+                        href="/admin"
+                        onClick={() => setIsUserMenuOpen(false)}
+                        className="flex items-center justify-between px-3 py-2 rounded-lg text-primary hover:bg-muted font-bold transition-colors"
+                      >
+                        <span>لوحة الإدارة</span>
+                        <Badge variant="luxury" className="text-[10px] py-0 px-1.5">أدمن</Badge>
+                      </Link>
+                    )}
+
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        setIsUserMenuOpen(false);
+                        await logout();
+                      }}
+                      className="flex w-full items-center gap-2 px-3 py-2 rounded-lg text-rose-600 hover:bg-rose-500/10 font-bold transition-colors cursor-pointer"
+                    >
+                      <LogOut className="h-3.5 w-3.5" aria-hidden="true" />
+                      <span>تسجيل الخروج</span>
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <Link
+                href="/login"
+                className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer"
+                aria-label="تسجيل الدخول إلى حسابك"
+                title="تسجيل الدخول"
+              >
+                <User className="h-5 w-5" aria-hidden="true" />
+              </Link>
+            )}
 
             {/* Shopping Cart Trigger */}
             <button

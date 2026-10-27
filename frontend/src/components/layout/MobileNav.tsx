@@ -15,7 +15,10 @@ import {
   Truck,
   ArrowLeft,
   ChevronLeft,
+  User,
+  LogOut,
 } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
 import { cn } from '@/lib/utils';
 
 interface MobileNavProps {
@@ -25,6 +28,7 @@ interface MobileNavProps {
 
 export function MobileNav({ isOpen, onClose }: MobileNavProps) {
   const pathname = usePathname();
+  const { user, isAuthenticated, logout } = useAuth();
 
   return (
     <Sheet
@@ -36,6 +40,47 @@ export function MobileNav({ isOpen, onClose }: MobileNavProps) {
     >
       <div className="flex flex-col h-full justify-between">
         <nav aria-label="قائمة التنقل للأجهزة الذكية" className="space-y-6">
+          {/* User Account / Login Bar */}
+          <div className="p-3 rounded-xl border border-border/80 bg-muted/40">
+            {isAuthenticated && user ? (
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+                    <User className="h-4 w-4" aria-hidden="true" />
+                  </div>
+                  <div className="min-w-0 text-xs">
+                    <p className="font-bold text-foreground truncate">{user.username}</p>
+                    <p className="text-[10px] text-muted-foreground truncate">{user.email}</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    onClose();
+                    await logout();
+                  }}
+                  className="flex min-h-[40px] min-w-[40px] items-center justify-center rounded-lg text-rose-600 hover:bg-rose-500/10 transition-colors cursor-pointer"
+                  aria-label="تسجيل الخروج"
+                  title="تسجيل الخروج"
+                >
+                  <LogOut className="h-4 w-4" aria-hidden="true" />
+                </button>
+              </div>
+            ) : (
+              <Link
+                href="/login"
+                onClick={onClose}
+                className="flex min-h-[44px] items-center justify-between rounded-lg bg-[#12363B] text-white px-3 py-2 text-xs font-bold hover:bg-[#12363B]/90 transition-colors shadow-xs"
+              >
+                <div className="flex items-center gap-2">
+                  <User className="h-4 w-4 text-[#C5A059]" aria-hidden="true" />
+                  <span>تسجيل الدخول / حساب جديد</span>
+                </div>
+                <ChevronLeft className="h-4 w-4 text-[#C5A059]" aria-hidden="true" />
+              </Link>
+            )}
+          </div>
+
           {/* Main Links */}
           <div className="space-y-1">
             <p className="px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">

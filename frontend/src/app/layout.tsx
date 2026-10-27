@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import '@/styles/globals.css';
+import { AuthProvider } from '@/context/AuthContext';
 import { CartProvider } from '@/context/CartContext';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
@@ -23,13 +24,15 @@ export default function RootLayout({
   return (
     <html lang="ar" dir="rtl" className="scroll-smooth">
       <body className="min-h-screen flex flex-col bg-background text-foreground antialiased selection:bg-primary/20 selection:text-primary">
-        <CartProvider>
-          <Header />
-          <div className="flex-1">{children}</div>
-          <Footer />
-          <CartDrawer />
-          <CartToast />
-        </CartProvider>
+        <AuthProvider>
+          <CartProvider>
+            <Header />
+            <div className="flex-1">{children}</div>
+            <Footer />
+            <CartDrawer />
+            <CartToast />
+          </CartProvider>
+        </AuthProvider>
       </body>
     </html>
   );

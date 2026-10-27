@@ -24,6 +24,36 @@ export interface ErrorResponse {
 }
 
 // ============================================================================
+// 1.1 Security & Authentication (public.users, Spring Boot Auth DTOs)
+// ============================================================================
+
+export interface LoginRequest {
+  identifier: string; // email or username
+  password: string;
+}
+
+export interface RegisterRequest {
+  username: string;
+  email: string;
+  password: string;
+}
+
+export interface AuthResponse {
+  accessToken: string;
+  refreshToken?: string; // present in backend response; ignored by web frontend
+  email: string;
+  username: string;
+  role: string; // "USER" | "ADMIN"
+  message: string;
+}
+
+export interface AuthUser {
+  email: string;
+  username: string;
+  role: string;
+}
+
+// ============================================================================
 // 2. Catalog & Products (public.categories, public.products, public.product_images)
 // ============================================================================
 

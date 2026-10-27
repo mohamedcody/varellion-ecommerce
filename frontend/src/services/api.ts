@@ -1,30 +1,69 @@
 import { ApiResponse, Category, Product, ProductFilterParams, ShippingZone } from '@/types';
 import { mockCategories, mockProducts, mockShippingZones } from '@/data/mockProducts';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api/v1';
-const USE_MOCK = process.env.NEXT_PUBLIC_USE_MOCK_API !== 'false'; // default to true in dev
+const RAW_API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api';
+export const API_BASE_URL = RAW_API_URL.replace(/\/+$/, '');
+const USE_MOCK = process.env.NEXT_PUBLIC_USE_MOCK_API !== 'false'; // default to true in dev for catalog if backend catalog skeletons are empty
 
 /**
- * Universal safe fetcher with typed ApiResponse<T>
+ * Standardized API Error carrying HTTP status and backend validation errors
+ */
+export class ApiError extends Error {
+  status: number;
+  errorData?: unknown;
+  validationErrors?: Record<string, string>;
+
+  constructor(message: string, status: number, errorData?: unknown, validationErrors?: Record<string, string>) {
+    super(message);
+    this.name = 'ApiError';
+    this.status = status;
+    this.errorData = errorData;
+    this.validationErrors = validationErrors;
+  }
+}
+
+/**
+ * Robust Endpoint URL builder preventing duplicate or missing '/api' segments
+ */
+export function buildEndpointUrl(endpoint: string): string {
+  const clean = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+  if (API_BASE_URL.endsWith('/api') && clean.startsWith('/api/')) {
+    return `${API_BASE_URL}${clean.slice(4)}`;
+  }
+  return `${API_BASE_URL}${clean}`;
+}
+
+/**
+ * Universal safe fetcher with credentials support for HTTP cookies and direct type T
+ */
+export async function requestApi<T>(endpoint: string, options?: RequestInit): Promise<T> {
+  const url = buildEndpointUrl(endpoint);
+
+  const res = await fetch(url, {
+    credentials: 'include',
+    headers: {
+      'Content-Type': 'application/json',
+      ...options?.headers,
+    },
+    ...options,
+  });
+
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => null);
+    const message = errorData?.message || `API request failed with status ${res.status}`;
+    throw new ApiError(message, res.status, errorData, errorData?.validationErrors);
+  }
+
+  return await res.json();
+}
+
+/**
+ * Legacy fetcher for ApiResponse<T> wrapped payloads (catalog endpoints)
  */
 async function fetchApi<T>(endpoint: string, options?: RequestInit): Promise<ApiResponse<T>> {
   try {
-    const res = await fetch(`${API_BASE_URL}${endpoint}`, {
-      headers: {
-        'Content-Type': 'application/json',
-        ...options?.headers,
-      },
-      ...options,
-    });
-
-    if (!res.ok) {
-      const errorData = await res.json().catch(() => null);
-      throw new Error(errorData?.message || `API request failed with status ${res.status}`);
-    }
-
-    return await res.json();
+    return await requestApi<ApiResponse<T>>(endpoint, options);
   } catch (error) {
-    // If backend is unreachable and we want a graceful mock fallback
     if (process.env.NODE_ENV === 'development') {
       console.warn(`[API Client] Remote fetch to "${endpoint}" failed, falling back to mock fixtures.`, error);
     }
@@ -127,7 +166,7 @@ export const catalogService = {
    */
   async getProductBySlug(slug: string): Promise<Product | null> {
     if (USE_MOCK) {
-      const product = mockProducts.find((p) => p.slug === slug);
+      const product = mockProducts.find((p) => p.slug === slug || p.sku.toLowerCase() === slug.toLowerCase() || p.productId === slug);
       return product ? { ...product } : null;
     }
 
@@ -135,46 +174,44 @@ export const catalogService = {
       const res = await fetchApi<Product>(`/products/${slug}`);
       return res.data;
     } catch {
-      const product = mockProducts.find((p) => p.slug === slug);
+      const product = mockProducts.find((p) => p.slug === slug || p.sku.toLowerCase() === slug.toLowerCase() || p.productId === slug);
       return product ? { ...product } : null;
     }
   },
 
   /**
-   * Fetch best-selling products for the homepage
+   * Fetch best-selling products for showcase
    */
   async getBestSellers(limit: number = 4): Promise<Product[]> {
-    const { products } = await this.getProducts({ isBestSeller: true });
-    return products.slice(0, limit);
+    const res = await this.getProducts({ isBestSeller: true, limit });
+    return res.products.slice(0, limit);
   },
 
   /**
-   * Fetch featured products for the storefront showcase
+   * Fetch featured products for showcase
    */
   async getFeaturedProducts(limit: number = 4): Promise<Product[]> {
-    const { products } = await this.getProducts({ isFeatured: true });
-    return products.slice(0, limit);
-  },
-};
-
-/**
- * Egyptian Regional Shipping Service
- */
-export const shippingService = {
-  getAllZones(): ShippingZone[] {
-    return mockShippingZones;
+    const res = await this.getProducts({ isFeatured: true, limit });
+    return res.products.slice(0, limit);
   },
 
-  getZoneForGovernorate(governorate: string): ShippingZone {
-    const cleanGov = governorate.trim();
-    const found = mockShippingZones.find((zone) =>
-      zone.governorates.some((g) => g.includes(cleanGov) || cleanGov.includes(g))
-    );
-    // Default to Greater Cairo or lowest zone if not explicitly matched
-    return found || mockShippingZones[0];
+  /**
+   * Fetch Egyptian shipping zones and fees
+   */
+  async getShippingZones(): Promise<ShippingZone[]> {
+    return [...mockShippingZones];
   },
 
-  calculateFee(governorate: string): number {
-    return this.getZoneForGovernorate(governorate).fee;
+  /**
+   * Calculate shipping fee by governorate
+   */
+  calculateShippingFee(governorate: string): number {
+    const trimmed = governorate.trim();
+    for (const zone of mockShippingZones) {
+      if (zone.governorates.some((g) => g.toLowerCase() === trimmed.toLowerCase())) {
+        return zone.fee;
+      }
+    }
+    return 60; // default baseline for Egypt
   },
 };
