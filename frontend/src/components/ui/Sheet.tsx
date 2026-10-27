@@ -44,7 +44,12 @@ export function Sheet({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex" role="dialog" aria-modal="true">
+    <div
+      className="fixed inset-0 z-50 flex"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby={title ? 'sheet-title' : undefined}
+    >
       {/* Backdrop */}
       <div
         className="fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity duration-300 animate-in fade-in"
@@ -62,14 +67,14 @@ export function Sheet({
       >
         <div className="flex items-center justify-between border-b pb-4">
           {title && (
-            <h2 className="text-lg font-bold tracking-tight text-foreground">
+            <h2 id="sheet-title" className="text-lg font-bold tracking-tight text-foreground">
               {title}
             </h2>
           )}
           <button
             onClick={onClose}
-            className="rounded-md p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors cursor-pointer ml-auto"
-            aria-label="Close"
+            className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors cursor-pointer mr-auto focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
+            aria-label="إغلاق الدرج"
           >
             <X className="h-5 w-5" />
           </button>

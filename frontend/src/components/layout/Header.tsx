@@ -17,6 +17,7 @@ import { siteConfig } from '@/config/site';
 import { Badge } from '@/components/ui/Badge';
 import { MobileNav } from '@/components/layout/MobileNav';
 import { SearchDialog } from '@/components/layout/SearchDialog';
+import { useCart } from '@/context/CartContext';
 import { cn } from '@/lib/utils';
 
 interface HeaderProps {
@@ -24,10 +25,14 @@ interface HeaderProps {
   onOpenCart?: () => void;
 }
 
-export function Header({ cartItemCount = 0, onOpenCart }: HeaderProps) {
+export function Header({ cartItemCount, onOpenCart }: HeaderProps) {
   const pathname = usePathname();
   const [isMobileNavOpen, setIsMobileNavOpen] = React.useState(false);
   const [isSearchOpen, setIsSearchOpen] = React.useState(false);
+
+  const { totalItems, openCart } = useCart();
+  const effectiveCartCount = cartItemCount !== undefined ? cartItemCount : totalItems;
+  const handleCartClick = onOpenCart || openCart;
 
   // Global keyboard shortcut for Search (Ctrl+K / Cmd+K)
   React.useEffect(() => {
@@ -160,15 +165,15 @@ export function Header({ cartItemCount = 0, onOpenCart }: HeaderProps) {
             {/* Shopping Cart Trigger */}
             <button
               type="button"
-              onClick={onOpenCart}
-              className="relative flex min-h-[44px] items-center gap-2 rounded-lg bg-primary/10 px-3 text-primary hover:bg-primary/20 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer"
-              aria-label={`سلة المشتريات، تحتوي على ${cartItemCount} قطع`}
+              onClick={handleCartClick}
+              className="relative flex min-h-[44px] items-center gap-2 rounded-lg bg-primary/10 px-3 text-primary hover:bg-primary/20 transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring cursor-pointer"
+              aria-label={`سلة المشتريات، تحتوي على ${effectiveCartCount} قطع`}
             >
               <ShoppingBag className="h-5 w-5" aria-hidden="true" />
               <span className="hidden sm:inline text-xs font-bold">السلة</span>
-              {cartItemCount > 0 ? (
-                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#12363B] text-white text-[11px] font-bold shadow-sm animate-in zoom-in">
-                  {cartItemCount}
+              {effectiveCartCount > 0 ? (
+                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#12363B] text-white text-[11px] font-bold shadow-xs animate-in zoom-in">
+                  {effectiveCartCount}
                 </span>
               ) : (
                 <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/20 text-primary text-[11px] font-semibold">

@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { Product } from '@/types';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
+import { useCart } from '@/context/CartContext';
 import { ShoppingBag, Star, Check, Sparkles } from 'lucide-react';
 
 interface ProductCardProps {
@@ -14,8 +15,8 @@ interface ProductCardProps {
 }
 
 export function ProductCard({ product, onAddToCart }: ProductCardProps) {
-  const [isAdding, setIsAdding] = useState(false);
   const [isAdded, setIsAdded] = useState(false);
+  const { addItem } = useCart();
 
   const mainImage = product.images.find((img) => img.isMain) || product.images[0];
   const discountPercent =
@@ -27,17 +28,14 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
     e.preventDefault();
     e.stopPropagation();
 
-    if (isAdding || product.availableStock <= 0) return;
+    if (product.availableStock <= 0) return;
 
-    setIsAdding(true);
-    setTimeout(() => {
-      setIsAdding(false);
-      setIsAdded(true);
-      if (onAddToCart) {
-        onAddToCart(product);
-      }
-      setTimeout(() => setIsAdded(false), 2200);
-    }, 400);
+    addItem(product, 1);
+    setIsAdded(true);
+    if (onAddToCart) {
+      onAddToCart(product);
+    }
+    setTimeout(() => setIsAdded(false), 2200);
   };
 
   return (
@@ -127,7 +125,7 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
       <div className="p-4 pt-0">
         <Button
           onClick={handleAddToCart}
-          disabled={product.availableStock <= 0 || isAdding}
+          disabled={product.availableStock <= 0}
           variant={isAdded ? 'secondary' : 'default'}
           size="default"
           className="w-full gap-2 transition-all min-h-[44px]"
@@ -138,8 +136,6 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
               <Check className="h-4 w-4 text-emerald-600" aria-hidden="true" />
               <span className="font-bold text-emerald-700 dark:text-emerald-400">تمت الإضافة للسلة</span>
             </>
-          ) : isAdding ? (
-            <span>جاري الإضافة...</span>
           ) : product.availableStock <= 0 ? (
             <span className="text-muted-foreground">نفد من المخزون</span>
           ) : (

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { catalogService } from '@/services/api';
 import { Product } from '@/types';
+import { useCart } from '@/context/CartContext';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { Card, CardContent } from '@/components/ui/Card';
@@ -31,8 +32,9 @@ export default function ProductDetailPage() {
   const [selectedImage, setSelectedImage] = useState<string>('');
   const [selectedColor, setSelectedColor] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [isAddingToCart, setIsAddingToCart] = useState<boolean>(false);
   const [isAdded, setIsAdded] = useState<boolean>(false);
+
+  const { addItem, openCart } = useCart();
 
   useEffect(() => {
     async function loadProduct() {
@@ -96,12 +98,16 @@ export default function ProductDetailPage() {
       : null;
 
   const handleAddToCart = () => {
-    setIsAddingToCart(true);
-    setTimeout(() => {
-      setIsAddingToCart(false);
-      setIsAdded(true);
-      setTimeout(() => setIsAdded(false), 2500);
-    }, 450);
+    if (!product || product.availableStock <= 0) return;
+    addItem(product, 1, selectedColor);
+    setIsAdded(true);
+    setTimeout(() => setIsAdded(false), 2200);
+  };
+
+  const handleFastBuy = () => {
+    if (!product || product.availableStock <= 0) return;
+    addItem(product, 1, selectedColor);
+    openCart();
   };
 
   return (
@@ -263,7 +269,7 @@ export default function ProductDetailPage() {
           <div className="flex flex-col sm:flex-row gap-3 pt-2">
             <Button
               onClick={handleAddToCart}
-              disabled={product.availableStock <= 0 || isAddingToCart}
+              disabled={product.availableStock <= 0}
               variant={isAdded ? 'secondary' : 'luxury'}
               size="lg"
               className="flex-1 gap-2.5 font-bold shadow-md min-h-[48px]"
@@ -271,25 +277,25 @@ export default function ProductDetailPage() {
               {isAdded ? (
                 <>
                   <Check className="h-5 w-5 text-emerald-600" aria-hidden="true" />
-                  <span className="text-emerald-700 dark:text-emerald-400">تمت الإضافة للسلة بنجاح</span>
+                  <span className="text-emerald-700 dark:text-emerald-400">تمت الإضافة للسلة</span>
                 </>
               ) : (
                 <>
                   <ShoppingBag className="h-5 w-5" aria-hidden="true" />
-                  <span>{isAddingToCart ? 'جاري الإضافة...' : 'أضف إلى سلة المشتريات'}</span>
+                  <span>أضف إلى سلة المشتريات</span>
                 </>
               )}
             </Button>
 
-            <Link href="/checkout" className="sm:w-auto">
-              <Button
-                variant="default"
-                size="lg"
-                className="w-full gap-2 font-bold min-h-[48px]"
-              >
-                <span>شراء سريع (دفع عند الاستلام)</span>
-              </Button>
-            </Link>
+            <Button
+              onClick={handleFastBuy}
+              disabled={product.availableStock <= 0}
+              variant="default"
+              size="lg"
+              className="sm:w-auto gap-2 font-bold min-h-[48px]"
+            >
+              <span>عرض السلة ومراجعة الطلب</span>
+            </Button>
           </div>
 
           {/* Inspection and Guarantee Banner */}

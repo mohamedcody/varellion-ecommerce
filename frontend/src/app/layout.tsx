@@ -1,7 +1,10 @@
 import type { Metadata } from 'next';
 import '@/styles/globals.css';
+import { CartProvider } from '@/context/CartContext';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
+import { CartDrawer } from '@/components/cart/CartDrawer';
+import { CartToast } from '@/components/cart/CartToast';
 
 export const metadata: Metadata = {
   title: 'VARELLION — الفخامة الرجالية اليومية | الساعات والمصنوعات الجلدية',
@@ -20,9 +23,13 @@ export default function RootLayout({
   return (
     <html lang="ar" dir="rtl" className="scroll-smooth">
       <body className="min-h-screen flex flex-col bg-background text-foreground antialiased selection:bg-primary/20 selection:text-primary">
-        <Header />
-        <div className="flex-1">{children}</div>
-        <Footer />
+        <CartProvider>
+          <Header />
+          <div className="flex-1">{children}</div>
+          <Footer />
+          <CartDrawer />
+          <CartToast />
+        </CartProvider>
       </body>
     </html>
   );
