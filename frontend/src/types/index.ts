@@ -34,7 +34,6 @@ export interface Category {
   slug: string;
   descriptionAr?: string;
   descriptionEn?: string;
-  imageUrl?: string;
   isActive: boolean;
   productCount?: number;
 }
@@ -53,14 +52,13 @@ export interface Product {
   productId: string;
   categoryId: string;
   category?: Category;
-  slug: string;
+  slug: string; // client-side route identifier (maps to sku or id)
   sku: string;
   nameAr: string;
   nameEn: string;
   descriptionAr: string;
   descriptionEn: string;
   price: number; // in EGP
-  previousPrice?: number; // for discount badges (e.g. 2400 EGP was 2800 EGP)
   costPrice?: number;
   stockQuantity: number;
   reservedQuantity: number;
@@ -68,12 +66,7 @@ export interface Product {
   isActive: boolean;
   isFeatured?: boolean;
   isBestSeller?: boolean;
-  badge?: string; // e.g. "الأكثر طلباً", "جلد طبيعي", "إصدار حصري"
-  rating?: number; // e.g. 4.9
-  reviewCount?: number; // e.g. 128
   images: ProductImage[];
-  specifications?: Record<string, string>; // e.g. { "نوع المينا": "فولاذ مقاوم للصدأ 316L", "مقاومة الماء": "50 متر" }
-  colors?: { nameAr: string; hex: string }[];
   createdAt?: string;
   updatedAt?: string;
 }
@@ -87,7 +80,7 @@ export interface ProductFilterParams {
   isFeatured?: boolean;
   isBestSeller?: boolean;
   inStockOnly?: boolean;
-  sortBy?: 'price-asc' | 'price-desc' | 'newest' | 'bestseller' | 'rating';
+  sortBy?: 'price-asc' | 'price-desc' | 'newest' | 'bestseller';
   page?: number;
   limit?: number;
 }
@@ -97,11 +90,10 @@ export interface ProductFilterParams {
 // ============================================================================
 
 export interface CartItem {
-  cartItemId: string;
+  cartItemId: string; // unique item id (matches productId for single SKU constraint)
   productId: string;
   product: Product;
   quantity: number;
-  selectedColor?: string;
   addedAt: string;
 }
 
@@ -178,7 +170,6 @@ export interface CreateOrderRequest {
   items: {
     productId: string;
     quantity: number;
-    selectedColor?: string;
   }[];
 }
 

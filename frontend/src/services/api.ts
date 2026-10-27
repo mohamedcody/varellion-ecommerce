@@ -98,8 +98,6 @@ export const catalogService = {
           filtered.sort((a, b) => a.price - b.price);
         } else if (params.sortBy === 'price-desc') {
           filtered.sort((a, b) => b.price - a.price);
-        } else if (params.sortBy === 'rating') {
-          filtered.sort((a, b) => (b.rating || 0) - (a.rating || 0));
         }
       }
 

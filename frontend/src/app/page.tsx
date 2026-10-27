@@ -175,29 +175,20 @@ export default async function HomePage() {
               <Link
                 key={cat.categoryId}
                 href={`/products?category=${cat.slug}`}
-                className="group relative flex flex-col justify-end overflow-hidden rounded-2xl border border-border/80 bg-card p-6 min-h-[280px] shadow-xs hover:border-primary/50 hover:shadow-lg transition-all"
+                className="group relative flex flex-col justify-end overflow-hidden rounded-2xl border border-[#C5A059]/30 bg-gradient-to-br from-[#12363B] via-[#0d262a] to-[#081719] p-6 min-h-[240px] shadow-sm hover:border-[#C5A059] hover:shadow-xl transition-all"
               >
-                {/* Background Image Overlay */}
-                {cat.imageUrl && (
-                  <div className="absolute inset-0 z-0 overflow-hidden">
-                    <img
-                      src={cat.imageUrl}
-                      alt={cat.nameAr}
-                      className="h-full w-full object-cover object-center transition-transform duration-700 group-hover:scale-105"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent" />
-                  </div>
-                )}
+                {/* Subtle Luxury Pattern / Glow */}
+                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-[#C5A059]/10 via-transparent to-transparent pointer-events-none" />
 
                 {/* Content Overlay */}
                 <div className="relative z-10 text-white space-y-2">
-                  <Badge variant="luxury" className="bg-[#12363B]/90 text-white border-white/20 text-[11px]">
-                    {cat.productCount} معروضات متوفرة
+                  <Badge variant="luxury" className="bg-[#12363B] text-[#C5A059] border-[#C5A059]/40 text-[11px] font-bold">
+                    {cat.productCount ? `${cat.productCount} معروضات متوفرة` : 'تشكيلة حصرية'}
                   </Badge>
                   <h3 className="text-xl font-bold text-white group-hover:text-[#C5A059] transition-colors">
                     {cat.nameAr}
                   </h3>
-                  <p className="text-xs text-white/80 line-clamp-2">
+                  <p className="text-xs text-white/80 line-clamp-2 leading-relaxed">
                     {cat.descriptionAr}
                   </p>
                   <div className="pt-2 flex items-center gap-1.5 text-xs font-bold text-[#C5A059]">

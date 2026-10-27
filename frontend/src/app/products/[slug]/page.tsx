@@ -14,13 +14,10 @@ import {
   ShieldCheck,
   Truck,
   RotateCcw,
-  Star,
   Check,
   ShoppingBag,
   ArrowRight,
   Sparkles,
-  PhoneCall,
-  Clock,
 } from 'lucide-react';
 
 export default function ProductDetailPage() {
@@ -30,7 +27,6 @@ export default function ProductDetailPage() {
 
   const [product, setProduct] = useState<Product | null>(null);
   const [selectedImage, setSelectedImage] = useState<string>('');
-  const [selectedColor, setSelectedColor] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isAdded, setIsAdded] = useState<boolean>(false);
 
@@ -46,9 +42,6 @@ export default function ProductDetailPage() {
         if (found && found.images.length > 0) {
           const main = found.images.find((img) => img.isMain) || found.images[0];
           setSelectedImage(main.imageUrl);
-        }
-        if (found && found.colors && found.colors.length > 0) {
-          setSelectedColor(found.colors[0].nameAr);
         }
       } catch (err) {
         console.error('Failed to load product detail:', err);
@@ -92,21 +85,16 @@ export default function ProductDetailPage() {
     );
   }
 
-  const discountPercent =
-    product.previousPrice && product.previousPrice > product.price
-      ? Math.round(((product.previousPrice - product.price) / product.previousPrice) * 100)
-      : null;
-
   const handleAddToCart = () => {
     if (!product || product.availableStock <= 0) return;
-    addItem(product, 1, selectedColor);
+    addItem(product, 1);
     setIsAdded(true);
     setTimeout(() => setIsAdded(false), 2200);
   };
 
   const handleFastBuy = () => {
     if (!product || product.availableStock <= 0) return;
-    addItem(product, 1, selectedColor);
+    addItem(product, 1);
     openCart();
   };
 
@@ -143,19 +131,14 @@ export default function ProductDetailPage() {
               </div>
             )}
 
-            {/* Badges Overlay */}
-            <div className="absolute top-4 right-4 flex flex-col gap-2 z-10">
-              {product.badge && (
-                <Badge variant="luxury" className="font-bold text-xs shadow-md">
-                  {product.badge}
+            {/* Out of Stock Overlay */}
+            {product.availableStock <= 0 && (
+              <div className="absolute top-4 right-4 z-10">
+                <Badge variant="outline" className="bg-background/90 text-rose-600 border-rose-300 font-bold text-xs shadow-md">
+                  نفد من المخزون
                 </Badge>
-              )}
-              {discountPercent && (
-                <Badge variant="gold" className="font-black text-xs shadow-md">
-                  خصم {discountPercent}%
-                </Badge>
-              )}
-            </div>
+              </div>
+            )}
           </div>
 
           {/* Thumbnails list if multiple */}
@@ -182,16 +165,12 @@ export default function ProductDetailPage() {
 
         {/* Right / Product Information & Purchase Column */}
         <div className="flex flex-col gap-6">
-          {/* Rating & SKU */}
+          {/* SKU & Category */}
           <div className="flex items-center justify-between text-xs text-muted-foreground">
             <span className="font-mono text-muted-foreground">كود الموديل: {product.sku}</span>
-            {product.rating && (
-              <div className="flex items-center gap-1.5 font-bold text-foreground">
-                <Star className="h-4 w-4 fill-[#C5A059] text-[#C5A059]" aria-hidden="true" />
-                <span className="text-sm">{product.rating.toFixed(1)}</span>
-                <span className="text-muted-foreground">({product.reviewCount} تقييم موثق)</span>
-              </div>
-            )}
+            <span className="font-semibold text-primary/80">
+              {product.category?.nameAr || 'منتج أصلي'}
+            </span>
           </div>
 
           {/* Product Title & English Subtitle */}
@@ -205,51 +184,31 @@ export default function ProductDetailPage() {
           </div>
 
           {/* Price Box */}
-          <div className="flex items-baseline gap-3 p-4 rounded-xl bg-muted/40 border border-border/60">
-            <span className="text-3xl font-black text-foreground">
-              {product.price.toLocaleString('ar-EG')} <span className="text-sm font-bold">ج.م</span>
-            </span>
-            {product.previousPrice && (
-              <span className="text-base text-muted-foreground line-through">
-                {product.previousPrice.toLocaleString('ar-EG')} ج.م
+          <div className="flex items-baseline justify-between p-4 rounded-xl bg-muted/40 border border-border/60">
+            <div className="flex items-baseline gap-2">
+              <span className="text-3xl font-black text-foreground">
+                {product.price.toLocaleString('ar-EG')}
               </span>
-            )}
-            <span className="text-xs font-semibold text-emerald-700 dark:text-emerald-400 mr-auto">
-              شامل ضريبة المبيعات
-            </span>
+              <span className="text-sm font-bold text-muted-foreground">ج.م</span>
+            </div>
+
+            <div className="text-xs font-semibold text-muted-foreground">
+              تُحسب مصاريف الشحن عند تأكيد الطلب
+            </div>
           </div>
 
-          {/* Description */}
-          <div className="text-sm text-foreground/90 leading-relaxed">
-            <p>{product.descriptionAr}</p>
+          {/* Arabic Detailed Description */}
+          <div className="space-y-3">
+            <h3 className="font-bold text-sm text-foreground">تفاصيل ومواصفات القطعة:</h3>
+            <div className="text-sm text-foreground/90 leading-relaxed bg-card p-4 rounded-xl border border-border/70">
+              <p>{product.descriptionAr}</p>
+            </div>
           </div>
 
-          {/* Color Selection if any */}
-          {product.colors && product.colors.length > 0 && (
-            <div className="space-y-2">
-              <label className="text-xs font-bold text-foreground">
-                اللون / الإصدار: <span className="text-primary">{selectedColor}</span>
-              </label>
-              <div className="flex items-center gap-2">
-                {product.colors.map((c) => (
-                  <button
-                    key={c.nameAr}
-                    type="button"
-                    onClick={() => setSelectedColor(c.nameAr)}
-                    className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-semibold transition-all cursor-pointer min-h-[44px] ${
-                      selectedColor === c.nameAr
-                        ? 'border-primary bg-primary/10 text-primary ring-1 ring-primary'
-                        : 'border-border text-foreground hover:bg-muted/50'
-                    }`}
-                  >
-                    <span
-                      className="h-3.5 w-3.5 rounded-full border border-black/20"
-                      style={{ backgroundColor: c.hex }}
-                    />
-                    <span>{c.nameAr}</span>
-                  </button>
-                ))}
-              </div>
+          {/* English Craftsmanship Note */}
+          {product.descriptionEn && (
+            <div className="text-xs text-muted-foreground leading-relaxed italic border-r-2 border-primary/40 pr-3">
+              <p>{product.descriptionEn}</p>
             </div>
           )}
 
@@ -258,10 +217,13 @@ export default function ProductDetailPage() {
             {product.availableStock > 0 ? (
               <div className="inline-flex items-center gap-1.5 text-emerald-700 dark:text-emerald-400">
                 <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-                <span>متوفر في المخزون — جاهز للشحن الفوري للمحافظات</span>
+                <span>
+                  متوفر في المخزون
+                  {product.availableStock <= 5 ? ` (متبقي ${product.availableStock} قطع فقط)` : ' — جاهز للشحن الفوري للمحافظات'}
+                </span>
               </div>
             ) : (
-              <span className="text-rose-600">غير متوفر حالياً</span>
+              <span className="text-rose-600 font-bold">غير متوفر حالياً</span>
             )}
           </div>
 
@@ -338,24 +300,6 @@ export default function ProductDetailPage() {
               </div>
             </CardContent>
           </Card>
-
-          {/* Specifications Table */}
-          {product.specifications && Object.keys(product.specifications).length > 0 && (
-            <div className="border-t border-border/80 pt-6 space-y-3">
-              <h3 className="font-bold text-sm text-foreground">المواصفات الفنية للقطعة:</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                {Object.entries(product.specifications).map(([key, val]) => (
-                  <div
-                    key={key}
-                    className="flex justify-between p-2.5 rounded-lg bg-muted/40 border border-border/50"
-                  >
-                    <span className="text-muted-foreground">{key}</span>
-                    <span className="font-bold text-foreground">{val}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
       </div>
     </div>

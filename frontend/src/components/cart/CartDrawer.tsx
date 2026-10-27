@@ -113,15 +113,10 @@ export function CartDrawer() {
                       {item.product.nameAr}
                     </Link>
 
-                    {/* Selected Variant / Color if present */}
-                    {item.selectedColor && (
-                      <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-                        <span>اللون:</span>
-                        <span className="font-semibold text-foreground">
-                          {item.selectedColor}
-                        </span>
-                      </div>
-                    )}
+                    {/* SKU Indicator */}
+                    <div className="text-[11px] font-mono text-muted-foreground">
+                      كود: {item.product.sku}
+                    </div>
 
                     {/* Price in EGP */}
                     <div className="text-xs font-black text-foreground">

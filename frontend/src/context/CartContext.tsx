@@ -11,7 +11,7 @@ interface CartContextType {
   totalItems: number;
   subtotal: number;
   toastMessage: string | null;
-  addItem: (product: Product, quantity?: number, selectedColor?: string) => void;
+  addItem: (product: Product, quantity?: number) => void;
   removeItem: (cartItemId: string) => void;
   updateQuantity: (cartItemId: string, quantity: number) => void;
   clearCart: () => void;
@@ -75,13 +75,14 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   /**
    * Add Item to Cart
-   * Identifies unique line items by product ID and selected option/color
+   * In alignment with DB constraint: uq_cart_product UNIQUE (cart_id, product_id)
+   * Product appears once per cart, incrementing quantity up to available stock.
    */
   const addItem = useCallback(
-    (product: Product, quantity: number = 1, selectedColor?: string) => {
+    (product: Product, quantity: number = 1) => {
       if (quantity <= 0) return;
 
-      const lineItemId = `${product.productId}__${selectedColor || 'default'}`;
+      const lineItemId = product.productId;
       const maxStock = product.availableStock > 0 ? product.availableStock : 1;
 
       setItems((prevItems) => {
@@ -105,7 +106,6 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
           productId: product.productId,
           product,
           quantity: initialQuantity,
-          selectedColor,
           addedAt: new Date().toISOString(),
         };
 
@@ -150,22 +150,25 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   /**
-   * Clear all items
+   * Clear all cart items
    */
   const clearCart = useCallback(() => {
     setItems([]);
   }, []);
 
-  // Computed values
-  const totalItems = useMemo(
-    () => items.reduce((acc, item) => acc + item.quantity, 0),
-    [items]
-  );
+  /**
+   * Total items count
+   */
+  const totalItems = useMemo(() => {
+    return items.reduce((acc, item) => acc + item.quantity, 0);
+  }, [items]);
 
-  const subtotal = useMemo(
-    () => items.reduce((acc, item) => acc + item.product.price * item.quantity, 0),
-    [items]
-  );
+  /**
+   * Subtotal in EGP
+   */
+  const subtotal = useMemo(() => {
+    return items.reduce((acc, item) => acc + item.product.price * item.quantity, 0);
+  }, [items]);
 
   const value = useMemo(
     () => ({

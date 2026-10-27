@@ -2,12 +2,11 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { Product } from '@/types';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { useCart } from '@/context/CartContext';
-import { ShoppingBag, Star, Check, Sparkles } from 'lucide-react';
+import { ShoppingBag, Check } from 'lucide-react';
 
 interface ProductCardProps {
   product: Product;
@@ -19,10 +18,6 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
   const { addItem } = useCart();
 
   const mainImage = product.images.find((img) => img.isMain) || product.images[0];
-  const discountPercent =
-    product.previousPrice && product.previousPrice > product.price
-      ? Math.round(((product.previousPrice - product.price) / product.previousPrice) * 100)
-      : null;
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -41,7 +36,10 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
   return (
     <div className="group relative flex flex-col justify-between overflow-hidden rounded-xl border border-border/80 bg-card transition-all duration-300 hover:border-primary/40 hover:shadow-md">
       {/* Clickable Area for Image and Details */}
-      <Link href={`/products/${product.slug}`} className="flex flex-col focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-t-xl">
+      <Link
+        href={`/products/${product.slug}`}
+        className="flex flex-col focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-t-xl"
+      >
         {/* Product Image Frame */}
         <div className="relative aspect-square w-full overflow-hidden bg-muted/30">
           {mainImage?.imageUrl ? (
@@ -57,44 +55,30 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
             </div>
           )}
 
-          {/* Badges Overlay */}
+          {/* Stock Badges Overlay */}
           <div className="absolute top-3 right-3 flex flex-col gap-1.5 z-10">
-            {product.badge && (
-              <Badge variant="luxury" className="shadow-xs backdrop-blur-xs font-bold text-[11px]">
-                {product.badge}
+            {product.availableStock <= 0 ? (
+              <Badge variant="outline" className="bg-background/90 text-rose-600 border-rose-200 text-[11px] font-bold">
+                نفد من المخزون
               </Badge>
-            )}
-            {discountPercent && (
-              <Badge variant="gold" className="shadow-xs font-black text-[11px]">
-                خصم {discountPercent}%
+            ) : product.availableStock <= 5 ? (
+              <Badge variant="outline" className="bg-background/90 text-amber-700 dark:text-amber-400 border-amber-300/50 text-[11px] font-bold">
+                متبقي {product.availableStock} قطع فقط
               </Badge>
-            )}
+            ) : null}
           </div>
-
-          {/* Low Stock Warning */}
-          {product.availableStock > 0 && product.availableStock <= 5 && (
-            <div className="absolute bottom-2.5 right-2.5 z-10 rounded-md bg-background/90 px-2 py-0.5 text-[11px] font-semibold text-amber-700 dark:text-amber-400 backdrop-blur-xs border border-amber-200/50 shadow-xs">
-              متبقي {product.availableStock} قطع فقط
-            </div>
-          )}
         </div>
 
         {/* Content Section */}
         <div className="p-4 flex flex-col flex-1 gap-2">
-          {/* Rating & Category */}
+          {/* Category & SKU */}
           <div className="flex items-center justify-between text-xs text-muted-foreground">
-            <span className="font-medium text-primary/80">
-              {product.category?.nameAr || 'إصدار فاخر'}
+            <span className="font-semibold text-primary/80">
+              {product.category?.nameAr || 'منتج أصلي'}
             </span>
-            {product.rating && (
-              <div className="flex items-center gap-1 font-bold text-foreground">
-                <Star className="h-3.5 w-3.5 fill-[#C5A059] text-[#C5A059]" aria-hidden="true" />
-                <span>{product.rating.toFixed(1)}</span>
-                {product.reviewCount && (
-                  <span className="text-muted-foreground text-[10px]">({product.reviewCount})</span>
-                )}
-              </div>
-            )}
+            <span className="font-mono text-[11px] text-muted-foreground">
+              {product.sku}
+            </span>
           </div>
 
           {/* Product Title */}
@@ -108,13 +92,17 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
           </p>
 
           {/* Price Block */}
-          <div className="mt-auto pt-2 flex items-baseline gap-2">
-            <span className="text-lg font-black text-foreground">
-              {product.price.toLocaleString('ar-EG')} <span className="text-xs font-bold">ج.م</span>
-            </span>
-            {product.previousPrice && (
-              <span className="text-xs text-muted-foreground line-through">
-                {product.previousPrice.toLocaleString('ar-EG')} ج.م
+          <div className="mt-auto pt-2 flex items-baseline justify-between">
+            <div className="flex items-baseline gap-1">
+              <span className="text-lg font-black text-foreground">
+                {product.price.toLocaleString('ar-EG')}
+              </span>
+              <span className="text-xs font-bold text-muted-foreground">ج.م</span>
+            </div>
+
+            {product.availableStock > 0 && (
+              <span className="text-[11px] font-medium text-emerald-700 dark:text-emerald-400">
+                جاهز للشحن
               </span>
             )}
           </div>
