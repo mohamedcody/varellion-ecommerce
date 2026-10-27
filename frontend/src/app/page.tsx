@@ -1,7 +1,9 @@
 import Link from 'next/link';
+import { catalogService } from '@/services/api';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/Card';
+import { ProductCard } from '@/components/product/ProductCard';
 import {
   ShieldCheck,
   Truck,
@@ -12,15 +14,22 @@ import {
   Sparkles,
   ArrowLeft,
   ChevronLeft,
+  Award,
+  Gem,
+  CheckCircle2,
 } from 'lucide-react';
 
-export default function HomePage() {
+export default async function HomePage() {
+  const [bestSellers, categories] = await Promise.all([
+    catalogService.getBestSellers(4),
+    catalogService.getCategories(),
+  ]);
+
   return (
     <div className="flex flex-col items-center">
-      {/* Hero Section — 3-Second Conversion Formula */}
+      {/* 1. Hero Section — 3-Second Conversion Formula */}
       <section className="relative w-full overflow-hidden border-b border-border/80 bg-gradient-to-b from-[#12363B]/5 via-background to-background py-16 sm:py-24 px-4 sm:px-6 lg:px-8">
         <div className="container mx-auto max-w-5xl text-center space-y-6">
-          
           {/* Brand Eyebrow Badge */}
           <div className="inline-flex items-center gap-2 rounded-full border border-primary/25 bg-primary/10 px-4 py-1.5 text-xs font-bold text-primary shadow-xs">
             <Sparkles className="h-3.5 w-3.5 text-[#C5A059]" aria-hidden="true" />
@@ -40,13 +49,13 @@ export default function HomePage() {
           {/* Action CTAs */}
           <div className="flex flex-wrap items-center justify-center gap-4 pt-4">
             <Link href="/products?category=watches">
-              <Button variant="luxury" size="lg" className="gap-2.5 shadow-md">
+              <Button variant="luxury" size="lg" className="gap-2.5 shadow-md min-h-[48px]">
                 <span>استكشف الساعات الأكثر طلباً</span>
                 <ArrowLeft className="h-4 w-4" aria-hidden="true" />
               </Button>
             </Link>
             <Link href="/products?category=leather-goods">
-              <Button variant="outline" size="lg" className="gap-2">
+              <Button variant="outline" size="lg" className="gap-2 min-h-[48px]">
                 <span>محافظ وحاملات كروت</span>
                 <ChevronLeft className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
               </Button>
@@ -60,166 +69,204 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* 4 Trust Pillars Bar (The Crucial Egyptian Confidence Drivers) */}
+      {/* 2. 4 Trust Pillars Bar (The Crucial Egyptian Confidence Drivers) */}
       <section className="w-full border-b border-border/80 bg-card py-8 px-4 sm:px-6 lg:px-8" aria-label="مميزات وثقة الشراء">
-        <div className="container mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          
+        <div className="container mx-auto max-w-7xl grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <Card className="border-border/80 bg-background hover:border-primary/40 transition-colors">
             <CardHeader className="flex flex-row items-center gap-3 pb-2">
               <div className="p-2.5 rounded-lg bg-primary/10 text-primary shrink-0">
                 <ShieldCheck className="h-5 w-5" aria-hidden="true" />
               </div>
-              <div>
-                <CardTitle className="text-base font-bold">معاينة قبل الدفع</CardTitle>
-                <CardDescription className="text-xs">افحص منتجك قبل السداد</CardDescription>
-              </div>
+              <CardTitle className="text-sm font-bold">معاينة قبل الدفع</CardTitle>
             </CardHeader>
-            <CardContent className="text-xs text-muted-foreground leading-relaxed">
-              يحق لك فتح الطرد وفحص خامة الساعة أو المحفظة والتأكد من مطابقتها قبل دفع أي مبالغ للمندوب.
-            </CardContent>
-          </Card>
-
-          <Card className="border-border/80 bg-background hover:border-[#C5A059]/40 transition-colors">
-            <CardHeader className="flex flex-row items-center gap-3 pb-2">
-              <div className="p-2.5 rounded-lg bg-[#C5A059]/15 text-[#C5A059] shrink-0">
-                <Banknote className="h-5 w-5" aria-hidden="true" />
-              </div>
-              <div>
-                <CardTitle className="text-base font-bold">الدفع عند الاستلام</CardTitle>
-                <CardDescription className="text-xs">Cash on Delivery (COD)</CardDescription>
-              </div>
-            </CardHeader>
-            <CardContent className="text-xs text-muted-foreground leading-relaxed">
-              سدد قيمة طلبك نقداً براحة تامة عند وصول المندوب لباب منزلك في أي محافظة داخل جمهورية مصر.
+            <CardContent>
+              <CardDescription className="text-xs leading-relaxed">
+                افتح الشحنة وافحص قطعتك وتأكد من الجودة والخامة بنفسك قبل دفع أي مليم للمندوب.
+              </CardDescription>
             </CardContent>
           </Card>
 
           <Card className="border-border/80 bg-background hover:border-primary/40 transition-colors">
             <CardHeader className="flex flex-row items-center gap-3 pb-2">
               <div className="p-2.5 rounded-lg bg-primary/10 text-primary shrink-0">
-                <RotateCcw className="h-5 w-5" aria-hidden="true" />
+                <Banknote className="h-5 w-5 text-emerald-600" aria-hidden="true" />
               </div>
-              <div>
-                <CardTitle className="text-base font-bold">ضمان استبدال 14 يوماً</CardTitle>
-                <CardDescription className="text-xs">استرجاع وتبديل فوري</CardDescription>
-              </div>
+              <CardTitle className="text-sm font-bold">الدفع عند الاستلام</CardTitle>
             </CardHeader>
-            <CardContent className="text-xs text-muted-foreground leading-relaxed">
-              سياسة إرجاع واستبدال واضحة وموثقة تضمن لك راحة البال الكاملة وحقك في التبديل دون أي تعقيد.
+            <CardContent>
+              <CardDescription className="text-xs leading-relaxed">
+                خدمة Cash on Delivery متوفرة لكافة الطلبات دون الحاجة لبطاقة بنكية مسبقة.
+              </CardDescription>
             </CardContent>
           </Card>
 
-          <Card className="border-border/80 bg-background hover:border-[#C5A059]/40 transition-colors">
+          <Card className="border-border/80 bg-background hover:border-primary/40 transition-colors">
             <CardHeader className="flex flex-row items-center gap-3 pb-2">
-              <div className="p-2.5 rounded-lg bg-[#C5A059]/15 text-[#C5A059] shrink-0">
-                <Truck className="h-5 w-5" aria-hidden="true" />
+              <div className="p-2.5 rounded-lg bg-primary/10 text-primary shrink-0">
+                <RotateCcw className="h-5 w-5 text-amber-600" aria-hidden="true" />
               </div>
-              <div>
-                <CardTitle className="text-base font-bold">تغطية 27 محافظة</CardTitle>
-                <CardDescription className="text-xs">توصيل سريع لباب منزلك</CardDescription>
-              </div>
+              <CardTitle className="text-sm font-bold">استرجاع واستبدال 14 يوماً</CardTitle>
             </CardHeader>
-            <CardContent className="text-xs text-muted-foreground leading-relaxed">
-              شحن مؤمن لجميع محافظات مصر (القاهرة والجيزة والإسكندرية والدلتا والصعيد والمحافظات الساحلية).
+            <CardContent>
+              <CardDescription className="text-xs leading-relaxed">
+                حرية تامة لاستبدال أو إرجاع المنتج بكل سهولة وأمان طبقا لحماية المستهلك.
+              </CardDescription>
             </CardContent>
           </Card>
 
+          <Card className="border-border/80 bg-background hover:border-primary/40 transition-colors">
+            <CardHeader className="flex flex-row items-center gap-3 pb-2">
+              <div className="p-2.5 rounded-lg bg-primary/10 text-primary shrink-0">
+                <Truck className="h-5 w-5 text-sky-600" aria-hidden="true" />
+              </div>
+              <CardTitle className="text-sm font-bold">شحن لـ 27 محافظة</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <CardDescription className="text-xs leading-relaxed">
+                توصيل سريع ومؤمن لباب بيتك أينما كنت في القاهرة، الإسكندرية، الدلتا أو الصعيد.
+              </CardDescription>
+            </CardContent>
+          </Card>
         </div>
       </section>
 
-      {/* Featured Categories Grid */}
-      <section className="w-full py-16 px-4 sm:px-6 lg:px-8 bg-background">
-        <div className="container mx-auto max-w-6xl space-y-10">
-          
-          <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between gap-4 border-b border-border/80 pb-4">
+      {/* 3. Best Sellers Section (Live Product Showcase) */}
+      <section className="w-full py-16 px-4 sm:px-6 lg:px-8 border-b border-border/80">
+        <div className="container mx-auto max-w-7xl space-y-8">
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
             <div>
-              <p className="text-xs font-bold uppercase tracking-wider text-primary">تشكيلات VARELLION</p>
-              <h2 className="text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight">
-                تسوق حسب القسم الرئيسي
+              <div className="inline-flex items-center gap-1.5 text-xs font-bold text-primary mb-1">
+                <Award className="h-3.5 w-3.5 text-[#C5A059]" aria-hidden="true" />
+                <span>الخيارات المفضلة لعملائنا في مصر</span>
+              </div>
+              <h2 className="text-2xl sm:text-3xl font-black text-foreground tracking-tight">
+                الأكثر طلباً ومبيعاً
               </h2>
             </div>
-            <Link
-              href="/products"
-              className="inline-flex items-center gap-1.5 text-xs font-bold text-primary hover:underline"
-            >
-              <span>مشاهدة الكتالوج كاملاً</span>
-              <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+            <Link href="/products" className="text-xs font-bold text-primary hover:underline flex items-center gap-1 min-h-[44px]">
+              <span>تصفح كل التشكيلة</span>
+              <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
             </Link>
+          </div>
+
+          {/* Grid of Best Sellers */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {bestSellers.map((product) => (
+              <ProductCard key={product.productId} product={product} />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* 4. Curated Category Visual Cards */}
+      <section className="w-full py-16 px-4 sm:px-6 lg:px-8 bg-muted/20 border-b border-border/80">
+        <div className="container mx-auto max-w-7xl space-y-8">
+          <div className="text-center max-w-2xl mx-auto space-y-2">
+            <h2 className="text-2xl sm:text-3xl font-black text-foreground">
+              استكشف مجموعاتنا الحصرية
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              صُممت كل فئة بعناية لتلبي احتياجات الرجل العصري الباحث عن التميز والعملية.
+            </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            
-            {/* Watches Category Card */}
-            <Link
-              href="/products?category=watches"
-              className="group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-border bg-card p-6 shadow-sm transition-all hover:border-primary/50 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            >
-              <div className="space-y-3">
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#12363B] text-[#C5A059] shadow-sm">
-                  <Watch className="h-6 w-6" aria-hidden="true" />
-                </div>
-                <Badge variant="gold" className="text-[10px]">الأعلى مبيعاً</Badge>
-                <h3 className="text-xl font-bold text-foreground group-hover:text-primary transition-colors">
-                  ساعات يد رجالية فاخرة
-                </h3>
-                <p className="text-xs text-muted-foreground leading-relaxed">
-                  ساعات ميكانيكية وكلاسيكية من الفولاذ المقاوم للصدأ وزجاج مقاوم للخدش، بتصاميم تناسب العمل والمناسبات.
-                </p>
-              </div>
-              <div className="mt-6 flex items-center justify-between border-t border-border/60 pt-4 text-xs font-bold text-primary">
-                <span>استكشف الساعات</span>
-                <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" aria-hidden="true" />
-              </div>
-            </Link>
+            {categories.map((cat) => (
+              <Link
+                key={cat.categoryId}
+                href={`/products?category=${cat.slug}`}
+                className="group relative flex flex-col justify-end overflow-hidden rounded-2xl border border-border/80 bg-card p-6 min-h-[280px] shadow-xs hover:border-primary/50 hover:shadow-lg transition-all"
+              >
+                {/* Background Image Overlay */}
+                {cat.imageUrl && (
+                  <div className="absolute inset-0 z-0 overflow-hidden">
+                    <img
+                      src={cat.imageUrl}
+                      alt={cat.nameAr}
+                      className="h-full w-full object-cover object-center transition-transform duration-700 group-hover:scale-105"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent" />
+                  </div>
+                )}
 
-            {/* Leather Goods Category Card */}
-            <Link
-              href="/products?category=leather-goods"
-              className="group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-border bg-card p-6 shadow-sm transition-all hover:border-primary/50 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            >
-              <div className="space-y-3">
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#12363B] text-white shadow-sm">
-                  <Wallet className="h-6 w-6" aria-hidden="true" />
+                {/* Content Overlay */}
+                <div className="relative z-10 text-white space-y-2">
+                  <Badge variant="luxury" className="bg-[#12363B]/90 text-white border-white/20 text-[11px]">
+                    {cat.productCount} معروضات متوفرة
+                  </Badge>
+                  <h3 className="text-xl font-bold text-white group-hover:text-[#C5A059] transition-colors">
+                    {cat.nameAr}
+                  </h3>
+                  <p className="text-xs text-white/80 line-clamp-2">
+                    {cat.descriptionAr}
+                  </p>
+                  <div className="pt-2 flex items-center gap-1.5 text-xs font-bold text-[#C5A059]">
+                    <span>استكشف المجموعة</span>
+                    <ArrowLeft className="h-3.5 w-3.5 transition-transform group-hover:-translate-x-1" aria-hidden="true" />
+                  </div>
                 </div>
-                <Badge variant="luxury" className="text-[10px]">جلد طبيعي 100%</Badge>
-                <h3 className="text-xl font-bold text-foreground group-hover:text-primary transition-colors">
-                  المحافظ وحاملات البطاقات
-                </h3>
-                <p className="text-xs text-muted-foreground leading-relaxed">
-                  محافظ جلد طبيعي مدبوغ يدوياً مع حماية RFID من سرقة بيانات البطاقات، عملية ونحيفة جداً في الجيب.
-                </p>
-              </div>
-              <div className="mt-6 flex items-center justify-between border-t border-border/60 pt-4 text-xs font-bold text-primary">
-                <span>استكشف الجلديات</span>
-                <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" aria-hidden="true" />
-              </div>
-            </Link>
-
-            {/* Men's Accessories Category Card */}
-            <Link
-              href="/products?category=accessories"
-              className="group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-border bg-card p-6 shadow-sm transition-all hover:border-primary/50 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            >
-              <div className="space-y-3">
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-secondary text-foreground shadow-sm">
-                  <Sparkles className="h-6 w-6 text-[#C5A059]" aria-hidden="true" />
-                </div>
-                <Badge variant="secondary" className="text-[10px]">إكسسوارات متكاملة</Badge>
-                <h3 className="text-xl font-bold text-foreground group-hover:text-primary transition-colors">
-                  إكسسوارات وملحقات رجالية
-                </h3>
-                <p className="text-xs text-muted-foreground leading-relaxed">
-                  أزرار أكمام فخمة، أساور جلد ومعدن راقية، وملحقات تقنية ذكية تكتمل بها إطلالتك اليومية.
-                </p>
-              </div>
-              <div className="mt-6 flex items-center justify-between border-t border-border/60 pt-4 text-xs font-bold text-primary">
-                <span>استكشف الإكسسوارات</span>
-                <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" aria-hidden="true" />
-              </div>
-            </Link>
-
+              </Link>
+            ))}
           </div>
+        </div>
+      </section>
 
+      {/* 5. Brand Craftsmanship & Guarantee Section */}
+      <section className="w-full py-16 px-4 sm:px-6 lg:px-8">
+        <div className="container mx-auto max-w-6xl rounded-3xl border border-primary/25 bg-gradient-to-br from-[#12363B]/10 via-background to-[#C5A059]/10 p-8 sm:p-12 lg:p-16">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
+            <div className="space-y-6">
+              <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3.5 py-1 text-xs font-bold text-primary">
+                <Gem className="h-3.5 w-3.5 text-[#C5A059]" aria-hidden="true" />
+                <span>معايير صناعة VARELLION</span>
+              </div>
+
+              <h2 className="text-3xl sm:text-4xl font-black text-foreground leading-tight">
+                فخامة تشعر بها في أدق التفاصيل
+              </h2>
+
+              <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
+                نحن لا نبيع مجرد إكسسوارات، بل نبتكر قطعاً تمنحك الثقة في كل خطوة. نختار جلود البقر الطبيعية الكاملة التي تزداد جمالاً مع الاستخدام اليومي، ونعتمد الفولاذ المقاوم للصدأ 316L ليقاوم الصدأ والتآكل مدى الحياة.
+              </p>
+
+              <div className="space-y-3 pt-2">
+                <div className="flex items-center gap-3 text-xs sm:text-sm font-semibold text-foreground">
+                  <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0" aria-hidden="true" />
+                  <span>جلود طبيعية 100% مدبوغة نباتياً بدون أي مشتقات صناعية رديئة.</span>
+                </div>
+                <div className="flex items-center gap-3 text-xs sm:text-sm font-semibold text-foreground">
+                  <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0" aria-hidden="true" />
+                  <span>زجاج مقاوم للخدش وحركات كوارتز يابانية دقيقة لا تخذل وقتك.</span>
+                </div>
+                <div className="flex items-center gap-3 text-xs sm:text-sm font-semibold text-foreground">
+                  <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0" aria-hidden="true" />
+                  <span>حق المعاينة الكاملة وتجربة القطعة على يدك قبل دفع ثمنها.</span>
+                </div>
+              </div>
+
+              <div className="pt-4">
+                <Link href="/products">
+                  <Button variant="luxury" size="lg" className="min-h-[48px] shadow-md">
+                    <span>تسوق التشكيلة الفاخرة الآن</span>
+                  </Button>
+                </Link>
+              </div>
+            </div>
+
+            {/* Visual Highlight */}
+            <div className="relative aspect-4/3 overflow-hidden rounded-2xl border border-border/80 shadow-xl">
+              <img
+                src="https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?auto=format&fit=crop&w=1200&q=80"
+                alt="حرفية تصنيع ساعات VARELLION"
+                className="h-full w-full object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-6">
+                <span className="text-sm font-bold text-white">
+                  ساعة VARELLION Emerald Chronograph — دقة الفولاذ والياقوت
+                </span>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
     </div>
