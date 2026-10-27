@@ -35,6 +35,17 @@ export const authService = {
   },
 
   /**
+   * Authenticate customer via Google ID Token
+   * POST /api/auth/google with { idToken }
+   */
+  async googleLogin(idToken: string): Promise<AuthResponse> {
+    return await requestApi<AuthResponse>('/auth/google', {
+      method: 'POST',
+      body: JSON.stringify({ idToken }),
+    });
+  },
+
+  /**
    * Refresh session using the HttpOnly refresh_token cookie
    * Sends empty body; browser attaches cookie automatically via credentials: 'include'
    */

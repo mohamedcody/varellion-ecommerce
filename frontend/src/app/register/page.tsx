@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/Input';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/Card';
 import { User, Mail, Lock, Eye, EyeOff, AlertCircle, Loader2, ShieldCheck, CheckCircle2 } from 'lucide-react';
 import { ApiError } from '@/services/api';
+import { GoogleSignInButton } from '@/components/auth/GoogleSignInButton';
 
 function getSafeRedirectUrl(target: string | null, userRole?: string): string {
   if (!target) return '/';
@@ -365,6 +366,23 @@ function RegisterFormContent() {
                 <span>إنشاء الحساب</span>
               )}
             </Button>
+
+            {/* Divider: OR REGISTER WITH */}
+            <div className="relative my-4" aria-hidden="true">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t border-border/80" />
+              </div>
+              <div className="relative flex justify-center text-xs">
+                <span className="bg-card text-muted-foreground px-3 font-medium">أو التسجيل السريع عبر</span>
+              </div>
+            </div>
+
+            {/* Google Sign-In Integration */}
+            <GoogleSignInButton
+              safeRedirectUrl={getSafeRedirectUrl(redirectParam)}
+              onError={(msg) => setErrorMessage(msg)}
+              text="signup"
+            />
           </form>
         </CardContent>
 

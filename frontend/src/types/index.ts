@@ -38,6 +38,10 @@ export interface RegisterRequest {
   password: string;
 }
 
+export interface GoogleLoginRequest {
+  idToken: string;
+}
+
 export interface AuthResponse {
   accessToken: string;
   refreshToken?: string; // present in backend response; ignored by web frontend

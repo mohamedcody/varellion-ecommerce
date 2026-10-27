@@ -11,6 +11,7 @@ interface AuthContextType {
   isLoading: boolean;
   login: (credentials: LoginRequest) => Promise<AuthResponse>;
   register: (data: RegisterRequest) => Promise<AuthResponse>;
+  loginWithGoogle: (idToken: string) => Promise<AuthResponse>;
   logout: () => Promise<void>;
 }
 
@@ -95,6 +96,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   /**
+   * Google OAuth Login handler:
+   * Passes verified Google ID Token to backend (/api/auth/google)
+   * Sets in-memory user and accessToken.
+   * Ignores response.refreshToken (relying solely on the HttpOnly cookie set by backend).
+   */
+  const loginWithGoogle = useCallback(async (idToken: string): Promise<AuthResponse> => {
+    const res = await authService.googleLogin(idToken);
+    setAccessToken(res.accessToken);
+    setUser({
+      email: res.email,
+      username: res.username,
+      role: res.role || 'USER',
+    });
+    return res;
+  }, []);
+
+  /**
    * Logout handler:
    * Informs backend to clear the HttpOnly cookie and clears in-memory state.
    */
@@ -117,9 +135,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       isLoading,
       login,
       register,
+      loginWithGoogle,
       logout,
     }),
-    [user, accessToken, isLoading, login, register, logout]
+    [user, accessToken, isLoading, login, register, loginWithGoogle, logout]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
