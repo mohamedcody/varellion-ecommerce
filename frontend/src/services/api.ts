@@ -165,16 +165,29 @@ export const catalogService = {
    * Fetch single product by slug
    */
   async getProductBySlug(slug: string): Promise<Product | null> {
+    const cleanSlug = decodeURIComponent(slug || '').trim().toLowerCase();
+    if (!cleanSlug) return null;
+
     if (USE_MOCK) {
-      const product = mockProducts.find((p) => p.slug === slug || p.sku.toLowerCase() === slug.toLowerCase() || p.productId === slug);
+      const product = mockProducts.find(
+        (p) =>
+          p.slug.toLowerCase() === cleanSlug ||
+          p.sku.toLowerCase() === cleanSlug ||
+          p.productId.toLowerCase() === cleanSlug
+      );
       return product ? { ...product } : null;
     }
 
     try {
-      const res = await fetchApi<Product>(`/products/${slug}`);
+      const res = await fetchApi<Product>(`/products/${encodeURIComponent(cleanSlug)}`);
       return res.data;
     } catch {
-      const product = mockProducts.find((p) => p.slug === slug || p.sku.toLowerCase() === slug.toLowerCase() || p.productId === slug);
+      const product = mockProducts.find(
+        (p) =>
+          p.slug.toLowerCase() === cleanSlug ||
+          p.sku.toLowerCase() === cleanSlug ||
+          p.productId.toLowerCase() === cleanSlug
+      );
       return product ? { ...product } : null;
     }
   },
