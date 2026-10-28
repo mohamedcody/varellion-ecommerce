@@ -19,6 +19,7 @@ import {
   Check,
   ShieldCheck,
   Printer,
+  Truck,
 } from 'lucide-react';
 
 function OrderSuccessContent() {
@@ -201,23 +202,39 @@ function OrderSuccessContent() {
           )}
 
           {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row gap-3 pt-2">
-            <Link href="/products" className="flex-1">
-              <Button variant="luxury" size="default" className="w-full gap-2 font-bold cursor-pointer min-h-[46px]">
-                <ShoppingBag className="w-4 h-4" aria-hidden="true" />
-                <span>متابعة تسوق التشكيلة</span>
+          <div className="space-y-3 pt-2">
+            <Link
+              href={`/track-order?orderNumber=${encodeURIComponent(displayOrderNumber)}`}
+              className="block w-full"
+            >
+              <Button
+                variant="outline"
+                size="default"
+                className="w-full gap-2 text-xs font-bold border-primary/50 text-primary hover:bg-primary/5 cursor-pointer min-h-[46px]"
+              >
+                <Truck className="w-4 h-4" aria-hidden="true" />
+                <span>تتبع حالة شحنتك ومسار المندوب</span>
               </Button>
             </Link>
 
-            <Button
-              variant="outline"
-              size="default"
-              onClick={handlePrint}
-              className="gap-2 text-xs font-semibold cursor-pointer min-h-[46px]"
-            >
-              <Printer className="w-4 h-4" aria-hidden="true" />
-              <span>طباعة إشعار الطلب</span>
-            </Button>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Link href="/products" className="flex-1">
+                <Button variant="luxury" size="default" className="w-full gap-2 font-bold cursor-pointer min-h-[46px]">
+                  <ShoppingBag className="w-4 h-4" aria-hidden="true" />
+                  <span>متابعة تسوق التشكيلة</span>
+                </Button>
+              </Link>
+
+              <Button
+                variant="outline"
+                size="default"
+                onClick={handlePrint}
+                className="gap-2 text-xs font-semibold cursor-pointer min-h-[46px]"
+              >
+                <Printer className="w-4 h-4" aria-hidden="true" />
+                <span>طباعة إشعار الطلب</span>
+              </Button>
+            </div>
           </div>
         </div>
 

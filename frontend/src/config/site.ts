@@ -49,6 +49,11 @@ export const siteConfig = {
       badge: 'تخفيضات',
       badgeColor: 'success',
     },
+    {
+      titleAr: 'تتبع طلبك',
+      titleEn: 'Track Order',
+      href: '/track-order',
+    },
   ] as NavItem[],
   trustPillars: [
     {

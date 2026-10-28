@@ -97,6 +97,86 @@ export const ordersService = {
   },
 
   /**
+   * Tracks an existing order by orderNumber and verified customer phone.
+   * Attempts live backend query first, then falls back to session snapshot and realistic dev fixtures.
+   */
+  async trackOrder(orderNumber: string, phone: string): Promise<Order | null> {
+    const cleanNum = orderNumber.trim();
+    const cleanPhone = phone.trim().replace(/\D/g, '');
+
+    try {
+      const response = await requestApi<Order>(
+        `/orders/track?orderNumber=${encodeURIComponent(cleanNum)}&phone=${encodeURIComponent(cleanPhone)}`
+      );
+      return response;
+    } catch {
+      // Offline / Local development fallback
+      if (typeof window !== 'undefined') {
+        const lastOrder = this.getLastPlacedOrder();
+        if (lastOrder) {
+          const storedPhone = lastOrder.customerPhone.trim().replace(/\D/g, '');
+          if (
+            lastOrder.orderNumber.toLowerCase() === cleanNum.toLowerCase() &&
+            storedPhone === cleanPhone
+          ) {
+            return lastOrder;
+          }
+        }
+      }
+
+      // Demo/Fixture Order for testing if user enters test order number
+      if (
+        (cleanNum.toUpperCase() === 'VAR-DEMO-2026' || cleanNum.toUpperCase() === 'VAR-20261028-0001') &&
+        (cleanPhone === '01012345678' || cleanPhone === '01000000000')
+      ) {
+        return {
+          orderId: 'demo-ord-uuid-001',
+          orderNumber: cleanNum.toUpperCase(),
+          customerName: 'محمد أحمد علي',
+          customerPhone: '01012345678',
+          shippingGovernorate: 'القاهرة',
+          shippingCityArea: 'المعادي',
+          shippingDetailedAddress: 'شارع 9، برج الصفا، الدور الرابع، شقة 12',
+          currency: 'EGP',
+          subtotal: 3450,
+          discountTotal: 0,
+          shippingFee: 0,
+          totalAmount: 3450,
+          orderStatus: 'SHIPPED',
+          paymentMethod: 'CASH_ON_DELIVERY',
+          customerNotes: 'يرجى الاتصال قبل الوصول بـ 30 دقيقة.',
+          items: [
+            {
+              orderItemId: 'item-demo-1',
+              productId: 'prod-watch-1',
+              productNameAr: 'ساعة فاريليون كلاسيك رويال أسود ملكي',
+              productNameEn: 'Varellion Classic Royal Black Watch',
+              productSku: 'VAR-W-01',
+              unitPrice: 2850,
+              quantity: 1,
+              totalPrice: 2850,
+            },
+            {
+              orderItemId: 'item-demo-2',
+              productId: 'prod-wallet-1',
+              productNameAr: 'محفظة كروت جلد طبيعي 100% بني كونياك',
+              productNameEn: 'Varellion Slim Cognac Leather Cardholder',
+              productSku: 'VAR-L-04',
+              unitPrice: 600,
+              quantity: 1,
+              totalPrice: 600,
+            },
+          ],
+          createdAt: new Date(Date.now() - 86400000).toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+      }
+
+      return null;
+    }
+  },
+
+  /**
    * Clears the cached order from sessionStorage.
    */
   clearLastPlacedOrder(): void {

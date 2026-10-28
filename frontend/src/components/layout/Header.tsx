@@ -68,6 +68,14 @@ export function Header({ cartItemCount, onOpenCart }: HeaderProps) {
           </div>
 
           <div className="hidden sm:flex items-center gap-4 text-[11px] text-white/80">
+            <Link
+              href="/track-order"
+              className="inline-flex items-center gap-1 text-[#C5A059] hover:underline transition-colors font-medium cursor-pointer"
+            >
+              <Truck className="h-3 w-3 text-[#C5A059]" aria-hidden="true" />
+              <span>تتبع طلبك</span>
+            </Link>
+            <span className="text-white/40">|</span>
             <span className="inline-flex items-center gap-1">
               <RotateCcw className="h-3 w-3 text-[#C5A059]" aria-hidden="true" />
               <span>ضمان استبدال 14 يوماً</span>
