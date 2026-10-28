@@ -140,9 +140,15 @@ function OrderSuccessContent() {
                   3
                 </div>
                 <div>
-                  <h4 className="font-bold text-foreground">المعاينة والاستلام والدفع نقداً</h4>
+                  <h4 className="font-bold text-foreground">
+                    {order?.paymentMethod === 'CARD'
+                      ? 'المعاينة والاستلام (مدفوع إلكترونياً)'
+                      : 'المعاينة والاستلام والدفع نقداً'}
+                  </h4>
                   <p className="text-muted-foreground mt-0.5 leading-relaxed">
-                    عند وصول المندوب، يحق لك فتح الشحنة ومعاينتها بالكامل، ثم سداد المبلغ نقداً عند الرضا التام.
+                    {order?.paymentMethod === 'CARD'
+                      ? 'عند وصول المندوب، استلم شحنتك فوراً دون دفع أي مبالغ إضافية، مع كامل حقك في فحص ومعاينة المنتج.'
+                      : 'عند وصول المندوب، يحق لك فتح الشحنة ومعاينتها بالكامل، ثم سداد المبلغ نقداً عند الرضا التام.'}
                   </p>
                 </div>
               </div>
@@ -185,7 +191,9 @@ function OrderSuccessContent() {
                   <span className="text-muted-foreground">طريقة السداد:</span>
                   <span className="font-bold text-primary flex items-center gap-1">
                     <ShieldCheck className="h-3.5 w-3.5" aria-hidden="true" />
-                    الدفع عند الاستلام (COD)
+                    {order.paymentMethod === 'CARD'
+                      ? 'بطاقة بنكية / محفظة إلكترونية (Paymob)'
+                      : 'الدفع عند الاستلام (COD)'}
                   </span>
                 </div>
               </CardContent>
@@ -264,7 +272,11 @@ function OrderSuccessContent() {
                 )}
 
                 <div className="flex justify-between items-baseline pt-2 border-t border-border font-black text-sm text-foreground">
-                  <span>المبلغ المطلوب عند الاستلام:</span>
+                  <span>
+                    {order?.paymentMethod === 'CARD'
+                      ? 'إجمالي المبلغ المسدد بالكامل:'
+                      : 'المبلغ المطلوب عند الاستلام:'}
+                  </span>
                   <span className="text-lg text-primary font-black">
                     {(order?.totalAmount || 0).toLocaleString('ar-EG')} ج.م
                   </span>
