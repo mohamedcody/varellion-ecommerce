@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useCart } from '@/context/CartContext';
-import { useAuth } from '@/context/AuthContext';
 import { Sheet } from '@/components/ui/Sheet';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
@@ -13,10 +13,7 @@ import {
   Minus,
   Trash2,
   ArrowLeft,
-  Info,
   PackageOpen,
-  CheckCircle2,
-  User,
 } from 'lucide-react';
 
 export function CartDrawer() {
@@ -29,23 +26,17 @@ export function CartDrawer() {
     updateQuantity,
     removeItem,
   } = useCart();
-  const { isAuthenticated, user } = useAuth();
-
-  const [showAuthNotice, setShowAuthNotice] = useState(false);
+  const router = useRouter();
 
   const handleCheckoutClick = () => {
-    // Handled per user agreement in Grill-Me:
-    // Inform user that checkout requires auth which will be enabled in the next phase
-    setShowAuthNotice(true);
+    closeCart();
+    router.push('/checkout');
   };
 
   return (
     <Sheet
       isOpen={isCartOpen}
-      onClose={() => {
-        setShowAuthNotice(false);
-        closeCart();
-      }}
+      onClose={closeCart}
       side="left" // Decided in Grill-Me: matches cart trigger location on the left side of Header in RTL
       title={`سلة المشتريات (${totalItems})`}
       className="max-w-md w-full flex flex-col p-0 bg-background"
@@ -202,41 +193,6 @@ export function CartDrawer() {
             <p className="text-[11px] text-muted-foreground leading-relaxed">
               المجموع الفرعي لا يشمل رسوم الشحن. تُحدد وتُضاف رسوم التوصيل في الخطوة التالية وفقاً للمحافظة المحددة وطرق الشحن المعتمدة.
             </p>
-
-            {/* Dependency Notice when Checkout is clicked */}
-            {showAuthNotice && (
-              <div
-                className="p-3.5 rounded-xl border border-primary/30 bg-primary/10 text-xs text-foreground space-y-2.5 animate-in fade-in"
-                role="alert"
-              >
-                {!isAuthenticated ? (
-                  <>
-                    <div className="flex items-start gap-2">
-                      <Info className="h-4 w-4 text-primary shrink-0 mt-0.5" aria-hidden="true" />
-                      <p className="leading-relaxed">
-                        <strong>يلزم تسجيل الدخول لإتمام الطلب:</strong> لتسجيل بياناتك وحفظ عنوان الشحن ومتابعة حالة المعاينة والتوصيل.
-                      </p>
-                    </div>
-                    <Link href="/login?redirect=/products" onClick={closeCart} className="block w-full">
-                      <Button variant="luxury" size="sm" className="w-full text-xs font-bold gap-1.5 min-h-[38px] cursor-pointer">
-                        <User className="h-3.5 w-3.5" aria-hidden="true" />
-                        <span>تسجيل الدخول / إنشاء حساب جديد</span>
-                      </Button>
-                    </Link>
-                  </>
-                ) : (
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2 text-emerald-700 dark:text-emerald-400 font-bold">
-                      <CheckCircle2 className="h-4 w-4 shrink-0" aria-hidden="true" />
-                      <span>أهلاً بك يا {user?.username}</span>
-                    </div>
-                    <p className="text-muted-foreground leading-relaxed text-[11px]">
-                      تم تسجيل دخولك بنجاح. صفحة إنهاء الطلب وعناوين الشحن (المرحلة القادمة: Checkout) قيد التفعيل لربط طلبك مباشرة بالسيرفر.
-                    </p>
-                  </div>
-                )}
-              </div>
-            )}
 
             {/* Primary Action Button */}
             <div className="space-y-2">

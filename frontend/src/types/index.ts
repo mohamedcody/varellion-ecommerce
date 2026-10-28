@@ -183,6 +183,20 @@ export type OrderStatus =
 
 export type PaymentMethod = 'CASH_ON_DELIVERY' | 'CARD' | 'INSTAPAY' | 'VODAFONE_CASH';
 
+export interface PaymobPaymentInitiation {
+  paymentUrl: string;
+  transactionId?: string;
+  orderId: string;
+  orderNumber: string;
+}
+
+export interface PaymentCallbackParams {
+  success: boolean;
+  orderNumber: string;
+  transactionId?: string;
+  errorMessage?: string;
+}
+
 export interface ShippingZone {
   zoneId: string;
   zoneNameAr: string;
