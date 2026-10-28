@@ -1,9 +1,9 @@
 # VARELLION Frontend — Progress Tracker
 
-> **Current Phase:** Phase 5 — Shopping Cart & Interactive Slide-Over Drawer (Completed)  
-> **Current Feature ID:** F-502 COMPLETED (Ready for Phase 6: Customer Authentication & Registration Flow)  
-> **Overall Progress:** Phase 0 (100%) | Phase 1 (100%) | Phase 2 (100%) | Phase 3 (100%) | Phase 4 (100%) | Phase 5 (100%) | Phase 6 (Queued)  
-> **Last Updated:** 2026-10-27  
+> **Current Phase:** Phase 6 Storefront Funnel Complete (Customer Authentication, Checkout, COD, Paymob, and Order Tracking)  
+> **Current Feature ID:** F-605 COMPLETED (Ready for Phase 7: Admin Dashboard Shell & Authentication)  
+> **Overall Progress:** Phase 0 (100%) | Phase 1 (100%) | Phase 2 (100%) | Phase 3 (100%) | Phase 4 (100%) | Phase 5 (100%) | Phase 6 Storefront & Payments (100%) | Phase 7 Admin (Queued)  
+> **Last Updated:** 2026-10-28  
 
 ---
 
@@ -41,6 +41,12 @@
 | **F-402** | Product Details Page (PDP) with Gallery & Trust Specs | 4 | **VERIFIED** | Built `/products/[slug]` with interactive gallery, color picker, inspection guarantee & specs. |
 | **F-501** | Cart State Management & Local Storage Persistence | 5 | **VERIFIED** | Built `src/context/CartContext.tsx` with React 19 Context, SSR-safe hydration, line-keying. |
 | **F-502** | Interactive Shopping Cart Drawer & Toast System | 5 | **VERIFIED** | Built `src/components/cart/CartDrawer.tsx` (left-slide in RTL) + `CartToast.tsx` with 44px targets. |
+| **F-600** | Customer Auth & Google Sign-In with GIS | 6 | **VERIFIED** | Built `/login` & `/register`, HttpOnly session cookie, zero tokens in localStorage. |
+| **F-601** | One-Page Egyptian Checkout & Cash on Delivery | 6 | **VERIFIED** | Built `/checkout` matching 1:1 with PostgreSQL `public.orders`, Egyptian phone validation. |
+| **F-602** | Egypt 27 Governorates Dynamic Shipping Engine | 6 | **VERIFIED** | Built `src/data/shippingZones.ts` with instant calculation & free shipping threshold. |
+| **F-603** | Paymob Hosted Online Payments & Simulator | 6 | **VERIFIED** | Built `/checkout/mock-paymob` & `/checkout/callback` with automatic COD fallback. |
+| **F-604** | Order Confirmation & Dynamic Invoice Screen | 6 | **VERIFIED** | Built `/checkout/success` with human-readable order number (`VAR-YYYYMMDD-XXXX`). |
+| **F-605** | Guest & Customer Order Tracking Portal | 6 | **VERIFIED** | Built `/track-order`, dual lookup (Order + Phone), visual timeline & WhatsApp link. |
 
 ---
 
