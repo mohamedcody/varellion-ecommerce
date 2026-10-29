@@ -1,0 +1,48 @@
+meta {
+  name: 01. Register - Valid User (Happy Path)
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/api/auth/register
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+script:pre-request {
+  const ts = Date.now();
+  bru.setVar("dynUsername", "user_" + ts);
+  bru.setVar("dynEmail", "user_" + ts + "@varellion.com");
+}
+
+body:json {
+  {
+    "username": "{{dynUsername}}",
+    "email": "{{dynEmail}}",
+    "password": "{{testPassword}}"
+  }
+}
+
+assert {
+  res.status: eq 200
+  res.body.accessToken: isDefined
+  res.body.refreshToken: isDefined
+  res.body.role: eq USER
+  res.body.message: eq Registration successful
+}
+
+script:post-response {
+  if (res.status === 200) {
+    if (res.body.accessToken) {
+      bru.setEnvVar("accessToken", res.body.accessToken);
+    }
+    if (res.body.refreshToken) {
+      bru.setEnvVar("refreshToken", res.body.refreshToken);
+    }
+  }
+}

@@ -1,0 +1,39 @@
+meta {
+  name: 08. Refresh Token - Valid Token (Happy Path)
+  type: http
+  seq: 8
+}
+
+post {
+  url: {{baseUrl}}/api/auth/refresh
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "refreshToken": "{{refreshToken}}"
+  }
+}
+
+assert {
+  res.status: eq 200
+  res.body.accessToken: isDefined
+  res.body.refreshToken: isDefined
+  res.body.role: eq USER
+}
+
+script:post-response {
+  if (res.status === 200) {
+    if (res.body.accessToken) {
+      bru.setEnvVar("accessToken", res.body.accessToken);
+    }
+    if (res.body.refreshToken) {
+      bru.setEnvVar("refreshToken", res.body.refreshToken);
+    }
+  }
+}

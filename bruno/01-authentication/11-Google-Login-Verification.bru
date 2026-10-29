@@ -1,11 +1,11 @@
 meta {
-  name: 3. Refresh Access Token
+  name: 11. Google Login - Verification
   type: http
-  seq: 3
+  seq: 11
 }
 
 post {
-  url: http://localhost:8080/api/auth/refresh
+  url: {{baseUrl}}/api/auth/google
   body: json
   auth: none
 }
@@ -16,18 +16,20 @@ headers {
 
 body:json {
   {
-    "refreshToken": "{{refreshToken}}"
+    "idToken": "{{googleIdToken}}"
   }
+}
+
+assert {
+  res.status: in [200, 400, 401]
 }
 
 script:post-response {
   if (res.status === 200) {
     if (res.body.accessToken) {
-      bru.setVar("accessToken", res.body.accessToken);
       bru.setEnvVar("accessToken", res.body.accessToken);
     }
     if (res.body.refreshToken) {
-      bru.setVar("refreshToken", res.body.refreshToken);
       bru.setEnvVar("refreshToken", res.body.refreshToken);
     }
   }
