@@ -1,0 +1,19 @@
+meta {
+  name: 05. Security Test - Unauthorized Access (No Token)
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/api/customer/profile
+  body: none
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+assert {
+  res.status: eq 401
+}

@@ -1,0 +1,25 @@
+meta {
+  name: 04. Delete Delivery Address
+  type: http
+  seq: 4
+}
+
+delete {
+  url: {{baseUrl}}/api/customer/address
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+assert {
+  res.status: eq 200
+  res.body.success: eq true
+  res.body.message: eq "تم حذف عنوان الشحن بنجاح"
+}

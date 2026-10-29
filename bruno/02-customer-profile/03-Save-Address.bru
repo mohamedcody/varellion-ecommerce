@@ -1,0 +1,34 @@
+meta {
+  name: 03. Save or Update Delivery Address (Upsert)
+  type: http
+  seq: 3
+}
+
+put {
+  url: {{baseUrl}}/api/customer/address
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "governorate": "القاهرة",
+    "cityArea": "مدينة نصر",
+    "detailedAddress": "شارع عباس العقاد، عمارة 15، الدور الرابع"
+  }
+}
+
+assert {
+  res.status: eq 200
+  res.body.success: eq true
+  res.body.data.governorate: eq "القاهرة"
+  res.body.data.cityArea: eq "مدينة نصر"
+}

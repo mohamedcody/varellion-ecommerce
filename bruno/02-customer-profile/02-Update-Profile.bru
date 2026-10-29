@@ -1,0 +1,33 @@
+meta {
+  name: 02. Update Customer Profile (Name & Phone)
+  type: http
+  seq: 2
+}
+
+put {
+  url: {{baseUrl}}/api/customer/profile
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "fullName": "محمد سعد",
+    "phoneNumber": "01012345678"
+  }
+}
+
+assert {
+  res.status: eq 200
+  res.body.success: eq true
+  res.body.data.fullName: eq "محمد سعد"
+  res.body.data.phoneNumber: eq "01012345678"
+}
