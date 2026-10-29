@@ -80,7 +80,7 @@ public class CustomerService {
                         .build()
                 );
 
-        CustomerAddress address = customerAddressRepository.findByCustomer_UserId(customerUUID).orElse(null);
+        CustomerAddress address = customerAddressRepository.findByCustomer_UserId(customer.getUserId()).orElse(null);
 
         return mapToDto(customer, user, address);
     }

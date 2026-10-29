@@ -13,7 +13,7 @@ import java.util.UUID;
 
 /**
  * JPA Entity representing registered customer profile in public.customers.
- * Note: user_id is the primary key and references auth.users(id).
+ * user_id is the primary key (UUID), linked to public.users(id) via user_account_id.
  */
 @Entity
 @Table(name = "customers", schema = "public")
