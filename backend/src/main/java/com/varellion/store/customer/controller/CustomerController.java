@@ -50,4 +50,14 @@ public class CustomerController {
         AddressDto savedAddress = customerService.saveOrUpdateAddress(userDetails.getUsername(), addressDto);
         return ResponseEntity.ok(ApiResponse.success("تم حفظ عنوان الشحن بنجاح", savedAddress));
     }
+
+    /**
+     * Deletes the saved delivery address for the authenticated customer.
+     */
+    @DeleteMapping("/address")
+    public ResponseEntity<ApiResponse<Void>> deleteAddress(
+            @AuthenticationPrincipal UserDetails userDetails) {
+        customerService.deleteAddress(userDetails.getUsername());
+        return ResponseEntity.ok(ApiResponse.success("تم حذف عنوان الشحن بنجاح", null));
+    }
 }

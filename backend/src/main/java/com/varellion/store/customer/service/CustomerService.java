@@ -139,6 +139,15 @@ public class CustomerService {
     }
 
     /**
+     * Deletes the saved delivery address for the authenticated customer.
+     */
+    @Transactional
+    public void deleteAddress(String usernameOrEmail) {
+        Customer customer = getOrCreateCustomerForUser(usernameOrEmail);
+        customerAddressRepository.deleteByCustomer_UserId(customer.getUserId());
+    }
+
+    /**
      * Deterministically derives a UUID from the internal User ID to guarantee 1:1 mapping with public.customers.
      */
     public UUID deriveCustomerUUID(User user) {

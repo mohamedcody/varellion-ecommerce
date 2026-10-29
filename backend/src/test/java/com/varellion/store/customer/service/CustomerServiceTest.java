@@ -145,4 +145,16 @@ class CustomerServiceTest {
         assertThat(saved.getCityArea()).isEqualTo("Dokki");
         assertThat(saved.getDetailedAddress()).isEqualTo("15 Mosaddak St");
     }
+
+    @Test
+    @DisplayName("Should successfully delete customer delivery address")
+    void testDeleteAddress() {
+        when(userRepository.findByUsername("ahmed_ali")).thenReturn(Optional.of(testUser));
+        when(customerRepository.findByUserAccountId(testUser.getId())).thenReturn(Optional.of(testCustomer));
+        doNothing().when(customerAddressRepository).deleteByCustomer_UserId(testCustomer.getUserId());
+
+        customerService.deleteAddress("ahmed_ali");
+
+        verify(customerAddressRepository, times(1)).deleteByCustomer_UserId(testCustomer.getUserId());
+    }
 }
