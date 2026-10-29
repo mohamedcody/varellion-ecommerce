@@ -38,11 +38,20 @@ public class CustomerService {
 
         UUID customerUUID = deriveCustomerUUID(user);
 
-        return customerRepository.findByUserId(customerUUID)
+        return customerRepository.findByUserAccountId(user.getId())
+                .or(() -> customerRepository.findByUserId(customerUUID))
+                .map(existing -> {
+                    if (existing.getUserAccountId() == null && user.getId() != null) {
+                        existing.setUserAccountId(user.getId());
+                        return customerRepository.save(existing);
+                    }
+                    return existing;
+                })
                 .orElseGet(() -> {
                     log.info("Auto-provisioning Customer profile for user: {} (ID: {})", user.getUsername(), user.getId());
                     Customer newCustomer = Customer.builder()
                             .userId(customerUUID)
+                            .userAccountId(user.getId())
                             .fullName(user.getUsername())
                             .phoneNumber(null)
                             .isActive(true)
@@ -61,9 +70,11 @@ public class CustomerService {
                 .orElseThrow(() -> new ResourceNotFoundException("User not found: " + usernameOrEmail));
 
         UUID customerUUID = deriveCustomerUUID(user);
-        Customer customer = customerRepository.findByUserId(customerUUID)
+        Customer customer = customerRepository.findByUserAccountId(user.getId())
+                .or(() -> customerRepository.findByUserId(customerUUID))
                 .orElseGet(() -> Customer.builder()
                         .userId(customerUUID)
+                        .userAccountId(user.getId())
                         .fullName(user.getUsername())
                         .isActive(true)
                         .build()

@@ -1,5 +1,6 @@
 package com.varellion.store.security;
 
+import com.varellion.store.customer.service.CustomerService;
 import com.varellion.store.security.dto.AuthResponse;
 import com.varellion.store.security.dto.LoginRequest;
 import com.varellion.store.security.dto.RegisterRequest;
@@ -49,6 +50,9 @@ class AuthServiceTest {
 
     @Mock
     private GoogleTokenVerifier googleTokenVerifier;
+
+    @Mock
+    private CustomerService customerService;
 
     @InjectMocks
     private AuthService authService;

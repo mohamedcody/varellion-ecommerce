@@ -25,6 +25,9 @@ public class Customer {
     @Column(name = "user_id", nullable = false, updatable = false)
     private UUID userId;
 
+    @Column(name = "user_account_id")
+    private Long userAccountId;
+
     @Column(name = "full_name")
     private String fullName;
 
@@ -49,8 +52,9 @@ public class Customer {
     }
 
     @Builder
-    public Customer(UUID userId, String fullName, String phoneNumber, Boolean isActive, OffsetDateTime createdAt, OffsetDateTime updatedAt, CustomerAddress address) {
+    public Customer(UUID userId, Long userAccountId, String fullName, String phoneNumber, Boolean isActive, OffsetDateTime createdAt, OffsetDateTime updatedAt, CustomerAddress address) {
         this.userId = userId;
+        this.userAccountId = userAccountId;
         this.fullName = fullName;
         this.phoneNumber = phoneNumber;
         this.isActive = isActive != null ? isActive : true;
