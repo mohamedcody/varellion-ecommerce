@@ -161,7 +161,7 @@ export interface Customer {
   phoneNumber: string;
   email?: string;
   isActive: boolean;
-  address?: CustomerAddress;
+  address?: CustomerAddress | null;
   createdAt?: string;
 }
 
