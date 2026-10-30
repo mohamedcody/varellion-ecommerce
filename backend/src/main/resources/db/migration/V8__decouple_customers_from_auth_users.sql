@@ -28,6 +28,17 @@ ALTER TABLE public.customers
     ADD COLUMN IF NOT EXISTS user_account_id BIGINT
         REFERENCES public.users(id) ON DELETE CASCADE;
 
--- 4. Create performance index on user_account_id
+-- 4. Enforce strict 1:1 relationship between public.users and public.customers
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint WHERE conname = 'uq_customers_user_account_id'
+    ) THEN
+        ALTER TABLE public.customers
+            ADD CONSTRAINT uq_customers_user_account_id UNIQUE (user_account_id);
+    END IF;
+END $$;
+
+-- 5. Create performance index on user_account_id
 CREATE INDEX IF NOT EXISTS idx_customers_user_account_id
     ON public.customers(user_account_id);

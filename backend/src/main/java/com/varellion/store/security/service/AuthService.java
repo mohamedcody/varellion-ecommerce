@@ -188,7 +188,7 @@ public class AuthService {
 
         // Auto-provision Customer profile upon Google Login for customer accounts
         if (!"ADMIN".equalsIgnoreCase(user.getRole())) {
-            customerService.getOrCreateCustomerForUser(user.getUsername());
+            customerService.getOrCreateCustomerForUser(user.getUsername(), identity.name());
         }
 
         UserDetails details = customUserDetailsService.loadUserByUsername(user.getEmail());

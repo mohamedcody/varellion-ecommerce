@@ -25,7 +25,7 @@ public class Customer {
     @Column(name = "user_id", nullable = false, updatable = false)
     private UUID userId;
 
-    @Column(name = "user_account_id")
+    @Column(name = "user_account_id", unique = true)
     private Long userAccountId;
 
     @Column(name = "full_name")
@@ -45,7 +45,7 @@ public class Customer {
     @Column(name = "updated_at", nullable = false)
     private OffsetDateTime updatedAt;
 
-    @OneToOne(mappedBy = "customer", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToOne(mappedBy = "customer", fetch = FetchType.LAZY)
     private CustomerAddress address;
 
     public Customer() {

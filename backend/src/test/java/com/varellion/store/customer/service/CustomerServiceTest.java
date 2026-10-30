@@ -149,6 +149,7 @@ class CustomerServiceTest {
     @Test
     @DisplayName("Should successfully delete customer delivery address")
     void testDeleteAddress() {
+        testCustomer.setAddress(testAddress);
         when(userRepository.findByUsername("ahmed_ali")).thenReturn(Optional.of(testUser));
         when(customerRepository.findByUserAccountId(testUser.getId())).thenReturn(Optional.of(testCustomer));
         doNothing().when(customerAddressRepository).deleteByCustomer_UserId(testCustomer.getUserId());
@@ -156,5 +157,21 @@ class CustomerServiceTest {
         customerService.deleteAddress("ahmed_ali");
 
         verify(customerAddressRepository, times(1)).deleteByCustomer_UserId(testCustomer.getUserId());
+        assertThat(testCustomer.getAddress()).isNull();
+    }
+
+    @Test
+    @DisplayName("Should auto-provision customer profile with preferred full name when provided")
+    void testAutoProvisionCustomerWithPreferredFullName() {
+        when(userRepository.findByUsername("ahmed_ali")).thenReturn(Optional.of(testUser));
+        when(customerRepository.findByUserAccountId(testUser.getId())).thenReturn(Optional.empty());
+        when(customerRepository.findByUserId(any(UUID.class))).thenReturn(Optional.empty());
+        when(customerRepository.save(any(Customer.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        Customer customer = customerService.getOrCreateCustomerForUser("ahmed_ali", "Mohamed Saad");
+
+        assertThat(customer).isNotNull();
+        assertThat(customer.getFullName()).isEqualTo("Mohamed Saad");
+        assertThat(customer.getUserAccountId()).isEqualTo(10L);
     }
 }

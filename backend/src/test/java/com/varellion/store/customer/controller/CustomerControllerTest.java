@@ -1,6 +1,7 @@
 package com.varellion.store.customer.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.varellion.store.common.exception.GlobalExceptionHandler;
 import com.varellion.store.customer.dto.AddressDto;
 import com.varellion.store.customer.dto.CustomerDto;
 import com.varellion.store.customer.dto.UpdateProfileRequest;
@@ -75,6 +76,7 @@ class CustomerControllerTest {
 
         mockMvc = MockMvcBuilders.standaloneSetup(customerController)
                 .setCustomArgumentResolvers(authPrincipalResolver)
+                .setControllerAdvice(new GlobalExceptionHandler())
                 .build();
     }
 
@@ -134,7 +136,9 @@ class CustomerControllerTest {
         mockMvc.perform(put("/api/customer/profile")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("Validation Failed"))
+                .andExpect(jsonPath("$.validationErrors.phoneNumber").exists());
     }
 
     @Test
@@ -163,13 +167,16 @@ class CustomerControllerTest {
         AddressDto addressDto = AddressDto.builder()
                 .governorate("") // Blank governorate
                 .cityArea("Smouha")
-                .detailedAddress("Short") // Too short (<5 chars)
+                .detailedAddress("123") // Too short (<5 chars)
                 .build();
 
         mockMvc.perform(put("/api/customer/address")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(addressDto)))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("Validation Failed"))
+                .andExpect(jsonPath("$.validationErrors.governorate").exists())
+                .andExpect(jsonPath("$.validationErrors.detailedAddress").exists());
     }
 
     @Test

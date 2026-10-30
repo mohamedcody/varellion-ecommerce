@@ -12,6 +12,7 @@ import com.varellion.store.security.entity.User;
 import com.varellion.store.security.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,10 +33,23 @@ public class CustomerService {
      */
     @Transactional
     public Customer getOrCreateCustomerForUser(String usernameOrEmail) {
-        User user = userRepository.findByUsername(usernameOrEmail)
-                .or(() -> userRepository.findByEmail(usernameOrEmail))
-                .orElseThrow(() -> new ResourceNotFoundException("User not found: " + usernameOrEmail));
+        return getOrCreateCustomerForUser(usernameOrEmail, null);
+    }
 
+    /**
+     * Resolves the authenticated User and ensures a linked Customer profile exists with an optional preferred full name.
+     */
+    @Transactional
+    public Customer getOrCreateCustomerForUser(String usernameOrEmail, String preferredFullName) {
+        User user = findUser(usernameOrEmail);
+        return getOrCreateCustomerForUser(user, preferredFullName);
+    }
+
+    /**
+     * Ensures a linked Customer profile exists for the given User entity.
+     */
+    @Transactional
+    public Customer getOrCreateCustomerForUser(User user, String preferredFullName) {
         UUID customerUUID = deriveCustomerUUID(user);
 
         return customerRepository.findByUserAccountId(user.getId())
@@ -49,14 +63,26 @@ public class CustomerService {
                 })
                 .orElseGet(() -> {
                     log.info("Auto-provisioning Customer profile for user: {} (ID: {})", user.getUsername(), user.getId());
+                    String initialFullName = (preferredFullName != null && !preferredFullName.isBlank())
+                            ? preferredFullName.trim()
+                            : user.getUsername();
+
                     Customer newCustomer = Customer.builder()
                             .userId(customerUUID)
                             .userAccountId(user.getId())
-                            .fullName(user.getUsername())
+                            .fullName(initialFullName)
                             .phoneNumber(null)
                             .isActive(true)
                             .build();
-                    return customerRepository.save(newCustomer);
+
+                    try {
+                        return customerRepository.save(newCustomer);
+                    } catch (DataIntegrityViolationException ex) {
+                        log.warn("Concurrent Customer profile creation detected for user ID {}. Falling back to lookup.", user.getId());
+                        return customerRepository.findByUserAccountId(user.getId())
+                                .or(() -> customerRepository.findByUserId(customerUUID))
+                                .orElseThrow(() -> ex);
+                    }
                 });
     }
 
@@ -65,9 +91,7 @@ public class CustomerService {
      */
     @Transactional(readOnly = true)
     public CustomerDto getProfile(String usernameOrEmail) {
-        User user = userRepository.findByUsername(usernameOrEmail)
-                .or(() -> userRepository.findByEmail(usernameOrEmail))
-                .orElseThrow(() -> new ResourceNotFoundException("User not found: " + usernameOrEmail));
+        User user = findUser(usernameOrEmail);
 
         UUID customerUUID = deriveCustomerUUID(user);
         Customer customer = customerRepository.findByUserAccountId(user.getId())
@@ -90,7 +114,8 @@ public class CustomerService {
      */
     @Transactional
     public CustomerDto updateProfile(String usernameOrEmail, UpdateProfileRequest request) {
-        Customer customer = getOrCreateCustomerForUser(usernameOrEmail);
+        User user = findUser(usernameOrEmail);
+        Customer customer = getOrCreateCustomerForUser(user, null);
 
         if (request.getFullName() != null && !request.getFullName().isBlank()) {
             customer.setFullName(request.getFullName().trim());
@@ -102,10 +127,6 @@ public class CustomerService {
 
         Customer saved = customerRepository.save(customer);
         CustomerAddress address = customerAddressRepository.findByCustomer_UserId(saved.getUserId()).orElse(null);
-
-        User user = userRepository.findByUsername(usernameOrEmail)
-                .or(() -> userRepository.findByEmail(usernameOrEmail))
-                .orElse(null);
 
         return mapToDto(saved, user, address);
     }
@@ -145,6 +166,13 @@ public class CustomerService {
     public void deleteAddress(String usernameOrEmail) {
         Customer customer = getOrCreateCustomerForUser(usernameOrEmail);
         customerAddressRepository.deleteByCustomer_UserId(customer.getUserId());
+        customer.setAddress(null);
+    }
+
+    private User findUser(String usernameOrEmail) {
+        return userRepository.findByUsername(usernameOrEmail)
+                .or(() -> userRepository.findByEmail(usernameOrEmail))
+                .orElseThrow(() -> new ResourceNotFoundException("User not found: " + usernameOrEmail));
     }
 
     /**
