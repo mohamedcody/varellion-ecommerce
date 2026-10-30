@@ -13,6 +13,7 @@ import {
   validateCheckoutForm,
 } from '@/lib/validations/checkout';
 import { PaymentMethod } from '@/types';
+import { customerService } from '@/services/customer';
 import { User, Phone, MapPin, FileText, CheckCircle2, Loader2, ShieldCheck, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 
@@ -47,13 +48,56 @@ export function CheckoutForm({
   const [saveAddress, setSaveAddress] = useState(true);
 
   const [fieldErrors, setFieldErrors] = useState<CheckoutFieldErrors>({});
+  const [hasPrefilled, setHasPrefilled] = useState(false);
 
-  // Auto-prefill customer information if logged in
+  // Auto-prefill customer profile and delivery address if logged in
   useEffect(() => {
-    if (user?.username && !customerName) {
-      setCustomerName(user.username);
+    let isMounted = true;
+
+    async function loadCustomerProfile() {
+      if (isAuthenticated) {
+        try {
+          const profile = await customerService.getProfile();
+          if (isMounted && profile) {
+            if (profile.fullName) {
+              setCustomerName(profile.fullName);
+            } else if (user?.username) {
+              setCustomerName(user.username);
+            }
+
+            if (profile.phoneNumber) {
+              setCustomerPhone(profile.phoneNumber);
+            }
+
+            if (profile.address) {
+              if (profile.address.governorate) {
+                onGovernorateChange(profile.address.governorate);
+              }
+              if (profile.address.cityArea) {
+                setShippingCityArea(profile.address.cityArea);
+              }
+              if (profile.address.detailedAddress) {
+                setShippingDetailedAddress(profile.address.detailedAddress);
+              }
+              setHasPrefilled(true);
+            }
+          }
+        } catch {
+          if (isMounted && user?.username && !customerName) {
+            setCustomerName(user.username);
+          }
+        }
+      } else if (user?.username && !customerName) {
+        setCustomerName(user.username);
+      }
     }
-  }, [user, customerName]);
+
+    loadCustomerProfile();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [isAuthenticated, user]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -89,6 +133,26 @@ export function CheckoutForm({
     }
 
     setFieldErrors({});
+
+    // If customer opted to save their address as default, sync with profile in background
+    if (
+      isAuthenticated &&
+      saveAddress &&
+      formValues.shippingGovernorate &&
+      formValues.shippingCityArea &&
+      formValues.shippingDetailedAddress
+    ) {
+      customerService
+        .saveAddress({
+          governorate: formValues.shippingGovernorate,
+          cityArea: formValues.shippingCityArea,
+          detailedAddress: formValues.shippingDetailedAddress,
+        })
+        .catch((err) => {
+          console.warn('[Checkout] Failed to sync saved address:', err);
+        });
+    }
+
     await onSubmitOrder(formValues);
   };
 
@@ -117,6 +181,13 @@ export function CheckoutForm({
             <div className="flex items-center gap-2 p-2.5 rounded-lg bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 text-xs font-semibold">
               <CheckCircle2 className="h-4 w-4 shrink-0" aria-hidden="true" />
               <span>أهلاً بك يا {user?.username}، تم ربط الطلب بحسابك الموثق.</span>
+            </div>
+          )}
+
+          {hasPrefilled && (
+            <div className="flex items-center gap-2 p-2.5 rounded-lg bg-primary/10 text-primary text-xs font-semibold">
+              <CheckCircle2 className="h-4 w-4 shrink-0" aria-hidden="true" />
+              <span>تم ملء بيانات الشحن تلقائياً من عنوانك المسجل في ملفك الشخصي.</span>
             </div>
           )}
 
@@ -251,6 +322,25 @@ export function CheckoutForm({
               </p>
             )}
           </div>
+
+          {/* Save Address as Default Checkbox */}
+          {isAuthenticated && (
+            <div className="flex items-center gap-2.5 pt-1">
+              <input
+                id="checkout-saveAddress"
+                type="checkbox"
+                checked={saveAddress}
+                onChange={(e) => setSaveAddress(e.target.checked)}
+                className="h-4 w-4 rounded border-border text-primary focus:ring-primary accent-primary cursor-pointer"
+              />
+              <label
+                htmlFor="checkout-saveAddress"
+                className="text-xs text-muted-foreground select-none cursor-pointer"
+              >
+                حفظ هذا العنوان كعنوان شحن افتراضي لطلباتي القادمة
+              </label>
+            </div>
+          )}
 
           {/* Delivery Notes for Courier */}
           <div className="space-y-1.5">
