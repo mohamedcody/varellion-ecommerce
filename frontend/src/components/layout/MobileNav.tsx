@@ -68,14 +68,25 @@ export function MobileNav({ isOpen, onClose }: MobileNavProps) {
                   </button>
                 </div>
 
-                <Link
-                  href="/profile"
-                  onClick={onClose}
-                  className="flex items-center gap-2 px-3 py-2 rounded-lg bg-muted/40 hover:bg-muted text-xs font-semibold text-foreground transition-colors border border-border/50"
-                >
-                  <User className="h-3.5 w-3.5 text-primary" aria-hidden="true" />
-                  <span>الملف الشخصي وعناويني</span>
-                </Link>
+                <div className="grid grid-cols-2 gap-2 pt-1">
+                  <Link
+                    href="/profile"
+                    onClick={onClose}
+                    className="flex items-center gap-1.5 px-2.5 py-2 rounded-xl bg-background hover:bg-muted text-xs font-semibold text-foreground transition-colors border border-border/60 shadow-2xs"
+                  >
+                    <User className="h-3.5 w-3.5 text-primary shrink-0" aria-hidden="true" />
+                    <span className="truncate">الملف الشخصي</span>
+                  </Link>
+
+                  <Link
+                    href="/track-order"
+                    onClick={onClose}
+                    className="flex items-center gap-1.5 px-2.5 py-2 rounded-xl bg-background hover:bg-muted text-xs font-semibold text-foreground transition-colors border border-border/60 shadow-2xs"
+                  >
+                    <Truck className="h-3.5 w-3.5 text-[#C5A059] shrink-0" aria-hidden="true" />
+                    <span className="truncate">تتبع طلباتي</span>
+                  </Link>
+                </div>
               </div>
             ) : (
               <Link

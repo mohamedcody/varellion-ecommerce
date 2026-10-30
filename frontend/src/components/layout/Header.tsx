@@ -13,6 +13,7 @@ import {
   RotateCcw,
   Sparkles,
   LogOut,
+  ChevronDown,
 } from 'lucide-react';
 import { siteConfig } from '@/config/site';
 import { Badge } from '@/components/ui/Badge';
@@ -35,8 +36,33 @@ export function Header({ cartItemCount, onOpenCart }: HeaderProps) {
   const { totalItems, openCart } = useCart();
   const { user, isAuthenticated, logout } = useAuth();
   const [isUserMenuOpen, setIsUserMenuOpen] = React.useState(false);
+  const userMenuRef = React.useRef<HTMLDivElement>(null);
   const effectiveCartCount = cartItemCount !== undefined ? cartItemCount : totalItems;
   const handleCartClick = onOpenCart || openCart;
+
+  // Close user dropdown menu when clicking outside or pressing Escape
+  React.useEffect(() => {
+    if (!isUserMenuOpen) return;
+
+    const handleClickOutside = (e: MouseEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
+        setIsUserMenuOpen(false);
+      }
+    };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setIsUserMenuOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isUserMenuOpen]);
 
   // Global keyboard shortcut for Search (Ctrl+K / Cmd+K)
   React.useEffect(() => {
@@ -166,67 +192,128 @@ export function Header({ cartItemCount, onOpenCart }: HeaderProps) {
 
             {/* Account / User Trigger */}
             {isAuthenticated && user ? (
-              <div className="relative">
+              <div className="relative" ref={userMenuRef}>
                 <button
                   type="button"
                   onClick={() => setIsUserMenuOpen((prev) => !prev)}
-                  className="flex min-h-[44px] items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-bold text-foreground hover:bg-muted transition-colors border border-border/70 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  className={cn(
+                    "flex min-h-[44px] items-center gap-2 rounded-xl px-2.5 sm:px-3 py-1.5 text-xs font-bold transition-all cursor-pointer",
+                    "border border-border/80 bg-background/90 hover:bg-muted shadow-xs",
+                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
+                    isUserMenuOpen && "bg-muted border-primary/40 ring-2 ring-primary/20"
+                  )}
                   aria-expanded={isUserMenuOpen}
-                  aria-label={`قائمة المستخدم: ${user.username}`}
+                  aria-haspopup="menu"
+                  aria-label={`قائمة حساب المستخدم: ${user.username}`}
                 >
-                  <User className="h-4 w-4 text-[#C5A059]" aria-hidden="true" />
-                  <span className="hidden md:inline max-w-[100px] truncate">{user.username}</span>
+                  <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#12363B] text-[#C5A059] border border-[#C5A059]/40 text-xs font-black shadow-xs shrink-0">
+                    {user.username ? user.username.charAt(0).toUpperCase() : 'V'}
+                  </span>
+                  <span className="hidden md:inline-block max-w-[110px] truncate text-foreground font-semibold">
+                    {user.username}
+                  </span>
+                  <ChevronDown
+                    className={cn(
+                      "h-3.5 w-3.5 text-muted-foreground transition-transform duration-200",
+                      isUserMenuOpen && "rotate-180 text-primary"
+                    )}
+                    aria-hidden="true"
+                  />
                 </button>
 
                 {/* Dropdown Menu */}
                 {isUserMenuOpen && (
                   <div
-                    className="absolute left-0 mt-2 w-48 rounded-xl border border-border/80 bg-card p-2 shadow-xl z-50 animate-in fade-in zoom-in-95 text-xs space-y-1"
+                    role="menu"
+                    aria-orientation="vertical"
+                    className={cn(
+                      "absolute end-0 mt-2.5 w-64 rounded-2xl border border-border bg-white dark:bg-[#182123] p-2.5 shadow-2xl z-50",
+                      "animate-in fade-in-0 zoom-in-95 duration-150 text-xs space-y-1.5",
+                      "ring-1 ring-black/5"
+                    )}
                   >
-                    <div className="px-3 py-2 border-b border-border/60">
-                      <p className="font-bold text-foreground truncate">{user.username}</p>
-                      <p className="text-[10px] text-muted-foreground truncate">{user.email}</p>
+                    {/* User Header Profile Card */}
+                    <div className="flex items-center gap-3 p-2.5 rounded-xl bg-muted/40 border border-border/40 text-start">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#12363B] text-[#C5A059] font-black text-sm border border-[#C5A059]/30">
+                        {user.username ? user.username.charAt(0).toUpperCase() : 'V'}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center justify-between gap-1">
+                          <p className="font-bold text-foreground text-xs truncate">{user.username}</p>
+                          {user.role === 'ADMIN' ? (
+                            <Badge variant="luxury" className="text-[9px] py-0 px-1.5 shrink-0">أدمن</Badge>
+                          ) : (
+                            <span className="text-[10px] text-[#C5A059] font-bold shrink-0">عميل VARELLION</span>
+                          )}
+                        </div>
+                        <p className="text-[11px] text-muted-foreground truncate mt-0.5">{user.email}</p>
+                      </div>
                     </div>
 
-                    <Link
-                      href="/profile"
-                      onClick={() => setIsUserMenuOpen(false)}
-                      className="flex items-center gap-2 px-3 py-2 rounded-lg text-foreground hover:bg-muted font-semibold transition-colors"
-                    >
-                      <User className="h-3.5 w-3.5 text-primary" aria-hidden="true" />
-                      <span>الملف الشخصي وعناويني</span>
-                    </Link>
-
-                    <Link
-                      href="/track-order"
-                      onClick={() => setIsUserMenuOpen(false)}
-                      className="flex items-center gap-2 px-3 py-2 rounded-lg text-foreground hover:bg-muted font-semibold transition-colors"
-                    >
-                      <Truck className="h-3.5 w-3.5 text-primary" aria-hidden="true" />
-                      <span>تتبع طلباتي</span>
-                    </Link>
-
-                    {user.role === 'ADMIN' && (
+                    <div className="pt-1 space-y-1">
                       <Link
-                        href="/admin"
+                        href="/profile"
+                        role="menuitem"
                         onClick={() => setIsUserMenuOpen(false)}
-                        className="flex items-center justify-between px-3 py-2 rounded-lg text-primary hover:bg-muted font-bold transition-colors"
+                        className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-foreground hover:bg-muted font-semibold transition-colors text-start group"
                       >
-                        <span>لوحة الإدارة</span>
-                        <Badge variant="luxury" className="text-[10px] py-0 px-1.5">أدمن</Badge>
+                        <div className="h-7 w-7 rounded-lg bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors shrink-0">
+                          <User className="h-4 w-4" aria-hidden="true" />
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="text-xs font-bold">الملف الشخصي وعناويني</span>
+                          <span className="text-[10px] text-muted-foreground font-normal">إدارة العناوين والبيانات</span>
+                        </div>
                       </Link>
-                    )}
+
+                      <Link
+                        href="/track-order"
+                        role="menuitem"
+                        onClick={() => setIsUserMenuOpen(false)}
+                        className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-foreground hover:bg-muted font-semibold transition-colors text-start group"
+                      >
+                        <div className="h-7 w-7 rounded-lg bg-[#C5A059]/15 flex items-center justify-center text-[#8C6D23] dark:text-[#C5A059] group-hover:bg-[#C5A059] group-hover:text-white transition-colors shrink-0">
+                          <Truck className="h-4 w-4" aria-hidden="true" />
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="text-xs font-bold">تتبع طلباتي</span>
+                          <span className="text-[10px] text-muted-foreground font-normal">متابعة شحناتك الحالية</span>
+                        </div>
+                      </Link>
+
+                      {user.role === 'ADMIN' && (
+                        <Link
+                          href="/admin"
+                          role="menuitem"
+                          onClick={() => setIsUserMenuOpen(false)}
+                          className="flex items-center justify-between px-3 py-2 rounded-xl text-primary hover:bg-primary/10 font-bold transition-colors text-start"
+                        >
+                          <div className="flex items-center gap-2.5">
+                            <div className="h-7 w-7 rounded-lg bg-primary/15 flex items-center justify-center text-primary shrink-0">
+                              <ShieldCheck className="h-4 w-4" aria-hidden="true" />
+                            </div>
+                            <span>لوحة تحكم الإدارة</span>
+                          </div>
+                          <Badge variant="luxury" className="text-[10px] py-0 px-1.5">أدمن</Badge>
+                        </Link>
+                      )}
+                    </div>
+
+                    <div className="my-1 border-t border-border/60" />
 
                     <button
                       type="button"
+                      role="menuitem"
                       onClick={async () => {
                         setIsUserMenuOpen(false);
                         await logout();
                       }}
-                      className="flex w-full items-center gap-2 px-3 py-2 rounded-lg text-rose-600 hover:bg-rose-500/10 font-bold transition-colors cursor-pointer"
+                      className="flex w-full items-center gap-2.5 px-3 py-2 rounded-xl text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 font-bold transition-colors cursor-pointer text-start group"
                     >
-                      <LogOut className="h-3.5 w-3.5" aria-hidden="true" />
-                      <span>تسجيل الخروج</span>
+                      <div className="h-7 w-7 rounded-lg bg-rose-500/10 flex items-center justify-center text-rose-600 group-hover:bg-rose-600 group-hover:text-white transition-colors shrink-0">
+                        <LogOut className="h-4 w-4" aria-hidden="true" />
+                      </div>
+                      <span className="text-xs">تسجيل الخروج</span>
                     </button>
                   </div>
                 )}
@@ -234,7 +321,7 @@ export function Header({ cartItemCount, onOpenCart }: HeaderProps) {
             ) : (
               <Link
                 href="/login"
-                className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer"
+                className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-xl text-muted-foreground hover:bg-muted hover:text-foreground transition-colors border border-transparent sm:border-border/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer"
                 aria-label="تسجيل الدخول إلى حسابك"
                 title="تسجيل الدخول"
               >
