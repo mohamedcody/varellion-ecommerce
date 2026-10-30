@@ -188,6 +188,24 @@ export function Header({ cartItemCount, onOpenCart }: HeaderProps) {
                       <p className="text-[10px] text-muted-foreground truncate">{user.email}</p>
                     </div>
 
+                    <Link
+                      href="/profile"
+                      onClick={() => setIsUserMenuOpen(false)}
+                      className="flex items-center gap-2 px-3 py-2 rounded-lg text-foreground hover:bg-muted font-semibold transition-colors"
+                    >
+                      <User className="h-3.5 w-3.5 text-primary" aria-hidden="true" />
+                      <span>الملف الشخصي وعناويني</span>
+                    </Link>
+
+                    <Link
+                      href="/track-order"
+                      onClick={() => setIsUserMenuOpen(false)}
+                      className="flex items-center gap-2 px-3 py-2 rounded-lg text-foreground hover:bg-muted font-semibold transition-colors"
+                    >
+                      <Truck className="h-3.5 w-3.5 text-primary" aria-hidden="true" />
+                      <span>تتبع طلباتي</span>
+                    </Link>
+
                     {user.role === 'ADMIN' && (
                       <Link
                         href="/admin"
