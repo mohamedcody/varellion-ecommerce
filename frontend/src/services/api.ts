@@ -33,9 +33,14 @@ export function buildEndpointUrl(endpoint: string): string {
   return `${API_BASE_URL}${clean}`;
 }
 
+let inMemoryAccessToken: string | null = null;
 let accessTokenGetter: (() => string | null) | null = null;
 let onAuthExpiredCallback: (() => void) | null = null;
 let tokenRefreshHandler: (() => Promise<string | null>) | null = null;
+
+export function setAccessToken(token: string | null): void {
+  inMemoryAccessToken = token;
+}
 
 export function setAccessTokenGetter(fn: () => string | null): void {
   accessTokenGetter = fn;
@@ -64,7 +69,13 @@ function processQueue(error: unknown | null, newToken: string | null = null) {
     if (error) {
       req.reject(error);
     } else {
-      requestApi(req.endpoint, req.options)
+      const replayedHeaders: Record<string, string> = {
+        ...(req.options?.headers as Record<string, string> || {}),
+      };
+      if (newToken) {
+        replayedHeaders['Authorization'] = `Bearer ${newToken}`;
+      }
+      requestApi(req.endpoint, { ...req.options, headers: replayedHeaders })
         .then(req.resolve)
         .catch(req.reject);
     }
@@ -83,7 +94,7 @@ export async function requestApi<T>(endpoint: string, options?: RequestInit): Pr
     ...(options?.headers as Record<string, string>),
   };
 
-  const token = accessTokenGetter?.();
+  const token = inMemoryAccessToken ?? accessTokenGetter?.();
   if (token && !headers['Authorization']) {
     headers['Authorization'] = `Bearer ${token}`;
   }
@@ -144,9 +155,18 @@ export async function requestApi<T>(endpoint: string, options?: RequestInit): Pr
         }
 
         isRefreshing = false;
+        if (freshToken) {
+          setAccessToken(freshToken);
+        }
         processQueue(null, freshToken);
 
-        return await requestApi<T>(endpoint, options);
+        const replayedHeaders: Record<string, string> = {
+          ...(options?.headers as Record<string, string> || {}),
+        };
+        if (freshToken) {
+          replayedHeaders['Authorization'] = `Bearer ${freshToken}`;
+        }
+        return await requestApi<T>(endpoint, { ...options, headers: replayedHeaders });
       } catch (refreshErr) {
         isRefreshing = false;
         processQueue(refreshErr, null);

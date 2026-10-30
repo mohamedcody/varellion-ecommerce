@@ -5,6 +5,7 @@ import { Customer } from '@/types';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { validateProfile } from '@/lib/validations/customer';
+import { ApiError } from '@/services/api';
 import { User, Phone, Mail, CheckCircle2 } from 'lucide-react';
 
 interface PersonalInfoCardProps {
@@ -34,7 +35,10 @@ export function PersonalInfoCard({ customer, onUpdate, isSaving }: PersonalInfoC
       await onUpdate({ fullName, phoneNumber: phoneNumber || undefined });
       setIsSaved(true);
       setTimeout(() => setIsSaved(false), 3000);
-    } catch {
+    } catch (err: unknown) {
+      if (err instanceof ApiError && err.validationErrors) {
+        setErrors(err.validationErrors);
+      }
       // Error handled by parent page banner
     }
   };

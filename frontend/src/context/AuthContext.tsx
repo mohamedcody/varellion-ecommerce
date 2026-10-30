@@ -3,7 +3,12 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { AuthUser, LoginRequest, RegisterRequest, AuthResponse } from '@/types';
 import { authService } from '@/services/auth';
-import { setAccessTokenGetter, setOnAuthExpired, setTokenRefreshHandler } from '@/services/api';
+import {
+  setAccessToken as setApiAccessToken,
+  setAccessTokenGetter,
+  setOnAuthExpired,
+  setTokenRefreshHandler,
+} from '@/services/api';
 
 interface AuthContextType {
   user: AuthUser | null;
@@ -30,6 +35,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     setOnAuthExpired(() => {
+      setApiAccessToken(null);
       setUser(null);
       setAccessToken(null);
     });
@@ -38,6 +44,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       try {
         const res = await authService.refreshToken();
         if (res.accessToken) {
+          setApiAccessToken(res.accessToken);
           setAccessToken(res.accessToken);
           setUser({
             email: res.email,
@@ -48,6 +55,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
         return null;
       } catch (err) {
+        setApiAccessToken(null);
         setUser(null);
         setAccessToken(null);
         throw err;
@@ -69,6 +77,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       try {
         const res = await authService.refreshToken();
         if (isMounted && res.accessToken) {
+          setApiAccessToken(res.accessToken);
           setAccessToken(res.accessToken);
           setUser({
             email: res.email,
@@ -79,6 +88,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } catch {
         // Expected for guest visitors without active session
         if (isMounted) {
+          setApiAccessToken(null);
           setUser(null);
           setAccessToken(null);
         }
@@ -103,6 +113,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
    */
   const login = useCallback(async (credentials: LoginRequest): Promise<AuthResponse> => {
     const res = await authService.login(credentials);
+    setApiAccessToken(res.accessToken);
     setAccessToken(res.accessToken);
     setUser({
       email: res.email,
@@ -119,6 +130,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
    */
   const register = useCallback(async (data: RegisterRequest): Promise<AuthResponse> => {
     const res = await authService.register(data);
+    setApiAccessToken(res.accessToken);
     setAccessToken(res.accessToken);
     setUser({
       email: res.email,
@@ -136,6 +148,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
    */
   const loginWithGoogle = useCallback(async (idToken: string): Promise<AuthResponse> => {
     const res = await authService.googleLogin(idToken);
+    setApiAccessToken(res.accessToken);
     setAccessToken(res.accessToken);
     setUser({
       email: res.email,
@@ -155,6 +168,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch (err) {
       console.warn('[AuthContext] Backend logout failed or unreachable:', err);
     } finally {
+      setApiAccessToken(null);
       setUser(null);
       setAccessToken(null);
     }

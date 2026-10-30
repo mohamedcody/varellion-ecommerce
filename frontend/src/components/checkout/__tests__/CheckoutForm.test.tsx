@@ -50,6 +50,8 @@ describe('CheckoutForm Profile Prefill', () => {
     });
 
     expect(screen.getByText(/تم ملء بيانات الشحن تلقائياً من عنوانك المسجل/i)).toBeDefined();
-    expect(screen.getByLabelText(/حفظ هذا العنوان كعنوان شحن افتراضي/i)).toBeDefined();
+    const saveCheckbox = screen.getByLabelText(/حفظ هذا العنوان كعنوان شحن افتراضي/i) as HTMLInputElement;
+    expect(saveCheckbox).toBeDefined();
+    expect(saveCheckbox.checked).toBe(false); // Does not overwrite existing address by default
   });
 });

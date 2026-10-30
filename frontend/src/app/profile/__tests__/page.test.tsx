@@ -21,6 +21,16 @@ describe('ProfilePage', () => {
     vi.restoreAllMocks();
   });
 
+  it('renders loading skeleton shimmer while fetching profile', () => {
+    vi.spyOn(customerService, 'getProfile').mockImplementation(
+      () => new Promise(() => {}) // pending promise never resolves immediately
+    );
+
+    render(<ProfilePage />);
+
+    expect(screen.getByTestId('profile-skeleton')).toBeDefined();
+  });
+
   it('renders customer name and address after loading', async () => {
     vi.spyOn(customerService, 'getProfile').mockResolvedValue({
       userId: 'uuid-123',

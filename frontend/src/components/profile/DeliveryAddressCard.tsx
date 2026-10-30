@@ -1,11 +1,12 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { CustomerAddress } from '@/types';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { ShippingGovernorateSelect } from '@/components/checkout/ShippingGovernorateSelect';
 import { validateAddress } from '@/lib/validations/customer';
+import { ApiError } from '@/services/api';
 import { MapPin, Plus, Edit2, Trash2, CheckCircle2 } from 'lucide-react';
 
 interface DeliveryAddressCardProps {
@@ -28,6 +29,16 @@ export function DeliveryAddressCard({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSaved, setIsSaved] = useState(false);
 
+  useEffect(() => {
+    setGovernorate(address?.governorate || '');
+    setCityArea(address?.cityArea || '');
+    setDetailedAddress(address?.detailedAddress || '');
+    setErrors({});
+    if (!address) {
+      setIsEditing(false);
+    }
+  }, [address]);
+
   const handleStartEdit = () => {
     setGovernorate(address?.governorate || '');
     setCityArea(address?.cityArea || '');
@@ -37,13 +48,11 @@ export function DeliveryAddressCard({
   };
 
   const handleCancel = () => {
-    if (address) {
-      setGovernorate(address.governorate);
-      setCityArea(address.cityArea);
-      setDetailedAddress(address.detailedAddress);
-      setErrors({});
-      setIsEditing(false);
-    }
+    setGovernorate(address?.governorate || '');
+    setCityArea(address?.cityArea || '');
+    setDetailedAddress(address?.detailedAddress || '');
+    setErrors({});
+    setIsEditing(false);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -68,7 +77,10 @@ export function DeliveryAddressCard({
       setIsSaved(true);
       setIsEditing(false);
       setTimeout(() => setIsSaved(false), 3000);
-    } catch {
+    } catch (err: unknown) {
+      if (err instanceof ApiError && err.validationErrors) {
+        setErrors(err.validationErrors);
+      }
       // Handled by parent error toast
     }
   };
@@ -171,17 +183,15 @@ export function DeliveryAddressCard({
           </div>
 
           <div className="flex items-center justify-end gap-3 pt-2">
-            {address && (
-              <Button
-                type="button"
-                variant="outline"
-                onClick={handleCancel}
-                disabled={isSaving}
-                className="text-xs"
-              >
-                إلغاء
-              </Button>
-            )}
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleCancel}
+              disabled={isSaving}
+              className="text-xs"
+            >
+              إلغاء
+            </Button>
             <Button
               type="submit"
               isLoading={isSaving}

@@ -80,6 +80,7 @@ export function CheckoutForm({
                 setShippingDetailedAddress(profile.address.detailedAddress);
               }
               setHasPrefilled(true);
+              setSaveAddress(false);
             }
           }
         } catch {

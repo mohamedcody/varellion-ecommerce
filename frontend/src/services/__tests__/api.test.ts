@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import {
   requestApi,
+  setAccessToken,
   setAccessTokenGetter,
   setOnAuthExpired,
   setTokenRefreshHandler,
@@ -10,6 +11,27 @@ import {
 describe('requestApi interceptor & refresh queue', () => {
   beforeEach(() => {
     vi.restoreAllMocks();
+    setAccessToken(null);
+  });
+
+  it('injects Authorization Bearer header when in-memory setAccessToken is called directly', async () => {
+    setAccessToken('direct-sync-token');
+    const mockFetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ success: true, data: 'ok' }),
+    });
+    global.fetch = mockFetch;
+
+    await requestApi('/test-endpoint-sync');
+
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.stringContaining('/test-endpoint-sync'),
+      expect.objectContaining({
+        headers: expect.objectContaining({
+          Authorization: 'Bearer direct-sync-token',
+        }),
+      })
+    );
   });
 
   it('injects Authorization Bearer header when token getter returns token', async () => {

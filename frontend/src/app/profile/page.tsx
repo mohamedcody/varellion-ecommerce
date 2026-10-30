@@ -129,8 +129,26 @@ export default function ProfilePage() {
             </div>
           )}
 
+          {/* Loading Skeleton */}
+          {isLoading && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start" data-testid="profile-skeleton">
+              <div className="rounded-2xl border border-border/60 bg-card/60 p-6 space-y-4 animate-pulse">
+                <div className="h-6 w-1/3 bg-muted/60 rounded" />
+                <div className="h-10 bg-muted/40 rounded" />
+                <div className="h-10 bg-muted/40 rounded" />
+                <div className="h-10 bg-muted/40 rounded" />
+              </div>
+              <div className="rounded-2xl border border-border/60 bg-card/60 p-6 space-y-4 animate-pulse">
+                <div className="h-6 w-1/3 bg-muted/60 rounded" />
+                <div className="h-10 bg-muted/40 rounded" />
+                <div className="h-10 bg-muted/40 rounded" />
+                <div className="h-20 bg-muted/40 rounded" />
+              </div>
+            </div>
+          )}
+
           {/* Main Profile Grid */}
-          {customer && (
+          {!isLoading && customer && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
               <PersonalInfoCard
                 customer={customer}
