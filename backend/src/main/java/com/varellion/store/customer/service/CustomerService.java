@@ -125,7 +125,7 @@ public class CustomerService {
             customer.setPhoneNumber(request.getPhoneNumber().trim().isEmpty() ? null : request.getPhoneNumber().trim());
         }
 
-        Customer saved = customerRepository.save(customer);
+        Customer saved = customerRepository.saveAndFlush(customer);
         CustomerAddress address = customerAddressRepository.findByCustomer_UserId(saved.getUserId()).orElse(null);
 
         return mapToDto(saved, user, address);

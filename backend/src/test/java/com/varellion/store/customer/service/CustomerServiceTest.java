@@ -110,7 +110,7 @@ class CustomerServiceTest {
     void testUpdateProfile() {
         when(userRepository.findByUsername("ahmed_ali")).thenReturn(Optional.of(testUser));
         when(customerRepository.findByUserAccountId(testUser.getId())).thenReturn(Optional.of(testCustomer));
-        when(customerRepository.save(any(Customer.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(customerRepository.saveAndFlush(any(Customer.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         UpdateProfileRequest request = UpdateProfileRequest.builder()
                 .fullName("Ahmed Ali Mohamed")

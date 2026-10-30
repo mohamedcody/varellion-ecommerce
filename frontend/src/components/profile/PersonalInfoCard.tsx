@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Customer } from '@/types';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
@@ -19,6 +19,12 @@ export function PersonalInfoCard({ customer, onUpdate, isSaving }: PersonalInfoC
   const [phoneNumber, setPhoneNumber] = useState(customer.phoneNumber || '');
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSaved, setIsSaved] = useState(false);
+
+  useEffect(() => {
+    setFullName(customer.fullName || '');
+    setPhoneNumber(customer.phoneNumber || '');
+    setErrors({});
+  }, [customer]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
