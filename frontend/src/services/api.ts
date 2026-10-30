@@ -33,25 +33,138 @@ export function buildEndpointUrl(endpoint: string): string {
   return `${API_BASE_URL}${clean}`;
 }
 
+let accessTokenGetter: (() => string | null) | null = null;
+let onAuthExpiredCallback: (() => void) | null = null;
+let tokenRefreshHandler: (() => Promise<string | null>) | null = null;
+
+export function setAccessTokenGetter(fn: () => string | null): void {
+  accessTokenGetter = fn;
+}
+
+export function setOnAuthExpired(fn: () => void): void {
+  onAuthExpiredCallback = fn;
+}
+
+export function setTokenRefreshHandler(fn: () => Promise<string | null>): void {
+  tokenRefreshHandler = fn;
+}
+
+interface PendingRequest {
+  resolve: (value: unknown) => void;
+  reject: (reason?: unknown) => void;
+  endpoint: string;
+  options?: RequestInit;
+}
+
+let isRefreshing = false;
+let refreshQueue: PendingRequest[] = [];
+
+function processQueue(error: unknown | null, newToken: string | null = null) {
+  refreshQueue.forEach((req) => {
+    if (error) {
+      req.reject(error);
+    } else {
+      requestApi(req.endpoint, req.options)
+        .then(req.resolve)
+        .catch(req.reject);
+    }
+  });
+  refreshQueue = [];
+}
+
 /**
  * Universal safe fetcher with credentials support for HTTP cookies and direct type T
  */
 export async function requestApi<T>(endpoint: string, options?: RequestInit): Promise<T> {
   const url = buildEndpointUrl(endpoint);
 
-  const res = await fetch(url, {
-    credentials: 'include',
-    headers: {
-      'Content-Type': 'application/json',
-      ...options?.headers,
-    },
-    ...options,
-  });
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...(options?.headers as Record<string, string>),
+  };
+
+  const token = accessTokenGetter?.();
+  if (token && !headers['Authorization']) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  // Network timeout safety (10 seconds timeout fallback)
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 10000);
+  const signal = options?.signal || controller.signal;
+
+  let res: Response;
+  try {
+    res = await fetch(url, {
+      credentials: 'include',
+      headers,
+      ...options,
+      signal,
+    });
+  } catch (err: unknown) {
+    clearTimeout(timeoutId);
+    if (err instanceof Error && err.name === 'AbortError') {
+      throw new ApiError('Request timeout: Server took too long to respond', 408);
+    }
+    throw err;
+  } finally {
+    clearTimeout(timeoutId);
+  }
+
+  if (res.status === 401) {
+    const isAuthRoute =
+      endpoint.includes('/auth/login') ||
+      endpoint.includes('/auth/register') ||
+      endpoint.includes('/auth/refresh') ||
+      endpoint.includes('/auth/logout');
+
+    if (!isAuthRoute) {
+      if (isRefreshing) {
+        return new Promise<T>((resolve, reject) => {
+          refreshQueue.push({
+            resolve: resolve as (val: unknown) => void,
+            reject,
+            endpoint,
+            options,
+          });
+        });
+      }
+
+      isRefreshing = true;
+
+      try {
+        let freshToken: string | null = null;
+        if (tokenRefreshHandler) {
+          freshToken = await tokenRefreshHandler();
+        } else {
+          const refreshRes = await requestApi<{ accessToken: string }>('/auth/refresh', {
+            method: 'POST',
+          });
+          freshToken = refreshRes.accessToken;
+        }
+
+        isRefreshing = false;
+        processQueue(null, freshToken);
+
+        return await requestApi<T>(endpoint, options);
+      } catch (refreshErr) {
+        isRefreshing = false;
+        processQueue(refreshErr, null);
+        onAuthExpiredCallback?.();
+        const errorData = await res.json().catch(() => null);
+        throw new ApiError(errorData?.message || 'Authentication session expired', 401, errorData);
+      }
+    }
+  }
 
   if (!res.ok) {
     const errorData = await res.json().catch(() => null);
     const message = errorData?.message || `API request failed with status ${res.status}`;
     throw new ApiError(message, res.status, errorData, errorData?.validationErrors);
+  }
+
+  if (res.status === 204) {
+    return {} as T;
   }
 
   return await res.json();
