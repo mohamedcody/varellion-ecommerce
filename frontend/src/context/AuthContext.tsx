@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { AuthUser, LoginRequest, RegisterRequest, AuthResponse } from '@/types';
 import { authService } from '@/services/auth';
+import { setAccessTokenGetter, setOnAuthExpired, setTokenRefreshHandler } from '@/services/api';
 
 interface AuthContextType {
   user: AuthUser | null;
@@ -21,6 +22,38 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+
+  // Synchronize In-Memory Access Token with central API Interceptor
+  useEffect(() => {
+    setAccessTokenGetter(() => accessToken);
+  }, [accessToken]);
+
+  useEffect(() => {
+    setOnAuthExpired(() => {
+      setUser(null);
+      setAccessToken(null);
+    });
+
+    setTokenRefreshHandler(async () => {
+      try {
+        const res = await authService.refreshToken();
+        if (res.accessToken) {
+          setAccessToken(res.accessToken);
+          setUser({
+            email: res.email,
+            username: res.username,
+            role: res.role || 'USER',
+          });
+          return res.accessToken;
+        }
+        return null;
+      } catch (err) {
+        setUser(null);
+        setAccessToken(null);
+        throw err;
+      }
+    });
+  }, []);
 
   /**
    * Silent Session Hydration on Initial Mount:
