@@ -79,16 +79,16 @@ export function Header({ cartItemCount, onOpenCart }: HeaderProps) {
   return (
     <>
       {/* 1. Top Announcement Bar — Trust & Delivery Signals */}
-      <div className="w-full bg-[#0E0F11] text-[#FAF9F6] text-[11px] sm:text-xs py-2 px-4 border-b border-[#22262B]">
+      <div className="w-full bg-obsidian-950 text-ivory-50 text-[11px] sm:text-xs py-2 px-4 border-b border-obsidian-800">
         <div className="container mx-auto flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-3 mx-auto sm:mx-0">
             <span className="inline-flex items-center gap-1.5 font-medium">
-              <Truck className="h-3.5 w-3.5 text-[#C5A059]" aria-hidden="true" />
+              <Truck className="h-3.5 w-3.5 text-gold-500" aria-hidden="true" />
               <span>شحن سريع لـ 27 محافظة في مصر</span>
             </span>
             <span className="hidden md:inline text-white/30">|</span>
             <span className="hidden md:inline-flex items-center gap-1.5 text-white/90">
-              <ShieldCheck className="h-3.5 w-3.5 text-[#C5A059]" aria-hidden="true" />
+              <ShieldCheck className="h-3.5 w-3.5 text-gold-500" aria-hidden="true" />
               <span>معاينة المنتج وفحصه قبل الاستلام والدفع عند الاستلام</span>
             </span>
           </div>
@@ -96,14 +96,14 @@ export function Header({ cartItemCount, onOpenCart }: HeaderProps) {
           <div className="hidden sm:flex items-center gap-4 text-[11px] text-white/80">
             <Link
               href="/track-order"
-              className="inline-flex items-center gap-1 text-[#C5A059] hover:underline transition-colors font-semibold cursor-pointer"
+              className="inline-flex items-center gap-1 text-gold-500 hover:underline transition-colors font-semibold cursor-pointer"
             >
-              <Truck className="h-3 w-3 text-[#C5A059]" aria-hidden="true" />
+              <Truck className="h-3 w-3 text-gold-500" aria-hidden="true" />
               <span>تتبع طلبك</span>
             </Link>
             <span className="text-white/30">|</span>
             <span className="inline-flex items-center gap-1">
-              <RotateCcw className="h-3 w-3 text-[#C5A059]" aria-hidden="true" />
+              <RotateCcw className="h-3 w-3 text-gold-500" aria-hidden="true" />
               <span>ضمان استبدال 14 يوماً</span>
             </span>
             <span className="text-white/80">العملة: <strong className="text-white font-bold">ج.م (EGP)</strong></span>
@@ -132,14 +132,14 @@ export function Header({ cartItemCount, onOpenCart }: HeaderProps) {
               className="flex items-center gap-2.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-lg py-1 px-1 transition-transform active:scale-98"
               aria-label="الصفحة الرئيسية لـ VARELLION"
             >
-              <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#0E0F11] text-[#C5A059] font-serif font-black text-xl shadow-xs border border-[#C5A059]/40">
+              <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-obsidian-950 text-gold-500 font-serif font-black text-xl shadow-xs border border-gold-500/40">
                 V
               </span>
               <div className="flex flex-col text-start">
                 <span className="font-serif font-black text-lg tracking-[0.14em] text-foreground leading-none">
                   VARELLION
                 </span>
-                <span className="text-[9px] uppercase font-bold tracking-[0.24em] text-[#876725] leading-tight mt-0.5">
+                <span className="text-[9px] uppercase font-bold tracking-[0.24em] text-gold-700 leading-tight mt-0.5">
                   Accessories & Time
                 </span>
               </div>
@@ -160,12 +160,12 @@ export function Header({ cartItemCount, onOpenCart }: HeaderProps) {
                   >
                     <span>{item.titleAr}</span>
                     {item.badge && (
-                      <span className="mr-1.5 inline-block rounded-md bg-[#FAF4E8] text-[#876725] border border-[#C5A059]/30 px-1.5 py-0.2 text-[10px] font-bold">
+                      <span className="mr-1.5 inline-block rounded-md bg-gold-100 text-gold-700 border border-gold-500/30 px-1.5 py-0.2 text-[10px] font-bold">
                         {item.badge}
                       </span>
                     )}
                     {isActive && (
-                      <span className="absolute inset-x-0 -bottom-5 h-0.5 bg-[#C5A059] rounded-full" />
+                      <span className="absolute inset-x-0 -bottom-5 h-0.5 bg-gold-500 rounded-full" />
                     )}
                   </Link>
                 );
@@ -199,14 +199,14 @@ export function Header({ cartItemCount, onOpenCart }: HeaderProps) {
                   className={cn(
                     "flex min-h-[44px] items-center gap-2 rounded-xl px-2.5 sm:px-3 py-1.5 text-xs font-bold transition-all cursor-pointer",
                     "border border-border bg-card hover:bg-secondary shadow-xs",
-                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C5A059]",
-                    isUserMenuOpen && "bg-secondary border-[#C5A059]/60 ring-2 ring-[#C5A059]/20"
+                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500",
+                    isUserMenuOpen && "bg-secondary border-gold-500/60 ring-2 ring-gold-500/20"
                   )}
                   aria-expanded={isUserMenuOpen}
                   aria-haspopup="menu"
                   aria-label={`قائمة حساب المستخدم: ${user.username}`}
                 >
-                  <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#0E0F11] text-[#C5A059] border border-[#C5A059]/40 text-xs font-black shadow-xs shrink-0">
+                  <span className="flex h-7 w-7 items-center justify-center rounded-full bg-obsidian-950 text-gold-500 border border-gold-500/40 text-xs font-black shadow-xs shrink-0">
                     {user.username ? user.username.charAt(0).toUpperCase() : 'V'}
                   </span>
                   <span className="hidden md:inline-block max-w-[110px] truncate text-foreground font-semibold">
@@ -234,7 +234,7 @@ export function Header({ cartItemCount, onOpenCart }: HeaderProps) {
                   >
                     {/* User Header Profile Card */}
                     <div className="flex items-center gap-3 p-2.5 rounded-lg bg-secondary/60 border border-border/60 text-start">
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#0E0F11] text-[#C5A059] font-serif font-black text-sm border border-[#C5A059]/35">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-obsidian-950 text-gold-500 font-serif font-black text-sm border border-gold-500/35">
                         {user.username ? user.username.charAt(0).toUpperCase() : 'V'}
                       </div>
                       <div className="min-w-0 flex-1">
@@ -243,7 +243,7 @@ export function Header({ cartItemCount, onOpenCart }: HeaderProps) {
                           {user.role === 'ADMIN' ? (
                             <Badge variant="luxury" className="text-[9px] py-0 px-1.5 shrink-0">أدمن</Badge>
                           ) : (
-                            <span className="text-[10px] text-[#876725] font-bold shrink-0">عميل VARELLION</span>
+                            <span className="text-[10px] text-gold-700 font-bold shrink-0">عميل VARELLION</span>
                           )}
                         </div>
                         <p className="text-[11px] text-muted-foreground truncate mt-0.5">{user.email}</p>
@@ -272,7 +272,7 @@ export function Header({ cartItemCount, onOpenCart }: HeaderProps) {
                         onClick={() => setIsUserMenuOpen(false)}
                         className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-foreground hover:bg-secondary font-semibold transition-colors text-start group"
                       >
-                        <div className="h-7 w-7 rounded-md bg-[#FAF4E8] flex items-center justify-center text-[#876725] group-hover:bg-[#C5A059] group-hover:text-obsidian-950 transition-colors shrink-0">
+                        <div className="h-7 w-7 rounded-md bg-gold-100 flex items-center justify-center text-gold-700 group-hover:bg-gold-500 group-hover:text-obsidian-950 transition-colors shrink-0">
                           <Truck className="h-4 w-4" aria-hidden="true" />
                         </div>
                         <div className="flex flex-col">
@@ -333,13 +333,13 @@ export function Header({ cartItemCount, onOpenCart }: HeaderProps) {
             <button
               type="button"
               onClick={handleCartClick}
-              className="relative flex min-h-[44px] items-center gap-2 rounded-lg bg-[#0E0F11] text-white hover:bg-obsidian-850 px-3.5 transition-all border border-[#C5A059]/30 shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C5A059] cursor-pointer"
+              className="relative flex min-h-[44px] items-center gap-2 rounded-lg bg-obsidian-950 text-white hover:bg-obsidian-850 px-3.5 transition-all border border-gold-500/30 shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500 cursor-pointer"
               aria-label={`سلة المشتريات، تحتوي على ${effectiveCartCount} قطع`}
             >
-              <ShoppingBag className="h-4 w-4 text-[#C5A059]" aria-hidden="true" />
+              <ShoppingBag className="h-4 w-4 text-gold-500" aria-hidden="true" />
               <span className="hidden sm:inline text-xs font-bold">السلة</span>
               {effectiveCartCount > 0 ? (
-                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#C5A059] text-obsidian-950 text-[11px] font-black shadow-xs animate-in zoom-in">
+                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-gold-500 text-obsidian-950 text-[11px] font-black shadow-xs animate-in zoom-in">
                   {effectiveCartCount}
                 </span>
               ) : (

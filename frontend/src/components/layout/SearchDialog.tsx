@@ -97,7 +97,7 @@ export function SearchDialog({ isOpen, onClose }: SearchDialogProps) {
               >
                 <div className="flex items-center gap-3">
                   {item.category === 'watches' ? (
-                    <Watch className="h-4 w-4 text-[#C5A059]" aria-hidden="true" />
+                    <Watch className="h-4 w-4 text-gold-500" aria-hidden="true" />
                   ) : (
                     <Wallet className="h-4 w-4 text-primary" aria-hidden="true" />
                   )}

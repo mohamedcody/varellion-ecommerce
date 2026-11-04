@@ -46,15 +46,15 @@ export default async function HomePage() {
   return (
     <div className="flex flex-col items-center">
       {/* 1. Hero Section — Asymmetric Luxury Editorial (3-Second Conversion Formula) */}
-      <section className="relative w-full overflow-hidden border-b border-border bg-gradient-to-b from-[#141619]/5 via-background to-background py-12 sm:py-16 lg:py-20 px-4 sm:px-6 lg:px-8">
+      <section className="relative w-full overflow-hidden border-b border-border bg-gradient-to-b from-obsidian-900/5 via-background to-background py-12 sm:py-16 lg:py-20 px-4 sm:px-6 lg:px-8">
         <div className="container mx-auto max-w-7xl">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-center">
             
             {/* Right Column (in RTL): Brand Story & Conversion CTAs */}
             <div className="lg:col-span-7 space-y-6 text-start">
               {/* Brand Eyebrow Badge */}
-              <div className="inline-flex items-center gap-2 rounded-full border border-[#C5A059]/40 bg-[#FAF4E8] px-3.5 py-1 text-xs font-bold text-[#876725] shadow-2xs">
-                <Sparkles className="h-3.5 w-3.5 text-[#C5A059]" aria-hidden="true" />
+              <div className="inline-flex items-center gap-2 rounded-full border border-gold-500/40 bg-gold-100 px-3.5 py-1 text-xs font-bold text-gold-700 shadow-2xs">
+                <Sparkles className="h-3.5 w-3.5 text-gold-500" aria-hidden="true" />
                 <span className="font-serif tracking-wider uppercase">VARELLION — HAUTE HORLOGERIE & CUIR</span>
               </div>
 
@@ -87,17 +87,17 @@ export default async function HomePage() {
               {/* Trust Indicators Strip */}
               <div className="pt-4 flex flex-wrap items-center gap-4 text-xs font-medium text-muted-foreground border-t border-border/60">
                 <span className="flex items-center gap-1.5 text-foreground">
-                  <CheckCircle2 className="h-4 w-4 text-[#C5A059]" aria-hidden="true" />
+                  <CheckCircle2 className="h-4 w-4 text-gold-500" aria-hidden="true" />
                   <span>معاينة القطعة قبل الدفع</span>
                 </span>
                 <span className="text-border">•</span>
                 <span className="flex items-center gap-1.5 text-foreground">
-                  <Truck className="h-4 w-4 text-[#C5A059]" aria-hidden="true" />
+                  <Truck className="h-4 w-4 text-gold-500" aria-hidden="true" />
                   <span>شحن لـ 27 محافظة في مصر</span>
                 </span>
                 <span className="text-border">•</span>
                 <span className="flex items-center gap-1.5 text-foreground">
-                  <Banknote className="h-4 w-4 text-[#C5A059]" aria-hidden="true" />
+                  <Banknote className="h-4 w-4 text-gold-500" aria-hidden="true" />
                   <span>الدفع عند الاستلام (COD)</span>
                 </span>
               </div>
@@ -105,7 +105,7 @@ export default async function HomePage() {
 
             {/* Left Column (in RTL): Hero Visual Showcase Card */}
             <div className="lg:col-span-5 relative">
-              <div className="relative aspect-4/5 w-full overflow-hidden rounded-2xl border border-[#C5A059]/30 bg-[#141619] shadow-xl group">
+              <div className="relative aspect-4/5 w-full overflow-hidden rounded-2xl border border-gold-500/30 bg-obsidian-900 shadow-xl group">
                 <img
                   src={flagshipImage}
                   alt={flagshipProduct?.nameAr || 'ساعة VARELLION الفاخرة'}
@@ -114,7 +114,7 @@ export default async function HomePage() {
                 />
                 
                 {/* Subtle Luxury Gradient Overlay */}
-                <div className="absolute inset-0 bg-gradient-to-t from-[#0E0F11]/90 via-[#0E0F11]/30 to-transparent flex flex-col justify-end p-6 text-white text-start">
+                <div className="absolute inset-0 bg-gradient-to-t from-obsidian-950/90 via-obsidian-950/30 to-transparent flex flex-col justify-end p-6 text-white text-start">
                   <Badge variant="luxury" className="self-start text-[10px] font-bold mb-2">
                     {flagshipProduct?.isFeatured ? 'الإصدار الرائد المميز' : 'الأكثر طلباً ومبيعاً'}
                   </Badge>
@@ -125,13 +125,13 @@ export default async function HomePage() {
                     {flagshipProduct?.descriptionAr || 'دقة واحترافية لا تضاهى بتصميم يعكس هيبتك اليومية.'}
                   </p>
                   <div className="mt-3 flex items-center justify-between pt-3 border-t border-white/20">
-                    <span className="text-lg font-black text-[#C5A059] tabular-nums">
+                    <span className="text-lg font-black text-gold-500 tabular-nums">
                       {flagshipProduct ? flagshipProduct.price.toLocaleString('ar-EG') : '1,850'}{' '}
                       <span className="text-xs font-bold text-white/80">ج.م</span>
                     </span>
                     <Link
                       href={flagshipProduct ? `/products/${flagshipProduct.slug}` : '/products'}
-                      className="text-xs font-bold text-white hover:text-[#C5A059] flex items-center gap-1 transition-colors"
+                      className="text-xs font-bold text-white hover:text-gold-500 flex items-center gap-1 transition-colors"
                     >
                       <span>عرض تفاصيل القطعة</span>
                       <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
@@ -150,7 +150,7 @@ export default async function HomePage() {
         <div className="container mx-auto max-w-7xl grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <Card className="border-border bg-background hover:border-ivory-300 transition-colors">
             <CardHeader className="flex flex-row items-center gap-3 pb-2 text-start">
-              <div className="p-2.5 rounded-lg bg-[#0E0F11] text-[#C5A059] border border-[#C5A059]/25 shrink-0 shadow-2xs">
+              <div className="p-2.5 rounded-lg bg-obsidian-950 text-gold-500 border border-gold-500/25 shrink-0 shadow-2xs">
                 <ShieldCheck className="h-5 w-5" aria-hidden="true" />
               </div>
               <CardTitle className="text-sm font-bold">معاينة وفحص قبل الدفع</CardTitle>
@@ -164,7 +164,7 @@ export default async function HomePage() {
 
           <Card className="border-border bg-background hover:border-ivory-300 transition-colors">
             <CardHeader className="flex flex-row items-center gap-3 pb-2 text-start">
-              <div className="p-2.5 rounded-lg bg-[#0E0F11] text-[#C5A059] border border-[#C5A059]/25 shrink-0 shadow-2xs">
+              <div className="p-2.5 rounded-lg bg-obsidian-950 text-gold-500 border border-gold-500/25 shrink-0 shadow-2xs">
                 <Banknote className="h-5 w-5" aria-hidden="true" />
               </div>
               <CardTitle className="text-sm font-bold">الدفع عند الاستلام</CardTitle>
@@ -178,7 +178,7 @@ export default async function HomePage() {
 
           <Card className="border-border bg-background hover:border-ivory-300 transition-colors">
             <CardHeader className="flex flex-row items-center gap-3 pb-2 text-start">
-              <div className="p-2.5 rounded-lg bg-[#0E0F11] text-[#C5A059] border border-[#C5A059]/25 shrink-0 shadow-2xs">
+              <div className="p-2.5 rounded-lg bg-obsidian-950 text-gold-500 border border-gold-500/25 shrink-0 shadow-2xs">
                 <RotateCcw className="h-5 w-5" aria-hidden="true" />
               </div>
               <CardTitle className="text-sm font-bold">ضمان استبدال 14 يوماً</CardTitle>
@@ -192,7 +192,7 @@ export default async function HomePage() {
 
           <Card className="border-border bg-background hover:border-ivory-300 transition-colors">
             <CardHeader className="flex flex-row items-center gap-3 pb-2 text-start">
-              <div className="p-2.5 rounded-lg bg-[#0E0F11] text-[#C5A059] border border-[#C5A059]/25 shrink-0 shadow-2xs">
+              <div className="p-2.5 rounded-lg bg-obsidian-950 text-gold-500 border border-gold-500/25 shrink-0 shadow-2xs">
                 <Truck className="h-5 w-5" aria-hidden="true" />
               </div>
               <CardTitle className="text-sm font-bold">تغطية 27 محافظة مصرية</CardTitle>
@@ -211,15 +211,15 @@ export default async function HomePage() {
         <div className="container mx-auto max-w-7xl space-y-8">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 text-start">
             <div>
-              <div className="inline-flex items-center gap-1.5 text-xs font-bold text-[#876725] mb-1">
-                <Award className="h-3.5 w-3.5 text-[#C5A059]" aria-hidden="true" />
+              <div className="inline-flex items-center gap-1.5 text-xs font-bold text-gold-700 mb-1">
+                <Award className="h-3.5 w-3.5 text-gold-500" aria-hidden="true" />
                 <span>الخيارات الأكثر طلباً في مصر</span>
               </div>
               <h2 className="text-2xl sm:text-3xl font-black text-foreground tracking-tight">
                 الأكثر طلباً ومبيعاً
               </h2>
             </div>
-            <Link href="/products" className="text-xs font-bold text-foreground hover:text-[#876725] flex items-center gap-1 min-h-[44px] transition-colors">
+            <Link href="/products" className="text-xs font-bold text-foreground hover:text-gold-700 flex items-center gap-1 min-h-[44px] transition-colors">
               <span>تصفح كل التشكيلة</span>
               <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
             </Link>
@@ -273,7 +273,7 @@ export default async function HomePage() {
                 <Link
                   key={cat.categoryId}
                   href={`/products?category=${cat.slug}`}
-                  className="group relative flex flex-col justify-end overflow-hidden rounded-xl border border-border bg-[#141619] p-6 min-h-[280px] shadow-xs hover:border-[#C5A059]/50 hover:shadow-lg transition-all text-start"
+                  className="group relative flex flex-col justify-end overflow-hidden rounded-xl border border-border bg-obsidian-900 p-6 min-h-[280px] shadow-xs hover:border-gold-500/50 hover:shadow-lg transition-all text-start"
                 >
                   {/* Real Tactile Photography */}
                   <img
@@ -284,20 +284,20 @@ export default async function HomePage() {
                   />
 
                   {/* Deep Obsidian Vignette */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#0E0F11] via-[#0E0F11]/50 to-transparent" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-obsidian-950 via-obsidian-950/50 to-transparent" />
 
                   {/* Content Overlay */}
                   <div className="relative z-10 text-white space-y-2">
                     <Badge variant="luxury" className="text-[10px] font-bold">
                       {cat.productCount ? `${cat.productCount} معروضات متوفرة` : 'تشكيلة حصرية'}
                     </Badge>
-                    <h3 className="text-xl font-bold text-white group-hover:text-[#C5A059] transition-colors">
+                    <h3 className="text-xl font-bold text-white group-hover:text-gold-500 transition-colors">
                       {cat.nameAr}
                     </h3>
                     <p className="text-xs text-white/80 line-clamp-2 leading-relaxed">
                       {cat.descriptionAr}
                     </p>
-                    <div className="pt-2 flex items-center gap-1.5 text-xs font-bold text-[#C5A059]">
+                    <div className="pt-2 flex items-center gap-1.5 text-xs font-bold text-gold-500">
                       <span>استكشف المجموعة</span>
                       <ArrowLeft className="h-3.5 w-3.5 transition-transform group-hover:-translate-x-1" aria-hidden="true" />
                     </div>
@@ -314,8 +314,8 @@ export default async function HomePage() {
         <div className="container mx-auto max-w-6xl rounded-2xl border border-border bg-card p-8 sm:p-12 lg:p-14 shadow-sm">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center text-start">
             <div className="space-y-6">
-              <div className="inline-flex items-center gap-2 rounded-full border border-[#C5A059]/40 bg-[#FAF4E8] px-3.5 py-1 text-xs font-bold text-[#876725]">
-                <Gem className="h-3.5 w-3.5 text-[#C5A059]" aria-hidden="true" />
+              <div className="inline-flex items-center gap-2 rounded-full border border-gold-500/40 bg-gold-100 px-3.5 py-1 text-xs font-bold text-gold-700">
+                <Gem className="h-3.5 w-3.5 text-gold-500" aria-hidden="true" />
                 <span>معايير صناعة VARELLION الصارمة</span>
               </div>
 
@@ -359,7 +359,7 @@ export default async function HomePage() {
                 className="h-full w-full object-cover"
                 loading="lazy"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#0E0F11]/85 via-transparent to-transparent flex items-end p-6">
+              <div className="absolute inset-0 bg-gradient-to-t from-obsidian-950/85 via-transparent to-transparent flex items-end p-6">
                 <span className="text-sm font-bold text-white">
                   ساعة VARELLION Emerald Chronograph — دقة الفولاذ والياقوت
                 </span>
