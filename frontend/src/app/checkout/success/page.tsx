@@ -4,6 +4,7 @@ import React, { useEffect, useState, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { ordersService } from '@/services/orders';
+import { siteConfig } from '@/config/site';
 import { Order } from '@/types';
 import { Button } from '@/components/ui/Button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
@@ -71,26 +72,22 @@ function OrderSuccessContent() {
   };
 
   // WhatsApp concierge message formatting
-  const customerPhoneClean = (order?.customerPhone || '').replace(/\D/g, '');
-  const recipientPhone = customerPhoneClean.startsWith('0') ? '2' + customerPhoneClean : customerPhoneClean;
+  const brandWhatsAppBase = siteConfig.whatsappUrl || 'https://wa.me/201000000000';
+  const customerWhatsAppMessage = `👑 *طلب تأكيد ومتابعة شحنة من VARELLION* 👑
 
-  const conciergeWhatsAppMessage = `👑 *مرحباً بك في عالم VARELLION الفاخر* 👑
-
-عزيزنا العميل: *${order?.customerName || 'المميز'}*،
-تم تأكيد طلبك بنجاح وجارٍ تجهيزه بعناية فائقة 📦✨
-
+مرحباً خدمة عملاء VARELLION، أود تأكيد وتتبع تفاصيل طلبي:
 🔖 *رقم الطلب:* ${displayOrderNumber}
-📍 *العنوان:* ${order?.shippingGovernorate || ''} — ${order?.shippingCityArea || ''}
+👤 *الاسم:* ${order?.customerName || ''}
+📱 *الهاتف:* ${order?.customerPhone || ''}
+📍 *المحافظة:* ${order?.shippingGovernorate || ''} — ${order?.shippingCityArea || ''}
 💰 *المبلغ المطلوب:* ${(order?.totalAmount || 0).toLocaleString('ar-EG')} ج.م
 
-🔗 *تتبع مسار شحنتك وموعد وصول المندوب بضغطة واحدة مباشرة:*
+🔗 *رابط التتبع المباشر للشحنة:*
 ${directTrackUrl}
 
-نشكرك على اختيارك VARELLION ✨`;
+شكراً لكم ✨`;
 
-  const customerWhatsAppUrl = recipientPhone
-    ? `https://wa.me/${recipientPhone}?text=${encodeURIComponent(conciergeWhatsAppMessage)}`
-    : `https://wa.me/?text=${encodeURIComponent(conciergeWhatsAppMessage)}`;
+  const conciergeWhatsAppUrl = `${brandWhatsAppBase}?text=${encodeURIComponent(customerWhatsAppMessage)}`;
 
   return (
     <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-4xl py-10 md:py-16 text-start">
@@ -256,12 +253,12 @@ ${directTrackUrl}
             </CardHeader>
             <CardContent className="space-y-3 pt-3 text-xs">
               <p className="text-muted-foreground leading-relaxed">
-                يمكن لصاحب المتجر إرسال رسالة واتساب رسمية ومجهزة للعميل برابط تتبع مباشر، كما يمكن للعميل مشاركة الرابط لفتح التتبع مباشرة دون الحاجة لإدخال أرقام.
+                تواصل مباشرة مع خدمة عملاء VARELLION عبر واتساب لتأكيد شحنتك، أو استفسر عن موعد وصول المندوب ومتابعة خط السير برابط التتبع المباشر.
               </p>
 
               <div className="flex flex-col sm:flex-row gap-2 pt-1">
                 <a
-                  href={customerWhatsAppUrl}
+                  href={conciergeWhatsAppUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex-1"
@@ -273,7 +270,7 @@ ${directTrackUrl}
                     className="w-full gap-2 text-xs font-bold bg-[#25D366] hover:bg-[#20ba5a] text-white cursor-pointer min-h-[42px]"
                   >
                     <MessageCircle className="w-4 h-4" aria-hidden="true" />
-                    <span>إرسال رابط التتبع عبر واتساب للعميل</span>
+                    <span>تأكيد ومتابعة الطلب مع خدمة العملاء عبر واتساب</span>
                   </Button>
                 </a>
 
