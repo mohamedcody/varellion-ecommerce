@@ -82,4 +82,26 @@ class RateLimitFilterTest {
         assertThat(catalogRes.getStatus()).isEqualTo(200);
         verify(filterChain, times(1)).doFilter(catalogReq, catalogRes);
     }
+
+    @Test
+    @DisplayName("Should block order lookup requests exceeding 15 per minute")
+    void testOrderLookupRateLimiting() throws ServletException, IOException {
+        String clientIp = "192.168.1.50";
+
+        for (int i = 0; i < 15; i++) {
+            MockHttpServletRequest req = new MockHttpServletRequest("POST", "/api/orders/lookup");
+            req.setRemoteAddr(clientIp);
+            MockHttpServletResponse res = new MockHttpServletResponse();
+            rateLimitFilter.doFilter(req, res, filterChain);
+            assertThat(res.getStatus()).isEqualTo(200);
+        }
+
+        MockHttpServletRequest blockedReq = new MockHttpServletRequest("GET", "/api/orders/track");
+        blockedReq.setRemoteAddr(clientIp);
+        MockHttpServletResponse blockedRes = new MockHttpServletResponse();
+        rateLimitFilter.doFilter(blockedReq, blockedRes, filterChain);
+
+        assertThat(blockedRes.getStatus()).isEqualTo(429);
+        assertThat(blockedRes.getContentAsString()).contains("Too Many Requests");
+    }
 }

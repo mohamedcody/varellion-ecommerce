@@ -2,7 +2,7 @@ import { Category, Product, ShippingZone } from '@/types';
 
 export const mockCategories: Category[] = [
   {
-    categoryId: 'cat-watches',
+    categoryId: '11111111-1111-1111-1111-111111111111',
     slug: 'watches',
     nameAr: 'الساعات الفاخرة',
     nameEn: 'Luxury Watches',
@@ -12,7 +12,7 @@ export const mockCategories: Category[] = [
     productCount: 8,
   },
   {
-    categoryId: 'cat-leather-goods',
+    categoryId: '22222222-2222-2222-2222-222222222222',
     slug: 'leather-goods',
     nameAr: 'المحافظ والجلديات',
     nameEn: 'Leather Goods',
@@ -22,7 +22,7 @@ export const mockCategories: Category[] = [
     productCount: 6,
   },
   {
-    categoryId: 'cat-accessories',
+    categoryId: '33333333-3333-3333-3333-333333333333',
     slug: 'accessories',
     nameAr: 'الإكسسوارات الرجالية',
     nameEn: 'Men Accessories',
@@ -35,8 +35,8 @@ export const mockCategories: Category[] = [
 
 export const mockProducts: Product[] = [
   {
-    productId: 'prod-watch-01',
-    categoryId: 'cat-watches',
+    productId: 'a0000000-0000-0000-0000-000000000001',
+    categoryId: '11111111-1111-1111-1111-111111111111',
     slug: 'varellion-emerald-chronograph',
     sku: 'VAR-W-EMR-01',
     nameAr: 'ساعة فارليون كرونوغراف — المينا الزمردية',
@@ -72,8 +72,8 @@ export const mockProducts: Product[] = [
     ],
   },
   {
-    productId: 'prod-watch-02',
-    categoryId: 'cat-watches',
+    productId: 'a0000000-0000-0000-0000-000000000002',
+    categoryId: '11111111-1111-1111-1111-111111111111',
     slug: 'varellion-obsidian-automatic',
     sku: 'VAR-W-OBS-02',
     nameAr: 'ساعة فارليون أوبسيديان — سوار جلد طبيعي أسود',
@@ -101,8 +101,8 @@ export const mockProducts: Product[] = [
     ],
   },
   {
-    productId: 'prod-watch-03',
-    categoryId: 'cat-watches',
+    productId: 'a0000000-0000-0000-0000-000000000003',
+    categoryId: '11111111-1111-1111-1111-111111111111',
     slug: 'varellion-royale-skeleton',
     sku: 'VAR-W-SKL-03',
     nameAr: 'ساعة فارليون سكيلتون رويال — ميكانيكية أوتوماتيكية',
@@ -130,8 +130,8 @@ export const mockProducts: Product[] = [
     ],
   },
   {
-    productId: 'prod-leather-01',
-    categoryId: 'cat-leather-goods',
+    productId: 'b0000000-0000-0000-0000-000000000001',
+    categoryId: '22222222-2222-2222-2222-222222222222',
     slug: 'varellion-bifold-cognac-wallet',
     sku: 'VAR-L-COB-01',
     nameAr: 'محفظة فارليون ثنائية الطي — جلد كونياك طبيعي 100%',
@@ -159,8 +159,8 @@ export const mockProducts: Product[] = [
     ],
   },
   {
-    productId: 'prod-leather-02',
-    categoryId: 'cat-leather-goods',
+    productId: 'b0000000-0000-0000-0000-000000000002',
+    categoryId: '22222222-2222-2222-2222-222222222222',
     slug: 'varellion-slim-cardholder',
     sku: 'VAR-L-CRD-02',
     nameAr: 'حامل بطاقات فارليون سليم — جلد أسود فاخر',
@@ -188,8 +188,8 @@ export const mockProducts: Product[] = [
     ],
   },
   {
-    productId: 'prod-acc-01',
-    categoryId: 'cat-accessories',
+    productId: 'c0000000-0000-0000-0000-000000000001',
+    categoryId: '33333333-3333-3333-3333-333333333333',
     slug: 'varellion-monogram-cufflinks',
     sku: 'VAR-A-CUF-01',
     nameAr: 'أزرار أكمام فارليون الملكية — مطلية بالمينا وعرق اللؤلؤ',

@@ -37,15 +37,15 @@ export function CartDrawer() {
     <Sheet
       isOpen={isCartOpen}
       onClose={closeCart}
-      side="left" // Decided in Grill-Me: matches cart trigger location on the left side of Header in RTL
+      side="left" // Matches cart trigger location on the left side of Header in RTL
       title={`سلة المشتريات (${totalItems})`}
-      className="max-w-md w-full flex flex-col p-0 bg-background"
+      className="max-w-md w-full flex flex-col p-0 bg-background text-start"
     >
       {items.length === 0 ? (
         /* Empty State */
         <div className="flex flex-col items-center justify-center flex-1 px-6 py-16 text-center">
-          <div className="flex h-20 w-20 items-center justify-center rounded-full bg-primary/10 text-primary mb-5 shadow-xs">
-            <PackageOpen className="h-10 w-10 text-primary" aria-hidden="true" />
+          <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-[#0E0F11] text-[#C5A059] mb-5 border border-[#C5A059]/30 shadow-xs">
+            <PackageOpen className="h-10 w-10 text-[#C5A059]" aria-hidden="true" />
           </div>
           <h3 className="text-lg font-black text-foreground mb-2">
             سلة مشترياتك فارغة حالياً
@@ -79,7 +79,7 @@ export function CartDrawer() {
                   <Link
                     href={`/products/${item.product.slug}`}
                     onClick={closeCart}
-                    className="relative h-20 w-20 shrink-0 overflow-hidden rounded-lg border border-border/80 bg-muted/30 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
+                    className="relative h-20 w-20 shrink-0 overflow-hidden rounded-lg border border-border bg-card shadow-2xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     aria-label={`عرض تفاصيل ${item.product.nameAr}`}
                   >
                     {mainImg?.imageUrl ? (
@@ -102,7 +102,7 @@ export function CartDrawer() {
                     <Link
                       href={`/products/${item.product.slug}`}
                       onClick={closeCart}
-                      className="font-bold text-xs sm:text-sm text-foreground hover:text-primary transition-colors line-clamp-1 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring rounded-xs"
+                      className="font-bold text-xs sm:text-sm text-foreground hover:text-[#876725] transition-colors line-clamp-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-xs"
                     >
                       {item.product.nameAr}
                     </Link>
@@ -113,26 +113,26 @@ export function CartDrawer() {
                     </div>
 
                     {/* Price in EGP */}
-                    <div className="text-xs font-black text-foreground">
+                    <div className="text-xs font-black text-foreground tabular-nums">
                       {item.product.price.toLocaleString('ar-EG')}{' '}
-                      <span className="font-bold text-[10px]">ج.م</span>
+                      <span className="font-bold text-[10px] text-muted-foreground">ج.م</span>
                     </div>
 
                     {/* Quantity Buttons & Delete */}
                     <div className="flex items-center justify-between pt-1">
-                      <div className="flex items-center border border-border rounded-lg bg-card">
+                      <div className="flex items-center border border-border rounded-lg bg-card shadow-2xs">
                         {/* Decrease */}
                         <button
                           type="button"
                           onClick={() => updateQuantity(item.cartItemId, item.quantity - 1)}
-                          className="flex min-h-[44px] min-w-[44px] items-center justify-center text-muted-foreground hover:text-foreground transition-colors cursor-pointer focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring rounded-r-lg"
+                          className="flex min-h-[40px] min-w-[40px] items-center justify-center text-muted-foreground hover:text-foreground transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-r-lg"
                           aria-label={`إنقاص كمية ${item.product.nameAr}`}
                         >
                           <Minus className="h-3.5 w-3.5" aria-hidden="true" />
                         </button>
 
                         {/* Current Quantity */}
-                        <span className="min-w-[28px] text-center text-xs font-bold text-foreground">
+                        <span className="min-w-[28px] text-center text-xs font-black text-foreground tabular-nums">
                           {item.quantity}
                         </span>
 
@@ -141,10 +141,10 @@ export function CartDrawer() {
                           type="button"
                           disabled={isMaxStock}
                           onClick={() => updateQuantity(item.cartItemId, item.quantity + 1)}
-                          className={`flex min-h-[44px] min-w-[44px] items-center justify-center transition-colors rounded-l-lg ${
+                          className={`flex min-h-[40px] min-w-[40px] items-center justify-center transition-colors rounded-l-lg ${
                             isMaxStock
                               ? 'text-muted-foreground/30 cursor-not-allowed'
-                              : 'text-muted-foreground hover:text-foreground cursor-pointer focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring'
+                              : 'text-muted-foreground hover:text-foreground cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
                           }`}
                           aria-label={`زيادة كمية ${item.product.nameAr}`}
                         >
@@ -156,7 +156,7 @@ export function CartDrawer() {
                       <button
                         type="button"
                         onClick={() => removeItem(item.cartItemId)}
-                        className="flex min-h-[44px] min-w-[44px] items-center justify-center text-muted-foreground hover:text-rose-600 transition-colors cursor-pointer focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring rounded-lg"
+                        className="flex min-h-[40px] min-w-[40px] items-center justify-center text-muted-foreground hover:text-rose-600 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-lg"
                         aria-label={`حذف ${item.product.nameAr} من السلة`}
                         title="حذف القطعة"
                       >
@@ -166,7 +166,7 @@ export function CartDrawer() {
 
                     {/* Stock Limit Warning */}
                     {isMaxStock && (
-                      <p className="text-[10px] text-amber-700 dark:text-amber-400 font-semibold pt-0.5">
+                      <p className="text-[10px] text-amber-800 font-semibold pt-0.5">
                         أقصى كمية متوفرة في المخزون حالياً ({item.product.availableStock} قطع)
                       </p>
                     )}
@@ -183,13 +183,13 @@ export function CartDrawer() {
               <span className="text-sm font-semibold text-muted-foreground">
                 المجموع الفرعي ({totalItems} قطع):
               </span>
-              <span className="text-xl font-black text-foreground">
+              <span className="text-xl font-black text-foreground tabular-nums">
                 {subtotal.toLocaleString('ar-EG')}{' '}
-                <span className="text-xs font-bold">ج.م</span>
+                <span className="text-xs font-bold text-muted-foreground">ج.م</span>
               </span>
             </div>
 
-            {/* Approved Shipping Disclaimer (No fake free shipping, no fake tax) */}
+            {/* Approved Shipping Disclaimer */}
             <p className="text-[11px] text-muted-foreground leading-relaxed">
               المجموع الفرعي لا يشمل رسوم الشحن. تُحدد وتُضاف رسوم التوصيل في الخطوة التالية وفقاً للمحافظة المحددة وطرق الشحن المعتمدة.
             </p>
@@ -202,7 +202,7 @@ export function CartDrawer() {
                 onClick={handleCheckoutClick}
                 className="w-full gap-2 font-bold min-h-[48px] shadow-sm text-sm"
               >
-                <ShoppingBag className="h-4 w-4" aria-hidden="true" />
+                <ShoppingBag className="h-4 w-4 text-[#C5A059]" aria-hidden="true" />
                 <span>المتابعة لإتمام الطلب</span>
               </Button>
 

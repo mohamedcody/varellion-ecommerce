@@ -1,14 +1,16 @@
 'use client';
 
 import React from 'react';
-import { OrderStatus } from '@/types';
+import { OrderStatus, OrderStatusHistory } from '@/types';
 import { CheckCircle2, Package, Truck, Home, AlertCircle, Clock, ShieldCheck } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface OrderTrackingTimelineProps {
   status: OrderStatus;
   createdAt: string;
+  updatedAt?: string;
   governorate: string;
+  statusHistory?: OrderStatusHistory[];
 }
 
 interface StepInfo {
@@ -61,18 +63,61 @@ function getActiveStepIndex(status: OrderStatus): number {
   }
 }
 
-export function OrderTrackingTimeline({ status, createdAt, governorate }: OrderTrackingTimelineProps) {
+export function OrderTrackingTimeline({ status, createdAt, updatedAt, governorate, statusHistory = [] }: OrderTrackingTimelineProps) {
+  const isDelivered = status === 'DELIVERED';
   const isCancelled = status === 'CANCELLED' || status === 'EXPIRED';
   const isFailed = status === 'DELIVERY_FAILED' || status === 'RETURNED';
   const activeIndex = getActiveStepIndex(status);
 
-  // Formatted date
-  const formattedDate = new Date(createdAt).toLocaleDateString('ar-EG', {
-    weekday: 'long',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  });
+  // Formatted date with safety check against invalid/empty createdAt
+  const formattedDate = React.useMemo(() => {
+    if (!createdAt) return '';
+    try {
+      const d = new Date(createdAt);
+      if (isNaN(d.getTime())) return '';
+      return d.toLocaleDateString('ar-EG', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      });
+    } catch {
+      return '';
+    }
+  }, [createdAt]);
+
+  // Extract progression timestamps from status history if available
+  const getStepTimestamp = (stepId: string): string | null => {
+    let targetStatuses: string[] = [];
+    if (stepId === 'received') targetStatuses = ['PENDING_CUSTOMER_CONFIRMATION', 'CONFIRMED'];
+    else if (stepId === 'preparing') targetStatuses = ['PREPARING'];
+    else if (stepId === 'shipped') targetStatuses = ['SHIPPED'];
+    else if (stepId === 'delivered') targetStatuses = ['DELIVERED'];
+
+    // Search in reverse order to obtain the latest progression timestamp for this milestone
+    const entry = (statusHistory && statusHistory.length > 0)
+      ? [...statusHistory].reverse().find((h) =>
+          targetStatuses.some((ts) => ts.toLowerCase() === h.newStatus?.trim().toLowerCase())
+        )
+      : undefined;
+
+    const dateStr = entry?.createdAt ||
+      (stepId === 'received' ? createdAt : (stepId === 'delivered' && isDelivered ? (updatedAt || createdAt) : null));
+    if (!dateStr) return null;
+
+    try {
+      const d = new Date(dateStr);
+      if (isNaN(d.getTime())) return null;
+      return d.toLocaleDateString('ar-EG', {
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+    } catch {
+      return null;
+    }
+  };
 
   return (
     <div className="space-y-6 text-start">
@@ -101,13 +146,15 @@ export function OrderTrackingTimeline({ status, createdAt, governorate }: OrderT
       <div className="relative">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 md:gap-2">
           {TRACKING_STEPS.map((step, index) => {
-            const isCompleted = !isCancelled && index < activeIndex;
-            const isCurrent = !isCancelled && index === activeIndex;
+            const isCompleted = !isCancelled && (isDelivered ? index <= activeIndex : index < activeIndex);
+            const isCurrent = !isCancelled && !isDelivered && index === activeIndex;
             const Icon = step.icon;
+            const stepTimestamp = getStepTimestamp(step.id);
 
             return (
               <div
                 key={step.id}
+                data-testid={`timeline-step-${step.id}`}
                 className={cn(
                   'relative flex md:flex-col items-start gap-3.5 md:gap-2 p-3.5 rounded-xl border transition-all',
                   isCurrent
@@ -136,12 +183,16 @@ export function OrderTrackingTimeline({ status, createdAt, governorate }: OrderT
                 </div>
 
                 {/* Step Text Details */}
-                <div className="space-y-0.5 min-w-0">
-                  <div className="flex items-center gap-2">
+                <div className="space-y-0.5 min-w-0 flex-1">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <span
                       className={cn(
                         'text-xs font-bold truncate',
-                        isCurrent ? 'text-primary' : isCompleted ? 'text-foreground' : 'text-muted-foreground'
+                        isCurrent
+                          ? 'text-primary'
+                          : isCompleted
+                          ? 'text-emerald-700 dark:text-emerald-400'
+                          : 'text-muted-foreground'
                       )}
                     >
                       {step.label}
@@ -151,10 +202,20 @@ export function OrderTrackingTimeline({ status, createdAt, governorate }: OrderT
                         الآن
                       </span>
                     )}
+                    {isCompleted && step.id === 'delivered' && (
+                      <span className="text-[10px] bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 font-bold px-1.5 py-0.2 rounded-full shrink-0">
+                        مكتمل
+                      </span>
+                    )}
                   </div>
                   <p className="text-[11px] text-muted-foreground leading-relaxed">
                     {step.description}
                   </p>
+                  {stepTimestamp && (
+                    <span className="text-[10px] text-muted-foreground/80 font-mono block pt-0.5" dir="ltr">
+                      {stepTimestamp}
+                    </span>
+                  )}
                 </div>
               </div>
             );
@@ -162,18 +223,32 @@ export function OrderTrackingTimeline({ status, createdAt, governorate }: OrderT
         </div>
       </div>
 
-      {/* Trust Notice */}
-      <div className="p-3.5 rounded-xl bg-muted/40 border border-border/50 text-xs text-muted-foreground flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-        <span className="flex items-center gap-2">
-          <ShieldCheck className="h-4 w-4 text-primary shrink-0" aria-hidden="true" />
-          <span>
-            تاريخ تسجيل الطلب: <strong className="text-foreground">{formattedDate}</strong>
+      {/* Trust Notice / Delivered Confirmation */}
+      {isDelivered ? (
+        <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-800 dark:text-emerald-300 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <span className="flex items-center gap-2">
+            <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400 shrink-0" aria-hidden="true" />
+            <span>
+              تم تسليم الطلب بنجاح للعميل — اكتملت جميع مراحل الشحن والتوصيل.
+            </span>
           </span>
-        </span>
-        <span className="text-[11px] bg-primary/10 text-primary font-bold px-2 py-0.5 rounded-full self-start sm:self-auto">
-          المعاينة متاحة مع المندوب قبل السداد
-        </span>
-      </div>
+          <span className="text-[11px] bg-emerald-600 text-white font-bold px-2.5 py-0.5 rounded-full self-start sm:self-auto">
+            تم التسليم بنجاح
+          </span>
+        </div>
+      ) : (
+        <div className="p-3.5 rounded-xl bg-muted/40 border border-border/50 text-xs text-muted-foreground flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <span className="flex items-center gap-2">
+            <ShieldCheck className="h-4 w-4 text-primary shrink-0" aria-hidden="true" />
+            <span>
+              تاريخ تسجيل الطلب: <strong className="text-foreground">{formattedDate || 'غير محدد'}</strong>
+            </span>
+          </span>
+          <span className="text-[11px] bg-primary/10 text-primary font-bold px-2 py-0.5 rounded-full self-start sm:self-auto">
+            المعاينة متاحة مع المندوب قبل السداد
+          </span>
+        </div>
+      )}
     </div>
   );
 }

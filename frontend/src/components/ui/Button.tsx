@@ -4,30 +4,30 @@ import { Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const buttonVariants = cva(
-  'inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 select-none cursor-pointer active:scale-[0.98] transition-transform duration-100',
+  'inline-flex items-center justify-center whitespace-nowrap rounded-lg text-sm font-semibold transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 select-none cursor-pointer active:scale-[0.98]',
   {
     variants: {
       variant: {
         default:
-          'bg-primary text-primary-foreground shadow hover:bg-primary/90',
+          'bg-primary text-primary-foreground shadow-sm hover:bg-obsidian-800',
         luxury:
-          'bg-[#12363B] text-white hover:bg-[#17565D] border border-[#2D7F83]/30 shadow-md',
+          'bg-obsidian-900 text-white hover:bg-obsidian-800 border border-[#C5A059]/35 shadow-sm hover:border-[#C5A059]/60',
         gold:
-          'bg-[#C5A059] text-white hover:bg-[#B38F46] shadow-sm',
+          'bg-gold-500 text-obsidian-950 hover:bg-gold-600 shadow-sm font-bold',
         destructive:
           'bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90',
         outline:
-          'border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground',
+          'border border-border bg-card text-foreground shadow-xs hover:bg-secondary hover:border-ivory-300',
         secondary:
-          'bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80',
-        ghost: 'hover:bg-accent hover:text-accent-foreground',
-        link: 'text-primary underline-offset-4 hover:underline',
+          'bg-secondary text-secondary-foreground shadow-xs hover:bg-ivory-200',
+        ghost: 'hover:bg-secondary hover:text-foreground text-foreground',
+        link: 'text-primary underline-offset-4 hover:underline font-semibold',
       },
       size: {
-        default: 'h-10 px-4 py-2',
-        sm: 'h-8 rounded-md px-3 text-xs',
-        lg: 'h-12 rounded-md px-8 text-base font-semibold',
-        icon: 'h-10 w-10',
+        default: 'h-11 px-5 py-2.5 min-h-[44px]',
+        sm: 'h-9 rounded-md px-3.5 text-xs min-h-[36px]',
+        lg: 'h-12 rounded-lg px-8 text-base min-h-[48px]',
+        icon: 'h-11 w-11 min-h-[44px] min-w-[44px]',
       },
     },
     defaultVariants: {

@@ -23,6 +23,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class RateLimitFilter extends OncePerRequestFilter {
 
     private static final int AUTH_LIMIT_PER_MINUTE = 20;
+    private static final int ORDER_LOOKUP_LIMIT_PER_MINUTE = 15;
     private static final int EXPENSIVE_LIMIT_PER_MINUTE = 5;
     private static final long WINDOW_MS = 60_000L;
     private static final int MAX_TRACKED_IPS = 50_000; // Prevent unbounded memory growth
@@ -42,6 +43,9 @@ public class RateLimitFilter extends OncePerRequestFilter {
         if (path.startsWith("/api/auth")) {
             bucketType = "AUTH";
             limit = AUTH_LIMIT_PER_MINUTE;
+        } else if (path.startsWith("/api/orders/lookup") || path.startsWith("/api/orders/track")) {
+            bucketType = "ORDER_LOOKUP";
+            limit = ORDER_LOOKUP_LIMIT_PER_MINUTE;
         } else if (path.startsWith("/api/upload") || path.startsWith("/api/ai")) {
             bucketType = "EXPENSIVE";
             limit = EXPENSIVE_LIMIT_PER_MINUTE;

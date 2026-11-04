@@ -3,25 +3,25 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/lib/utils';
 
 const badgeVariants = cva(
-  'inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2',
+  'inline-flex items-center rounded-md border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2',
   {
     variants: {
       variant: {
         default:
-          'border-transparent bg-primary text-primary-foreground shadow',
+          'border-transparent bg-primary text-primary-foreground shadow-xs',
         luxury:
-          'border-[#2D7F83]/40 bg-[#12363B] text-white',
+          'border-[#C5A059]/35 bg-obsidian-900 text-[#C5A059] shadow-xs',
         gold:
-          'border-transparent bg-[#C5A059] text-white shadow-sm',
+          'border-transparent bg-gold-500 text-obsidian-950 font-bold shadow-xs',
         secondary:
-          'border-transparent bg-secondary text-secondary-foreground',
+          'border-border bg-secondary text-secondary-foreground',
         destructive:
-          'border-transparent bg-destructive text-destructive-foreground shadow',
-        outline: 'text-foreground border-border',
+          'border-transparent bg-destructive text-destructive-foreground shadow-xs',
+        outline: 'text-foreground border-border bg-card/60',
         success:
-          'border-transparent bg-emerald-700 text-white shadow-sm',
+          'border-transparent bg-emerald-700 text-white shadow-xs',
         warning:
-          'border-transparent bg-amber-600 text-white shadow-sm',
+          'border-transparent bg-amber-600 text-white shadow-xs',
       },
     },
     defaultVariants: {

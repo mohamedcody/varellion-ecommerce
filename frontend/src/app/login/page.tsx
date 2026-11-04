@@ -96,7 +96,7 @@ function LoginFormContent() {
       <Card className="border-border/80 shadow-lg bg-card">
         <CardHeader className="text-center space-y-2 pb-6">
           <div className="inline-flex items-center justify-center mx-auto mb-1">
-            <span className="text-2xl font-black tracking-widest text-[#C5A059] uppercase font-serif">
+            <span className="text-2xl font-black tracking-widest text-foreground uppercase font-serif">
               VARELLION
             </span>
           </div>
@@ -236,7 +236,7 @@ function LoginFormContent() {
             ليس لديك حساب بعد؟{' '}
             <Link
               href={redirectParam ? `/register?redirect=${encodeURIComponent(redirectParam)}` : '/register'}
-              className="font-bold text-[#C5A059] hover:underline focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring rounded-xs"
+              className="font-bold text-[#876725] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-xs"
             >
               إنشاء حساب جديد
             </Link>

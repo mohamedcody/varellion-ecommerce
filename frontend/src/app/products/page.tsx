@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo, Suspense } from 'react';
+import React, { useState, useEffect, useMemo, Suspense, useCallback } from 'react';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { catalogService } from '@/services/api';
 import { Product, Category } from '@/types';
@@ -8,7 +8,9 @@ import { ProductGrid } from '@/components/product/ProductGrid';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Badge } from '@/components/ui/Badge';
-import { Search, Sparkles, X, Loader2 } from 'lucide-react';
+import { Search, Sparkles, X, Loader2, ChevronRight, ChevronLeft, RotateCcw } from 'lucide-react';
+
+const PAGE_SIZE = 20;
 
 function ProductsContent() {
   const router = useRouter();
@@ -18,15 +20,27 @@ function ProductsContent() {
   // URL Query Parameters
   const paramCategory = searchParams.get('category') || 'all';
   const paramSearch = searchParams.get('search') || searchParams.get('q') || '';
-  const paramFeatured = searchParams.get('featured') === 'true';
 
   const [products, setProducts] = useState<Product[]>([]);
+  const [totalProducts, setTotalProducts] = useState<number>(0);
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>(paramCategory);
-  const [searchQuery, setSearchQuery] = useState<string>(paramSearch);
-  const [isFeaturedOnly, setIsFeaturedOnly] = useState<boolean>(paramFeatured);
+  const [searchInput, setSearchInput] = useState<string>(paramSearch);
+  const [debouncedSearch, setDebouncedSearch] = useState<string>(paramSearch);
   const [sortBy, setSortBy] = useState<'bestseller' | 'price-asc' | 'price-desc'>('bestseller');
+  const [currentPage, setCurrentPage] = useState<number>(0);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState<number>(0);
+
+  // Debounce search query input (300ms)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchInput);
+      setCurrentPage(0);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchInput]);
 
   // Synchronize internal state when URL search params change
   useEffect(() => {
@@ -34,127 +48,124 @@ function ProductsContent() {
   }, [paramCategory]);
 
   useEffect(() => {
-    setSearchQuery(paramSearch);
+    setSearchInput(paramSearch);
+    setDebouncedSearch(paramSearch);
   }, [paramSearch]);
 
+  // Load categories once on mount
   useEffect(() => {
-    setIsFeaturedOnly(paramFeatured);
-  }, [paramFeatured]);
-
-  // Load catalog categories and products
-  useEffect(() => {
-    async function loadData() {
-      setIsLoading(true);
+    let isMounted = true;
+    async function loadCategories() {
       try {
-        const [cats, prodsRes] = await Promise.all([
-          catalogService.getCategories(),
-          catalogService.getProducts(),
-        ]);
-        setCategories(cats);
-        setProducts(prodsRes.products);
+        const cats = await catalogService.getCategories();
+        if (isMounted) {
+          setCategories(cats);
+        }
       } catch (err) {
-        console.error('Failed to load catalog data:', err);
-      } finally {
-        setIsLoading(false);
+        console.error('Failed to load categories:', err);
       }
     }
-    loadData();
+    loadCategories();
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
-  // Update URL helper to maintain clean, shareable URLs
-  const updateUrl = (newCategory?: string, newSearch?: string, newFeatured?: boolean) => {
-    const params = new URLSearchParams();
-    const cat = newCategory !== undefined ? newCategory : selectedCategory;
-    const search = newSearch !== undefined ? newSearch : searchQuery;
-    const feat = newFeatured !== undefined ? newFeatured : isFeaturedOnly;
+  // Backend-Driven Product Fetching
+  useEffect(() => {
+    let isCancelled = false;
 
-    if (cat && cat !== 'all') {
-      params.set('category', cat);
+    async function fetchProducts() {
+      setIsLoading(true);
+      setFetchError(null);
+      try {
+        const res = await catalogService.getProducts({
+          categorySlug: selectedCategory === 'all' ? undefined : selectedCategory,
+          searchQuery: debouncedSearch.trim() || undefined,
+          sortBy: sortBy,
+          page: currentPage,
+          limit: PAGE_SIZE,
+        });
+
+        if (!isCancelled) {
+          setProducts(res.products);
+          setTotalProducts(res.total);
+        }
+      } catch (err) {
+        if (!isCancelled) {
+          console.error('Failed to load products from backend:', err);
+          setFetchError('تعذر الاتصال بالخادم لتحميل المنتجات. يرجى التحقق من الاتصال وإعادة المحاولة.');
+          setProducts([]);
+          setTotalProducts(0);
+        }
+      } finally {
+        if (!isCancelled) {
+          setIsLoading(false);
+        }
+      }
     }
-    if (search.trim()) {
-      params.set('search', search.trim());
+
+    fetchProducts();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [selectedCategory, debouncedSearch, sortBy, currentPage, retryCount]);
+
+  // Update URL helper to maintain clean, shareable URLs
+  const updateUrl = useCallback((newCategory: string, newSearch: string) => {
+    const params = new URLSearchParams();
+
+    if (newCategory && newCategory !== 'all') {
+      params.set('category', newCategory);
     }
-    if (feat) {
-      params.set('featured', 'true');
+    if (newSearch && newSearch.trim()) {
+      params.set('search', newSearch.trim());
     }
 
     const queryString = params.toString();
     const targetUrl = queryString ? `${pathname}?${queryString}` : pathname;
     router.push(targetUrl, { scroll: false });
-  };
+  }, [pathname, router]);
 
   const handleCategorySelect = (categorySlug: string) => {
     setSelectedCategory(categorySlug);
-    updateUrl(categorySlug, searchQuery, isFeaturedOnly);
+    setCurrentPage(0);
+    updateUrl(categorySlug, debouncedSearch);
   };
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = e.target.value;
-    setSearchQuery(val);
+    setSearchInput(e.target.value);
   };
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    updateUrl(selectedCategory, searchQuery, isFeaturedOnly);
+    setDebouncedSearch(searchInput);
+    setCurrentPage(0);
+    updateUrl(selectedCategory, searchInput);
   };
 
   const handleClearSearch = () => {
-    setSearchQuery('');
-    updateUrl(selectedCategory, '', isFeaturedOnly);
+    setSearchInput('');
+    setDebouncedSearch('');
+    setCurrentPage(0);
+    updateUrl(selectedCategory, '');
   };
 
   const handleClearFilters = () => {
     setSelectedCategory('all');
-    setSearchQuery('');
-    setIsFeaturedOnly(false);
+    setSearchInput('');
+    setDebouncedSearch('');
+    setCurrentPage(0);
     router.push(pathname, { scroll: false });
   };
-
-  // Filter & Sort Logic
-  const filteredProducts = useMemo(() => {
-    let result = [...products];
-
-    // Filter by Category
-    if (selectedCategory !== 'all') {
-      const cat = categories.find((c) => c.slug === selectedCategory);
-      if (cat) {
-        result = result.filter((p) => p.categoryId === cat.categoryId);
-      }
-    }
-
-    // Filter by Search Query
-    if (searchQuery.trim()) {
-      const q = searchQuery.trim().toLowerCase();
-      result = result.filter(
-        (p) =>
-          p.nameAr.toLowerCase().includes(q) ||
-          p.nameEn.toLowerCase().includes(q) ||
-          p.descriptionAr.toLowerCase().includes(q) ||
-          p.sku.toLowerCase().includes(q)
-      );
-    }
-
-    // Filter by Featured
-    if (isFeaturedOnly) {
-      result = result.filter((p) => p.isFeatured);
-    }
-
-    // Sort
-    if (sortBy === 'price-asc') {
-      result.sort((a, b) => a.price - b.price);
-    } else if (sortBy === 'price-desc') {
-      result.sort((a, b) => b.price - a.price);
-    } else if (sortBy === 'bestseller') {
-      result.sort((a, b) => (b.isBestSeller ? 1 : 0) - (a.isBestSeller ? 1 : 0));
-    }
-
-    return result;
-  }, [products, selectedCategory, searchQuery, isFeaturedOnly, sortBy, categories]);
 
   const activeCategoryName = useMemo(() => {
     if (selectedCategory === 'all') return null;
     return categories.find((c) => c.slug === selectedCategory)?.nameAr || null;
   }, [selectedCategory, categories]);
+
+  const totalPages = Math.ceil(totalProducts / PAGE_SIZE);
 
   return (
     <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-10 max-w-7xl">
@@ -175,7 +186,7 @@ function ProductsContent() {
 
         {/* Count Badge & Active Filter Reset */}
         <div className="flex items-center gap-3">
-          {(selectedCategory !== 'all' || searchQuery.trim() || isFeaturedOnly) && (
+          {(selectedCategory !== 'all' || debouncedSearch.trim()) && (
             <Button
               variant="outline"
               size="sm"
@@ -188,7 +199,7 @@ function ProductsContent() {
           )}
 
           <Badge variant="outline" className="px-3 py-1 font-semibold text-xs">
-            {filteredProducts.length} {filteredProducts.length === 1 ? 'منتج متاح' : 'منتجات متاحة'}
+            {totalProducts} {totalProducts === 1 ? 'منتج متاح' : 'منتجات متاحة'}
           </Badge>
         </div>
       </div>
@@ -198,7 +209,7 @@ function ProductsContent() {
         {/* Category Filters */}
         <div className="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0 scrollbar-none" role="tablist" aria-label="أقسام المنتجات">
           <Button
-            variant={selectedCategory === 'all' && !isFeaturedOnly ? 'luxury' : 'outline'}
+            variant={selectedCategory === 'all' ? 'luxury' : 'outline'}
             size="sm"
             onClick={() => handleCategorySelect('all')}
             className="rounded-full text-xs font-bold shrink-0 min-h-[40px] px-4 cursor-pointer"
@@ -217,21 +228,6 @@ function ProductsContent() {
               {cat.nameAr}
             </Button>
           ))}
-
-          {/* Featured Deals Filter Pill */}
-          <Button
-            variant={isFeaturedOnly ? 'luxury' : 'outline'}
-            size="sm"
-            onClick={() => {
-              const next = !isFeaturedOnly;
-              setIsFeaturedOnly(next);
-              updateUrl(selectedCategory, searchQuery, next);
-            }}
-            className="rounded-full text-xs font-bold shrink-0 min-h-[40px] px-4 cursor-pointer border-[#C5A059]/40 text-[#8C6D23] dark:text-[#C5A059]"
-          >
-            <Sparkles className="h-3.5 w-3.5 mr-1" aria-hidden="true" />
-            <span>عروض حصرية</span>
-          </Button>
         </div>
 
         {/* Search & Sort Controls */}
@@ -242,12 +238,12 @@ function ProductsContent() {
             <Input
               type="search"
               placeholder="ابحث بالاسم أو الموديل..."
-              value={searchQuery}
+              value={searchInput}
               onChange={handleSearchChange}
               className="pr-9 pl-8 text-xs h-10 rounded-lg"
               aria-label="ابحث في الكتالوج"
             />
-            {searchQuery && (
+            {searchInput && (
               <button
                 type="button"
                 onClick={handleClearSearch}
@@ -263,7 +259,10 @@ function ProductsContent() {
           <div className="relative">
             <select
               value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as any)}
+              onChange={(e) => {
+                setSortBy(e.target.value as any);
+                setCurrentPage(0);
+              }}
               className="h-10 rounded-lg border border-input bg-background px-3 py-2 text-xs font-semibold text-foreground focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring cursor-pointer min-h-[40px]"
               aria-label="ترتيب المنتجات"
             >
@@ -275,13 +274,60 @@ function ProductsContent() {
         </div>
       </div>
 
+      {/* Error State with Retry Button */}
+      {fetchError && !isLoading && (
+        <div className="flex flex-col items-center justify-center p-8 rounded-xl border border-destructive/20 bg-destructive/5 text-center my-6">
+          <p className="text-sm text-destructive font-medium mb-3">{fetchError}</p>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setRetryCount((c) => c + 1)}
+            className="gap-2 text-xs"
+          >
+            <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />
+            <span>إعادة المحاولة</span>
+          </Button>
+        </div>
+      )}
+
       {/* Product Grid Showcase */}
       <ProductGrid
-        products={filteredProducts}
+        products={products}
         isLoading={isLoading}
-        emptyTitle={searchQuery ? `لم نجد أي نتائج لـ "${searchQuery}"` : 'لم نجد أي قطع مطابقة'}
+        emptyTitle={debouncedSearch ? `لم نجد أي نتائج لـ "${debouncedSearch}"` : 'لم نجد أي قطع مطابقة'}
         emptyDescription="جرب تغيير كلمات البحث أو اختر قسماً آخر من الأقسام بالأعلى."
       />
+
+      {/* Pagination Controls */}
+      {!isLoading && totalPages > 1 && (
+        <div className="flex items-center justify-center gap-3 mt-12 pt-6 border-t border-border/60">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setCurrentPage((p) => Math.max(0, p - 1))}
+            disabled={currentPage === 0}
+            className="gap-1 text-xs"
+          >
+            <ChevronRight className="h-4 w-4" aria-hidden="true" />
+            <span>السابق</span>
+          </Button>
+
+          <span className="text-xs font-semibold text-muted-foreground px-3">
+            صفحة {currentPage + 1} من {totalPages}
+          </span>
+
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setCurrentPage((p) => Math.min(totalPages - 1, p + 1))}
+            disabled={currentPage >= totalPages - 1}
+            className="gap-1 text-xs"
+          >
+            <span>التالي</span>
+            <ChevronLeft className="h-4 w-4" aria-hidden="true" />
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

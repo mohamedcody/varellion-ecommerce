@@ -233,6 +233,16 @@ export interface OrderItem {
   imageUrl?: string;
 }
 
+export interface OrderStatusHistory {
+  historyId?: string;
+  previousStatus?: string | null;
+  newStatus: string;
+  statusDisplayAr?: string;
+  statusDisplayEn?: string;
+  reason?: string;
+  createdAt: string;
+}
+
 export interface Order {
   orderId: string;
   orderNumber: string; // e.g. VAR-20261027-0102
@@ -247,10 +257,16 @@ export interface Order {
   shippingFee: number;
   totalAmount: number;
   orderStatus: OrderStatus;
+  statusDisplayAr?: string;
+  statusDisplayEn?: string;
+  shippingFeeStatus?: string;
+  estimatedDeliveryAr?: string;
+  confirmationDeadline?: string;
   paymentMethod: PaymentMethod;
   customerNotes?: string;
   adminNotes?: string;
   items: OrderItem[];
+  statusHistory?: OrderStatusHistory[];
   createdAt: string;
   updatedAt: string;
 }

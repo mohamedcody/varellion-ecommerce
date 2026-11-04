@@ -23,11 +23,29 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ar" dir="rtl" className="scroll-smooth">
-      <body className="min-h-screen flex flex-col bg-background text-foreground antialiased selection:bg-primary/20 selection:text-primary">
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=Tajawal:wght@400;500;700;800&display=swap"
+          rel="stylesheet"
+        />
+      </head>
+      <body className="min-h-screen flex flex-col bg-background text-foreground antialiased selection:bg-[#C5A059]/25 selection:text-[#876725]">
+        {/* WCAG 2.4.1 Accessible Skip to Main Content Link */}
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:start-4 focus:z-50 focus:rounded-lg focus:bg-primary focus:text-primary-foreground focus:px-4 focus:py-2.5 focus:shadow-xl focus:outline-none focus:ring-2 focus:ring-ring"
+        >
+          الانتقال إلى المحتوى الرئيسي
+        </a>
+
         <AuthProvider>
           <CartProvider>
             <Header />
-            <div className="flex-1">{children}</div>
+            <main id="main-content" className="flex-1">
+              {children}
+            </main>
             <Footer />
             <CartDrawer />
             <CartToast />

@@ -391,7 +391,7 @@ function RegisterFormContent() {
             لديك حساب بالفعل؟{' '}
             <Link
               href={redirectParam ? `/login?redirect=${encodeURIComponent(redirectParam)}` : '/login'}
-              className="font-bold text-[#C5A059] hover:underline focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring rounded-xs"
+              className="font-bold text-[#876725] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-xs"
             >
               تسجيل الدخول
             </Link>

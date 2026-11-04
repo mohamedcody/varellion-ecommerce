@@ -23,35 +23,38 @@ import {
 
 const EGYPTIAN_PHONE_REGEX = /^01[0125][0-9]{8}$/;
 
+function normalizeEgyptianPhone(raw: string): string {
+  if (!raw) return '';
+  let digits = raw.replace(/\D/g, '');
+  if (digits.startsWith('0020')) {
+    digits = '0' + digits.substring(4);
+  } else if (digits.startsWith('20') && digits.length === 12) {
+    digits = '0' + digits.substring(2);
+  } else if (!digits.startsWith('0') && digits.length === 10 && ['10', '11', '12', '15'].some((p) => digits.startsWith(p))) {
+    digits = '0' + digits;
+  }
+  return digits;
+}
+
 function TrackOrderContent() {
   const searchParams = useSearchParams();
   const initialOrderParam = searchParams.get('orderNumber') || '';
+  const initialPhoneParam = searchParams.get('phone') || '';
 
   const [orderNumber, setOrderNumber] = useState(initialOrderParam);
-  const [phone, setPhone] = useState('');
+  const [phone, setPhone] = useState(initialPhoneParam);
   const [isSearching, setIsSearching] = useState(false);
   const [trackedOrder, setTrackedOrder] = useState<Order | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<{ orderNumber?: string; phone?: string }>({});
 
-  // Auto-fill from sessionStorage if customer just placed an order
-  useEffect(() => {
-    if (initialOrderParam && !phone) {
-      const last = ordersService.getLastPlacedOrder();
-      if (last && last.orderNumber.toLowerCase() === initialOrderParam.toLowerCase()) {
-        setPhone(last.customerPhone);
-      }
-    }
-  }, [initialOrderParam, phone]);
-
-  const handleSearch = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const performTrack = async (targetOrderNumber: string, targetPhone: string) => {
     setErrorMessage(null);
     setTrackedOrder(null);
 
     const errors: { orderNumber?: string; phone?: string } = {};
-    const cleanNum = orderNumber.trim();
-    const cleanPhone = phone.trim();
+    const cleanNum = (targetOrderNumber || '').trim();
+    const cleanPhone = normalizeEgyptianPhone(targetPhone);
 
     if (!cleanNum) {
       errors.orderNumber = 'يرجى إدخال رقم الطلب (مثال: VAR-20261028-1234)';
@@ -59,7 +62,7 @@ function TrackOrderContent() {
       errors.orderNumber = 'رقم الطلب غير صحيح أو قصير جداً';
     }
 
-    if (!cleanPhone) {
+    if (!targetPhone || !targetPhone.trim()) {
       errors.phone = 'يرجى إدخال رقم الموبايل المسجل به الطلب';
     } else if (!EGYPTIAN_PHONE_REGEX.test(cleanPhone)) {
       errors.phone = 'رقم موبايل مصري غير صحيح (يجب أن يبدأ بـ 010 أو 011 أو 012 أو 015 ويتكون من 11 رقماً)';
@@ -93,9 +96,36 @@ function TrackOrderContent() {
     }
   };
 
+  // Auto-fill from sessionStorage if customer just placed an order and phone is missing
+  useEffect(() => {
+    if (initialOrderParam && !phone && !initialPhoneParam) {
+      const last = ordersService.getLastPlacedOrder();
+      if (last && last.orderNumber.toLowerCase() === initialOrderParam.toLowerCase()) {
+        setPhone(last.customerPhone);
+      }
+    }
+  }, [initialOrderParam, phone, initialPhoneParam]);
+
+  // WhatsApp 1-Click Concierge Tracking Auto-Lookup
+  useEffect(() => {
+    const candidateOrder = (initialOrderParam || orderNumber).trim();
+    const candidatePhone = normalizeEgyptianPhone(initialPhoneParam || phone);
+
+    if (candidateOrder && candidatePhone && EGYPTIAN_PHONE_REGEX.test(candidatePhone)) {
+      performTrack(candidateOrder, candidatePhone);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialOrderParam, initialPhoneParam]);
+
+  const handleSearch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await performTrack(orderNumber, phone);
+  };
+
   const handleApplyDemoOrder = () => {
     setOrderNumber('VAR-20261028-0001');
     setPhone('01012345678');
+    setErrorMessage(null);
     setFieldErrors({});
   };
 

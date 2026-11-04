@@ -16,6 +16,23 @@ export function generateOrderNumber(): string {
   return `VAR-${year}${month}${day}-${randomSuffix}`;
 }
 
+/**
+ * Normalizes Egyptian phone numbers into an 11-digit standard string (01XXXXXXXXX).
+ * Handles +20, 0020, 20 prefixes, spaces, and hyphens.
+ */
+export function normalizeEgyptianPhone(raw: string): string {
+  if (!raw) return '';
+  let digits = raw.replace(/\D/g, '');
+  if (digits.startsWith('0020')) {
+    digits = '0' + digits.substring(4);
+  } else if (digits.startsWith('20') && digits.length === 12) {
+    digits = '0' + digits.substring(2);
+  } else if (!digits.startsWith('0') && digits.length === 10 && ['10', '11', '12', '15'].some((p) => digits.startsWith(p))) {
+    digits = '0' + digits;
+  }
+  return digits;
+}
+
 export interface PlaceOrderParams {
   request: CreateOrderRequest;
   subtotal: number;
@@ -26,59 +43,29 @@ export interface PlaceOrderParams {
 
 export const ordersService = {
   /**
-   * Submits a new order to the backend API.
-   * If the backend server is unreachable in development/offline mode,
-   * gracefully generates a validated local Order object for testing.
+   * Submits a new authoritative order to the backend API.
+   * Throws ApiError or Error on failure so the UI surfaces real backend messages.
+   * Caches authoritative order in sessionStorage with a guarded try/catch.
    */
   async createOrder(params: PlaceOrderParams): Promise<Order> {
-    const { request, subtotal, shippingFee, discountTotal = 0, orderItems } = params;
-    const totalAmount = subtotal + shippingFee - discountTotal;
+    const { request } = params;
 
-    try {
-      // 1. Attempt authoritative backend submission
-      const createdOrder = await requestApi<Order>('/orders', {
-        method: 'POST',
-        body: JSON.stringify(request),
-      });
+    const response = await requestApi<{ data?: Order } | Order>('/orders', {
+      method: 'POST',
+      body: JSON.stringify(request),
+    });
 
-      if (typeof window !== 'undefined') {
+    const createdOrder = (response as { data?: Order }).data ?? (response as Order);
+
+    if (typeof window !== 'undefined') {
+      try {
         sessionStorage.setItem(SESSION_ORDER_KEY, JSON.stringify(createdOrder));
+      } catch (storageErr) {
+        console.warn('[ordersService] Failed to cache order in sessionStorage:', storageErr);
       }
-      return createdOrder;
-    } catch (backendError) {
-      console.warn(
-        '[ordersService] Backend order submission unavailable, activating local development snapshot:',
-        backendError
-      );
-
-      // 2. Fallback local snapshot strictly matching PostgreSQL public.orders schema
-      const localOrder: Order = {
-        orderId: typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `ord_${Date.now()}`,
-        orderNumber: generateOrderNumber(),
-        customerName: request.customerName,
-        customerPhone: request.customerPhone,
-        shippingGovernorate: request.shippingGovernorate,
-        shippingCityArea: request.shippingCityArea,
-        shippingDetailedAddress: request.shippingDetailedAddress,
-        currency: 'EGP',
-        subtotal,
-        discountTotal,
-        shippingFee,
-        totalAmount,
-        orderStatus: 'PENDING_CUSTOMER_CONFIRMATION',
-        paymentMethod: request.paymentMethod,
-        customerNotes: request.customerNotes,
-        items: orderItems,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-
-      if (typeof window !== 'undefined') {
-        sessionStorage.setItem(SESSION_ORDER_KEY, JSON.stringify(localOrder));
-      }
-
-      return localOrder;
     }
+
+    return createdOrder;
   },
 
   /**
@@ -101,20 +88,33 @@ export const ordersService = {
    * Attempts live backend query first, then falls back to session snapshot and realistic dev fixtures.
    */
   async trackOrder(orderNumber: string, phone: string): Promise<Order | null> {
-    const cleanNum = orderNumber.trim();
-    const cleanPhone = phone.trim().replace(/\D/g, '');
+    const cleanNum = (orderNumber || '').trim();
+    const cleanPhone = normalizeEgyptianPhone(phone);
 
     try {
-      const response = await requestApi<Order>(
-        `/orders/track?orderNumber=${encodeURIComponent(cleanNum)}&phone=${encodeURIComponent(cleanPhone)}`
+      const response = await requestApi<{ data?: Order } | Order>(
+        `/orders/track?orderNumber=${encodeURIComponent(cleanNum)}&phone=${encodeURIComponent(cleanPhone)}`,
+        {
+          headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            Pragma: 'no-cache',
+          },
+        }
       );
-      return response;
+      const result = (response as { data?: Order }).data ?? (response as Order);
+      if (typeof window !== 'undefined' && result) {
+        const lastOrder = this.getLastPlacedOrder();
+        if (lastOrder && lastOrder.orderNumber.toLowerCase() === cleanNum.toLowerCase()) {
+          sessionStorage.setItem(SESSION_ORDER_KEY, JSON.stringify(result));
+        }
+      }
+      return result;
     } catch {
       // Offline / Local development fallback
       if (typeof window !== 'undefined') {
         const lastOrder = this.getLastPlacedOrder();
         if (lastOrder) {
-          const storedPhone = lastOrder.customerPhone.trim().replace(/\D/g, '');
+          const storedPhone = normalizeEgyptianPhone(lastOrder.customerPhone);
           if (
             lastOrder.orderNumber.toLowerCase() === cleanNum.toLowerCase() &&
             storedPhone === cleanPhone
@@ -126,11 +126,15 @@ export const ordersService = {
 
       // Demo/Fixture Order for testing if user enters test order number
       if (
-        (cleanNum.toUpperCase() === 'VAR-DEMO-2026' || cleanNum.toUpperCase() === 'VAR-20261028-0001') &&
+        (cleanNum.toUpperCase() === 'VAR-DEMO-2026' ||
+         cleanNum.toUpperCase() === 'VAR-20261028-0001' ||
+         cleanNum.toUpperCase() === 'VAR-DEMO-DELIVERED' ||
+         cleanNum.toUpperCase() === 'VAR-20261028-DELIVERED') &&
         (cleanPhone === '01012345678' || cleanPhone === '01000000000')
       ) {
+        const isDeliveredDemo = cleanNum.toUpperCase().includes('DELIVERED');
         return {
-          orderId: 'demo-ord-uuid-001',
+          orderId: isDeliveredDemo ? 'demo-ord-delivered-001' : 'demo-ord-uuid-001',
           orderNumber: cleanNum.toUpperCase(),
           customerName: 'محمد أحمد علي',
           customerPhone: '01012345678',
@@ -142,7 +146,9 @@ export const ordersService = {
           discountTotal: 0,
           shippingFee: 0,
           totalAmount: 3450,
-          orderStatus: 'SHIPPED',
+          orderStatus: isDeliveredDemo ? 'DELIVERED' : 'SHIPPED',
+          statusDisplayAr: isDeliveredDemo ? 'تم التسليم بنجاح' : 'مع مندوب التوصيل',
+          statusDisplayEn: isDeliveredDemo ? 'Delivered' : 'Out for Delivery',
           paymentMethod: 'CASH_ON_DELIVERY',
           customerNotes: 'يرجى الاتصال قبل الوصول بـ 30 دقيقة.',
           items: [
@@ -167,7 +173,37 @@ export const ordersService = {
               totalPrice: 600,
             },
           ],
-          createdAt: new Date(Date.now() - 86400000).toISOString(),
+          statusHistory: isDeliveredDemo
+            ? [
+                {
+                  newStatus: 'CONFIRMED',
+                  statusDisplayAr: 'تم تأكيد الطلب بنجاح',
+                  createdAt: new Date(Date.now() - 172800000).toISOString(),
+                },
+                {
+                  newStatus: 'SHIPPED',
+                  statusDisplayAr: 'مع مندوب التوصيل',
+                  createdAt: new Date(Date.now() - 86400000).toISOString(),
+                },
+                {
+                  newStatus: 'DELIVERED',
+                  statusDisplayAr: 'تم التسليم بنجاح',
+                  createdAt: new Date().toISOString(),
+                },
+              ]
+            : [
+                {
+                  newStatus: 'CONFIRMED',
+                  statusDisplayAr: 'تم تأكيد الطلب بنجاح',
+                  createdAt: new Date(Date.now() - 86400000).toISOString(),
+                },
+                {
+                  newStatus: 'SHIPPED',
+                  statusDisplayAr: 'مع مندوب التوصيل',
+                  createdAt: new Date().toISOString(),
+                },
+              ],
+          createdAt: new Date(Date.now() - 172800000).toISOString(),
           updatedAt: new Date().toISOString(),
         };
       }

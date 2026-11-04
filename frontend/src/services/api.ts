@@ -3,7 +3,7 @@ import { mockCategories, mockProducts, mockShippingZones } from '@/data/mockProd
 
 const RAW_API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api';
 export const API_BASE_URL = RAW_API_URL.replace(/\/+$/, '');
-const USE_MOCK = process.env.NEXT_PUBLIC_USE_MOCK_API !== 'false'; // default to true in dev for catalog if backend catalog skeletons are empty
+const USE_MOCK = process.env.NEXT_PUBLIC_USE_MOCK_API === 'true'; // Default to false: Backend-Driven Architecture
 
 /**
  * Standardized API Error carrying HTTP status and backend validation errors
@@ -99,22 +99,37 @@ export async function requestApi<T>(endpoint: string, options?: RequestInit): Pr
     headers['Authorization'] = `Bearer ${token}`;
   }
 
-  // Network timeout safety (10 seconds timeout fallback)
+  // Network timeout safety (10 seconds timeout fallback linked with caller signal)
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 10000);
-  const signal = options?.signal || controller.signal;
+
+  let signal: AbortSignal;
+  if (options?.signal) {
+    if (typeof AbortSignal.any === 'function') {
+      signal = AbortSignal.any([controller.signal, options.signal]);
+    } else {
+      options.signal.addEventListener('abort', () => controller.abort(), { once: true });
+      signal = controller.signal;
+    }
+  } else {
+    signal = controller.signal;
+  }
 
   let res: Response;
   try {
+    const { signal: _callerSignal, ...restOptions } = options || {};
     res = await fetch(url, {
       credentials: 'include',
       headers,
-      ...options,
+      ...restOptions,
       signal,
     });
   } catch (err: unknown) {
     clearTimeout(timeoutId);
     if (err instanceof Error && err.name === 'AbortError') {
+      if (options?.signal?.aborted) {
+        throw err;
+      }
       throw new ApiError('Request timeout: Server took too long to respond', 408);
     }
     throw err;
@@ -205,6 +220,48 @@ async function fetchApi<T>(endpoint: string, options?: RequestInit): Promise<Api
 }
 
 /**
+ * Maps backend ProductDto into frontend Product domain model
+ */
+export function mapProductDto(dto: any): Product {
+  if (!dto) throw new Error('Null product DTO');
+  return {
+    productId: dto.productId,
+    categoryId: dto.categoryId,
+    category: dto.categorySlug ? {
+      categoryId: dto.categoryId,
+      slug: dto.categorySlug,
+      nameAr: dto.categoryNameAr || '',
+      nameEn: dto.categoryNameEn || '',
+      isActive: true,
+    } : undefined,
+    slug: dto.sku || dto.productId,
+    sku: dto.sku,
+    nameAr: dto.nameAr,
+    nameEn: dto.nameEn,
+    descriptionAr: dto.descriptionAr || '',
+    descriptionEn: dto.descriptionEn || '',
+    price: typeof dto.price === 'number' ? dto.price : parseFloat(dto.price || '0'),
+    costPrice: dto.costPrice ? (typeof dto.costPrice === 'number' ? dto.costPrice : parseFloat(dto.costPrice)) : undefined,
+    stockQuantity: dto.stockQuantity ?? dto.availableStock ?? 0,
+    reservedQuantity: dto.reservedQuantity ?? 0,
+    availableStock: dto.availableStock !== undefined
+      ? dto.availableStock
+      : Math.max(0, (dto.stockQuantity ?? 0) - (dto.reservedQuantity ?? 0)),
+    isActive: dto.isActive ?? true,
+    isFeatured: dto.isFeatured,
+    isBestSeller: dto.isBestSeller,
+    images: (dto.images || []).map((img: any) => ({
+      imageId: img.imageId,
+      productId: dto.productId,
+      imageUrl: img.imageUrl,
+      isMain: !!img.isMain,
+      displayOrder: img.displayOrder ?? 0,
+    })),
+    createdAt: dto.createdAt,
+  };
+}
+
+/**
  * Catalog API Service Layer
  */
 export const catalogService = {
@@ -216,12 +273,8 @@ export const catalogService = {
       return [...mockCategories];
     }
 
-    try {
-      const res = await fetchApi<Category[]>('/categories');
-      return res.data;
-    } catch {
-      return [...mockCategories];
-    }
+    const res = await fetchApi<Category[]>('/categories');
+    return res.data || [];
   },
 
   /**
@@ -231,7 +284,7 @@ export const catalogService = {
     if (USE_MOCK) {
       let filtered = [...mockProducts].filter((p) => p.isActive);
 
-      if (params?.categorySlug) {
+      if (params?.categorySlug && params.categorySlug !== 'all') {
         const cat = mockCategories.find((c) => c.slug === params.categorySlug);
         if (cat) {
           filtered = filtered.filter((p) => p.categoryId === cat.categoryId);
@@ -279,49 +332,53 @@ export const catalogService = {
       };
     }
 
-    try {
-      const query = new URLSearchParams();
-      if (params?.categorySlug) query.append('category', params.categorySlug);
-      if (params?.searchQuery) query.append('q', params.searchQuery);
-      if (params?.isFeatured) query.append('featured', 'true');
-      if (params?.page) query.append('page', params.page.toString());
-      if (params?.limit) query.append('limit', params.limit.toString());
+    const query = new URLSearchParams();
+    if (params?.categorySlug && params.categorySlug !== 'all') query.append('category', params.categorySlug);
+    if (params?.searchQuery) query.append('q', params.searchQuery.trim());
+    if (params?.sortBy) query.append('sort', params.sortBy);
+    if (params?.page !== undefined) query.append('page', params.page.toString());
+    if (params?.limit !== undefined) query.append('limit', params.limit.toString());
 
-      const res = await fetchApi<{ products: Product[]; total: number }>(`/products?${query.toString()}`);
-      return res.data;
-    } catch {
-      return { products: mockProducts, total: mockProducts.length };
-    }
+    const res = await fetchApi<{
+      products: any[];
+      totalElements: number;
+      totalPages: number;
+      currentPage: number;
+      pageSize: number;
+    }>(`/products${query.toString() ? `?${query.toString()}` : ''}`);
+
+    const data = res.data;
+    return {
+      products: (data.products || []).map(mapProductDto),
+      total: data.totalElements ?? data.products?.length ?? 0,
+    };
   },
 
   /**
-   * Fetch single product by slug
+   * Fetch single product by slug or SKU or UUID
    */
   async getProductBySlug(slug: string): Promise<Product | null> {
-    const cleanSlug = decodeURIComponent(slug || '').trim().toLowerCase();
+    const cleanSlug = decodeURIComponent(slug || '').trim();
     if (!cleanSlug) return null;
 
     if (USE_MOCK) {
       const product = mockProducts.find(
         (p) =>
-          p.slug.toLowerCase() === cleanSlug ||
-          p.sku.toLowerCase() === cleanSlug ||
-          p.productId.toLowerCase() === cleanSlug
+          p.slug.toLowerCase() === cleanSlug.toLowerCase() ||
+          p.sku.toLowerCase() === cleanSlug.toLowerCase() ||
+          p.productId.toLowerCase() === cleanSlug.toLowerCase()
       );
       return product ? { ...product } : null;
     }
 
     try {
-      const res = await fetchApi<Product>(`/products/${encodeURIComponent(cleanSlug)}`);
-      return res.data;
-    } catch {
-      const product = mockProducts.find(
-        (p) =>
-          p.slug.toLowerCase() === cleanSlug ||
-          p.sku.toLowerCase() === cleanSlug ||
-          p.productId.toLowerCase() === cleanSlug
-      );
-      return product ? { ...product } : null;
+      const res = await fetchApi<any>(`/products/${encodeURIComponent(cleanSlug)}`);
+      return res.data ? mapProductDto(res.data) : null;
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 404) {
+        return null;
+      }
+      throw error;
     }
   },
 
@@ -329,8 +386,13 @@ export const catalogService = {
    * Fetch best-selling products for showcase
    */
   async getBestSellers(limit: number = 4): Promise<Product[]> {
-    const res = await this.getProducts({ isBestSeller: true, limit });
-    return res.products.slice(0, limit);
+    if (USE_MOCK) {
+      const best = mockProducts.filter((p) => p.isBestSeller && p.isActive);
+      return best.slice(0, limit);
+    }
+
+    const res = await fetchApi<any[]>(`/products/best-sellers?limit=${limit}`);
+    return (res.data || []).map(mapProductDto);
   },
 
   /**

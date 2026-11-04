@@ -79,34 +79,34 @@ export function Header({ cartItemCount, onOpenCart }: HeaderProps) {
   return (
     <>
       {/* 1. Top Announcement Bar — Trust & Delivery Signals */}
-      <div className="w-full bg-[#12363B] text-white text-[11px] sm:text-xs py-2 px-4 border-b border-[#17565D]">
+      <div className="w-full bg-[#0E0F11] text-[#FAF9F6] text-[11px] sm:text-xs py-2 px-4 border-b border-[#22262B]">
         <div className="container mx-auto flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-3 mx-auto sm:mx-0">
-            <span className="inline-flex items-center gap-1 font-medium">
+            <span className="inline-flex items-center gap-1.5 font-medium">
               <Truck className="h-3.5 w-3.5 text-[#C5A059]" aria-hidden="true" />
               <span>شحن سريع لـ 27 محافظة في مصر</span>
             </span>
-            <span className="hidden md:inline text-white/40">|</span>
-            <span className="hidden md:inline-flex items-center gap-1 text-white/90">
+            <span className="hidden md:inline text-white/30">|</span>
+            <span className="hidden md:inline-flex items-center gap-1.5 text-white/90">
               <ShieldCheck className="h-3.5 w-3.5 text-[#C5A059]" aria-hidden="true" />
-              <span>معاينة المنتج قبل الاستلام والدفع عند الاستلام</span>
+              <span>معاينة المنتج وفحصه قبل الاستلام والدفع عند الاستلام</span>
             </span>
           </div>
 
           <div className="hidden sm:flex items-center gap-4 text-[11px] text-white/80">
             <Link
               href="/track-order"
-              className="inline-flex items-center gap-1 text-[#C5A059] hover:underline transition-colors font-medium cursor-pointer"
+              className="inline-flex items-center gap-1 text-[#C5A059] hover:underline transition-colors font-semibold cursor-pointer"
             >
               <Truck className="h-3 w-3 text-[#C5A059]" aria-hidden="true" />
               <span>تتبع طلبك</span>
             </Link>
-            <span className="text-white/40">|</span>
+            <span className="text-white/30">|</span>
             <span className="inline-flex items-center gap-1">
               <RotateCcw className="h-3 w-3 text-[#C5A059]" aria-hidden="true" />
               <span>ضمان استبدال 14 يوماً</span>
             </span>
-            <span>العملة: <strong>ج.م (EGP)</strong></span>
+            <span className="text-white/80">العملة: <strong className="text-white font-bold">ج.م (EGP)</strong></span>
           </div>
         </div>
       </div>
@@ -120,33 +120,33 @@ export function Header({ cartItemCount, onOpenCart }: HeaderProps) {
             <button
               type="button"
               onClick={() => setIsMobileNavOpen(true)}
-              className="flex lg:hidden min-h-[44px] min-w-[44px] items-center justify-center rounded-lg text-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-colors cursor-pointer"
+              className="flex lg:hidden min-h-[44px] min-w-[44px] items-center justify-center rounded-lg text-foreground hover:bg-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-colors cursor-pointer"
               aria-label="فتح القائمة الرئيسية للمتجر"
             >
               <Menu className="h-6 w-6" aria-hidden="true" />
             </button>
 
-            {/* Brand Logo */}
+            {/* Bespoke Luxury Typographic Brand Logo */}
             <Link
               href="/"
-              className="flex items-center gap-2.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-lg py-1 px-1.5 transition-transform active:scale-98"
+              className="flex items-center gap-2.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-lg py-1 px-1 transition-transform active:scale-98"
               aria-label="الصفحة الرئيسية لـ VARELLION"
             >
-              <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#12363B] text-white font-black text-lg shadow-sm border border-[#2D7F83]/40">
+              <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#0E0F11] text-[#C5A059] font-serif font-black text-xl shadow-xs border border-[#C5A059]/40">
                 V
               </span>
               <div className="flex flex-col text-start">
-                <span className="font-black text-lg tracking-wider text-[#12363B] leading-none">
+                <span className="font-serif font-black text-lg tracking-[0.14em] text-foreground leading-none">
                   VARELLION
                 </span>
-                <span className="text-[10px] uppercase font-bold tracking-widest text-[#717F82] leading-tight">
-                  Accessories
+                <span className="text-[9px] uppercase font-bold tracking-[0.24em] text-[#876725] leading-tight mt-0.5">
+                  Accessories & Time
                 </span>
               </div>
             </Link>
 
             {/* Desktop Navigation Links */}
-            <nav className="hidden lg:flex items-center gap-6 text-sm font-medium" aria-label="التنقل الرئيسي">
+            <nav className="hidden lg:flex items-center gap-6 text-sm font-semibold" aria-label="التنقل الرئيسي">
               {siteConfig.mainNav.map((item) => {
                 const isActive = pathname === item.href;
                 return (
@@ -154,18 +154,18 @@ export function Header({ cartItemCount, onOpenCart }: HeaderProps) {
                     key={item.href}
                     href={item.href}
                     className={cn(
-                      'relative py-1 transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm',
-                      isActive ? 'text-primary font-bold' : 'text-foreground/80'
+                      'relative py-1 transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm',
+                      isActive ? 'text-foreground font-bold' : 'text-foreground/75'
                     )}
                   >
                     <span>{item.titleAr}</span>
                     {item.badge && (
-                      <span className="mr-1.5 inline-block rounded-full bg-[#C5A059]/20 text-[#8C6D23] px-1.5 py-0.2 text-[10px] font-bold">
+                      <span className="mr-1.5 inline-block rounded-md bg-[#FAF4E8] text-[#876725] border border-[#C5A059]/30 px-1.5 py-0.2 text-[10px] font-bold">
                         {item.badge}
                       </span>
                     )}
                     {isActive && (
-                      <span className="absolute inset-x-0 -bottom-5 h-0.5 bg-primary rounded-full" />
+                      <span className="absolute inset-x-0 -bottom-5 h-0.5 bg-[#C5A059] rounded-full" />
                     )}
                   </Link>
                 );
@@ -174,18 +174,18 @@ export function Header({ cartItemCount, onOpenCart }: HeaderProps) {
           </div>
 
           {/* Left Section (in RTL): Search, Account, Cart */}
-          <div className="flex items-center gap-1 sm:gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2.5">
             
             {/* Search Trigger Button */}
             <button
               type="button"
               onClick={() => setIsSearchOpen(true)}
-              className="flex min-h-[44px] items-center gap-2 rounded-lg px-2.5 sm:px-3 text-muted-foreground hover:bg-muted hover:text-foreground border border-transparent sm:border-border transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="flex min-h-[44px] items-center gap-2 rounded-lg px-2.5 sm:px-3 text-muted-foreground hover:bg-secondary hover:text-foreground border border-transparent sm:border-border transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               aria-label="البحث عن منتجات VARELLION"
             >
               <Search className="h-4 w-4" aria-hidden="true" />
               <span className="hidden md:inline text-xs">ابحث عن ساعة أو محفظة…</span>
-              <kbd className="hidden lg:inline-flex items-center rounded border bg-muted/60 px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">
+              <kbd className="hidden lg:inline-flex items-center rounded border border-border bg-secondary/80 px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">
                 ⌘&nbsp;K
               </kbd>
             </button>
@@ -198,15 +198,15 @@ export function Header({ cartItemCount, onOpenCart }: HeaderProps) {
                   onClick={() => setIsUserMenuOpen((prev) => !prev)}
                   className={cn(
                     "flex min-h-[44px] items-center gap-2 rounded-xl px-2.5 sm:px-3 py-1.5 text-xs font-bold transition-all cursor-pointer",
-                    "border border-border/80 bg-background/90 hover:bg-muted shadow-xs",
-                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
-                    isUserMenuOpen && "bg-muted border-primary/40 ring-2 ring-primary/20"
+                    "border border-border bg-card hover:bg-secondary shadow-xs",
+                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C5A059]",
+                    isUserMenuOpen && "bg-secondary border-[#C5A059]/60 ring-2 ring-[#C5A059]/20"
                   )}
                   aria-expanded={isUserMenuOpen}
                   aria-haspopup="menu"
                   aria-label={`قائمة حساب المستخدم: ${user.username}`}
                 >
-                  <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#12363B] text-[#C5A059] border border-[#C5A059]/40 text-xs font-black shadow-xs shrink-0">
+                  <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#0E0F11] text-[#C5A059] border border-[#C5A059]/40 text-xs font-black shadow-xs shrink-0">
                     {user.username ? user.username.charAt(0).toUpperCase() : 'V'}
                   </span>
                   <span className="hidden md:inline-block max-w-[110px] truncate text-foreground font-semibold">
@@ -215,7 +215,7 @@ export function Header({ cartItemCount, onOpenCart }: HeaderProps) {
                   <ChevronDown
                     className={cn(
                       "h-3.5 w-3.5 text-muted-foreground transition-transform duration-200",
-                      isUserMenuOpen && "rotate-180 text-primary"
+                      isUserMenuOpen && "rotate-180 text-foreground"
                     )}
                     aria-hidden="true"
                   />
@@ -227,14 +227,14 @@ export function Header({ cartItemCount, onOpenCart }: HeaderProps) {
                     role="menu"
                     aria-orientation="vertical"
                     className={cn(
-                      "absolute end-0 mt-2.5 w-64 rounded-2xl border border-border bg-white dark:bg-[#182123] p-2.5 shadow-2xl z-50",
+                      "absolute end-0 mt-2.5 w-64 rounded-xl border border-border bg-card p-2.5 shadow-xl z-50",
                       "animate-in fade-in-0 zoom-in-95 duration-150 text-xs space-y-1.5",
                       "ring-1 ring-black/5"
                     )}
                   >
                     {/* User Header Profile Card */}
-                    <div className="flex items-center gap-3 p-2.5 rounded-xl bg-muted/40 border border-border/40 text-start">
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#12363B] text-[#C5A059] font-black text-sm border border-[#C5A059]/30">
+                    <div className="flex items-center gap-3 p-2.5 rounded-lg bg-secondary/60 border border-border/60 text-start">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#0E0F11] text-[#C5A059] font-serif font-black text-sm border border-[#C5A059]/35">
                         {user.username ? user.username.charAt(0).toUpperCase() : 'V'}
                       </div>
                       <div className="min-w-0 flex-1">
@@ -243,7 +243,7 @@ export function Header({ cartItemCount, onOpenCart }: HeaderProps) {
                           {user.role === 'ADMIN' ? (
                             <Badge variant="luxury" className="text-[9px] py-0 px-1.5 shrink-0">أدمن</Badge>
                           ) : (
-                            <span className="text-[10px] text-[#C5A059] font-bold shrink-0">عميل VARELLION</span>
+                            <span className="text-[10px] text-[#876725] font-bold shrink-0">عميل VARELLION</span>
                           )}
                         </div>
                         <p className="text-[11px] text-muted-foreground truncate mt-0.5">{user.email}</p>
@@ -255,9 +255,9 @@ export function Header({ cartItemCount, onOpenCart }: HeaderProps) {
                         href="/profile"
                         role="menuitem"
                         onClick={() => setIsUserMenuOpen(false)}
-                        className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-foreground hover:bg-muted font-semibold transition-colors text-start group"
+                        className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-foreground hover:bg-secondary font-semibold transition-colors text-start group"
                       >
-                        <div className="h-7 w-7 rounded-lg bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors shrink-0">
+                        <div className="h-7 w-7 rounded-md bg-secondary flex items-center justify-center text-foreground group-hover:bg-primary group-hover:text-primary-foreground transition-colors shrink-0">
                           <User className="h-4 w-4" aria-hidden="true" />
                         </div>
                         <div className="flex flex-col">
@@ -270,9 +270,9 @@ export function Header({ cartItemCount, onOpenCart }: HeaderProps) {
                         href="/track-order"
                         role="menuitem"
                         onClick={() => setIsUserMenuOpen(false)}
-                        className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-foreground hover:bg-muted font-semibold transition-colors text-start group"
+                        className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-foreground hover:bg-secondary font-semibold transition-colors text-start group"
                       >
-                        <div className="h-7 w-7 rounded-lg bg-[#C5A059]/15 flex items-center justify-center text-[#8C6D23] dark:text-[#C5A059] group-hover:bg-[#C5A059] group-hover:text-white transition-colors shrink-0">
+                        <div className="h-7 w-7 rounded-md bg-[#FAF4E8] flex items-center justify-center text-[#876725] group-hover:bg-[#C5A059] group-hover:text-obsidian-950 transition-colors shrink-0">
                           <Truck className="h-4 w-4" aria-hidden="true" />
                         </div>
                         <div className="flex flex-col">
@@ -286,10 +286,10 @@ export function Header({ cartItemCount, onOpenCart }: HeaderProps) {
                           href="/admin"
                           role="menuitem"
                           onClick={() => setIsUserMenuOpen(false)}
-                          className="flex items-center justify-between px-3 py-2 rounded-xl text-primary hover:bg-primary/10 font-bold transition-colors text-start"
+                          className="flex items-center justify-between px-3 py-2 rounded-lg text-foreground hover:bg-secondary font-bold transition-colors text-start"
                         >
                           <div className="flex items-center gap-2.5">
-                            <div className="h-7 w-7 rounded-lg bg-primary/15 flex items-center justify-center text-primary shrink-0">
+                            <div className="h-7 w-7 rounded-md bg-secondary flex items-center justify-center text-foreground shrink-0">
                               <ShieldCheck className="h-4 w-4" aria-hidden="true" />
                             </div>
                             <span>لوحة تحكم الإدارة</span>
@@ -299,7 +299,7 @@ export function Header({ cartItemCount, onOpenCart }: HeaderProps) {
                       )}
                     </div>
 
-                    <div className="my-1 border-t border-border/60" />
+                    <div className="my-1 border-t border-border" />
 
                     <button
                       type="button"
@@ -308,9 +308,9 @@ export function Header({ cartItemCount, onOpenCart }: HeaderProps) {
                         setIsUserMenuOpen(false);
                         await logout();
                       }}
-                      className="flex w-full items-center gap-2.5 px-3 py-2 rounded-xl text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 font-bold transition-colors cursor-pointer text-start group"
+                      className="flex w-full items-center gap-2.5 px-3 py-2 rounded-lg text-rose-600 hover:bg-rose-50 font-bold transition-colors cursor-pointer text-start group"
                     >
-                      <div className="h-7 w-7 rounded-lg bg-rose-500/10 flex items-center justify-center text-rose-600 group-hover:bg-rose-600 group-hover:text-white transition-colors shrink-0">
+                      <div className="h-7 w-7 rounded-md bg-rose-500/10 flex items-center justify-center text-rose-600 group-hover:bg-rose-600 group-hover:text-white transition-colors shrink-0">
                         <LogOut className="h-4 w-4" aria-hidden="true" />
                       </div>
                       <span className="text-xs">تسجيل الخروج</span>
@@ -321,7 +321,7 @@ export function Header({ cartItemCount, onOpenCart }: HeaderProps) {
             ) : (
               <Link
                 href="/login"
-                className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-xl text-muted-foreground hover:bg-muted hover:text-foreground transition-colors border border-transparent sm:border-border/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer"
+                className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors border border-transparent sm:border-border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer"
                 aria-label="تسجيل الدخول إلى حسابك"
                 title="تسجيل الدخول"
               >
@@ -333,17 +333,17 @@ export function Header({ cartItemCount, onOpenCart }: HeaderProps) {
             <button
               type="button"
               onClick={handleCartClick}
-              className="relative flex min-h-[44px] items-center gap-2 rounded-lg bg-primary/10 px-3 text-primary hover:bg-primary/20 transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring cursor-pointer"
+              className="relative flex min-h-[44px] items-center gap-2 rounded-lg bg-[#0E0F11] text-white hover:bg-obsidian-850 px-3.5 transition-all border border-[#C5A059]/30 shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C5A059] cursor-pointer"
               aria-label={`سلة المشتريات، تحتوي على ${effectiveCartCount} قطع`}
             >
-              <ShoppingBag className="h-5 w-5" aria-hidden="true" />
+              <ShoppingBag className="h-4 w-4 text-[#C5A059]" aria-hidden="true" />
               <span className="hidden sm:inline text-xs font-bold">السلة</span>
               {effectiveCartCount > 0 ? (
-                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#12363B] text-white text-[11px] font-bold shadow-xs animate-in zoom-in">
+                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#C5A059] text-obsidian-950 text-[11px] font-black shadow-xs animate-in zoom-in">
                   {effectiveCartCount}
                 </span>
               ) : (
-                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/20 text-primary text-[11px] font-semibold">
+                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white/10 text-white text-[11px] font-semibold">
                   0
                 </span>
               )}

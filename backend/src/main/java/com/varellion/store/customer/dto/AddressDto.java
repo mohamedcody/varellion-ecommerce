@@ -32,3 +32,4 @@ public class AddressDto {
     @Size(min = 5, message = "العنوان التفصيلي قصير جداً، يرجى توضيح بيانات الشارع والعمارة")
     private String detailedAddress;
 }
+

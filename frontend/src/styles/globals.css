@@ -1,82 +1,116 @@
 @import "tailwindcss";
 
 @theme inline {
-  --color-background: hsl(var(--background));
-  --color-foreground: hsl(var(--foreground));
-  --color-card: hsl(var(--card));
-  --color-card-foreground: hsl(var(--card-foreground));
-  --color-popover: hsl(var(--popover));
-  --color-popover-foreground: hsl(var(--popover-foreground));
-  --color-primary: hsl(var(--primary));
-  --color-primary-foreground: hsl(var(--primary-foreground));
-  --color-secondary: hsl(var(--secondary));
-  --color-secondary-foreground: hsl(var(--secondary-foreground));
-  --color-muted: hsl(var(--muted));
-  --color-muted-foreground: hsl(var(--muted-foreground));
-  --color-accent: hsl(var(--accent));
-  --color-accent-foreground: hsl(var(--accent-foreground));
-  --color-destructive: hsl(var(--destructive));
-  --color-destructive-foreground: hsl(var(--destructive-foreground));
-  --color-border: hsl(var(--border));
-  --color-input: hsl(var(--input));
-  --color-ring: hsl(var(--ring));
+  --font-tajawal: var(--font-tajawal), 'Tajawal', system-ui, -apple-system, sans-serif;
+  --font-cinzel: var(--font-cinzel), 'Cinzel', Georgia, serif;
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  /* Direct luxury brand color tokens */
+  --color-obsidian-950: var(--obsidian-950);
+  --color-obsidian-900: var(--obsidian-900);
+  --color-obsidian-850: var(--obsidian-850);
+  --color-obsidian-800: var(--obsidian-800);
+  --color-obsidian-700: var(--obsidian-700);
+
+  --color-ivory-50: var(--ivory-50);
+  --color-ivory-100: var(--ivory-100);
+  --color-ivory-200: var(--ivory-200);
+  --color-ivory-300: var(--ivory-300);
+
+  --color-gold-500: var(--gold-500);
+  --color-gold-600: var(--gold-600);
+  --color-gold-700: var(--gold-700);
+  --color-gold-100: var(--gold-100);
 }
 
 @layer base {
   :root {
-    /* Brand palette tokens */
-    --color-primary-900: #12363B;
-    --color-primary-700: #17565D;
-    --color-primary-500: #2D7F83;
-    --color-primary-300: #79B8B8;
-    --color-primary-100: #E6F3F2;
-    --color-primary-50: #F4FAF9;
+    /* --- VARELLION Obsidian & Dark Charcoal Palette --- */
+    --obsidian-950: #0E0F11;
+    --obsidian-900: #141619;
+    --obsidian-850: #1A1D20;
+    --obsidian-800: #22262B;
+    --obsidian-700: #2E333A;
 
-    /* Neutral palette tokens */
-    --color-neutral-900: #1C2426;
-    --color-neutral-800: #2C3537;
-    --color-neutral-700: #465154;
-    --color-neutral-500: #717F82;
-    --color-neutral-300: #CAD2D2;
-    --color-neutral-200: #E2E7E7;
-    --color-neutral-100: #F0F3F3;
-    --color-neutral-50: #F8FAFA;
-    --color-neutral-0: #FFFFFF;
+    /* --- VARELLION Warm Ivory & Alabaster Palette --- */
+    --ivory-50:  #FAF9F6;
+    --ivory-100: #F4F1EA;
+    --ivory-200: #EAE5D9;
+    --ivory-300: #D8D1C0;
 
-    /* Luxury Accent */
+    /* --- VARELLION Brushed Gold & Warm Brass Accents --- */
+    --gold-500: #C5A059;
+    --gold-600: #A8853F;
+    --gold-700: #876725; /* WCAG 2.2 AA compliant (4.8:1 on light surfaces) */
+    --gold-100: #FBF7EE;
+
+    /* --- Neutral Monochromes & Body Typography --- */
+    --charcoal-900: #121316;
+    --charcoal-800: #2A2E33;
+    --charcoal-700: #424850;
+    --charcoal-500: #6B7280;
+    --charcoal-400: #9CA3AF;
+
+    /* Backward-compatibility brand tokens (re-pointed to luxury palette) */
+    --color-primary-900: #141619;
+    --color-primary-700: #1A1D20;
+    --color-primary-500: #22262B;
+    --color-primary-300: #6B7280;
+    --color-primary-100: #F4F1EA;
+    --color-primary-50: #FAF9F6;
     --color-accent-gold: #C5A059;
-    --color-accent-gold-light: #FDF8ED;
+    --color-accent-gold-light: #FBF7EE;
 
-    /* Shadcn semantic tokens mapped to VARELLION design system */
-    --background: 195 20% 98%;        /* #F8FAFA */
-    --foreground: 192 15% 13%;        /* #1C2426 */
-    --card: 0 0% 100%;                /* #FFFFFF */
-    --card-foreground: 192 15% 13%;   /* #1C2426 */
-    --popover: 0 0% 100%;             /* #FFFFFF */
-    --popover-foreground: 192 15% 13%;/* #1C2426 */
-    --primary: 187 53% 15%;           /* #12363B */
-    --primary-foreground: 0 0% 100%;  /* #FFFFFF */
-    --secondary: 180 8% 95%;          /* #F0F3F3 */
-    --secondary-foreground: 192 15% 13%;
-    --muted: 180 8% 95%;              /* #F0F3F3 */
-    --muted-foreground: 188 7% 48%;   /* #717F82 */
-    --accent: 173 40% 97%;            /* #F4FAF9 */
-    --accent-foreground: 187 53% 15%; /* #12363B */
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 180 8% 90%;             /* #E2E7E7 */
-    --input: 180 8% 90%;              /* #E2E7E7 */
-    --ring: 183 49% 35%;              /* #2D7F83 */
+    /* Semantic mappings to Luxury Design System */
+    --background: #FAF9F6;
+    --foreground: #121316;
+    --card: #FFFFFF;
+    --card-foreground: #121316;
+    --popover: #FFFFFF;
+    --popover-foreground: #121316;
+    --primary: #141619;
+    --primary-foreground: #FFFFFF;
+    --secondary: #F4F1EA;
+    --secondary-foreground: #121316;
+    --muted: #F4F1EA;
+    --muted-foreground: #6B7280;
+    --accent: #FBF7EE;
+    --accent-foreground: #876725;
+    --destructive: #B42318;
+    --destructive-foreground: #FFFFFF;
+    --border: #EAE5D9;
+    --input: #EAE5D9;
+    --ring: #C5A059;
     --radius: 0.5rem;
   }
 
   * {
-    border-color: hsl(var(--border));
+    border-color: var(--border);
   }
 
   body {
-    background-color: hsl(var(--background));
-    color: hsl(var(--foreground));
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-tajawal), system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     font-feature-settings: "rlig" 1, "calt" 1;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;

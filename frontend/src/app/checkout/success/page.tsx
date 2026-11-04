@@ -20,6 +20,7 @@ import {
   ShieldCheck,
   Printer,
   Truck,
+  MessageCircle,
 } from 'lucide-react';
 
 function OrderSuccessContent() {
@@ -28,15 +29,24 @@ function OrderSuccessContent() {
 
   const [order, setOrder] = useState<Order | null>(null);
   const [copied, setCopied] = useState(false);
+  const [copiedLink, setCopiedLink] = useState(false);
+  const [origin, setOrigin] = useState('');
 
   useEffect(() => {
     const cachedOrder = ordersService.getLastPlacedOrder();
     if (cachedOrder) {
       setOrder(cachedOrder);
     }
+    if (typeof window !== 'undefined') {
+      setOrigin(window.location.origin);
+    }
   }, []);
 
   const displayOrderNumber = order?.orderNumber || urlOrderNumber || 'VAR-ORD-PENDING';
+
+  const directTrackUrl = origin
+    ? `${origin}/track-order?orderNumber=${encodeURIComponent(displayOrderNumber)}${order?.customerPhone ? `&phone=${encodeURIComponent(order.customerPhone)}` : ''}`
+    : `/track-order?orderNumber=${encodeURIComponent(displayOrderNumber)}`;
 
   const handleCopyOrderNumber = () => {
     if (navigator.clipboard) {
@@ -46,11 +56,41 @@ function OrderSuccessContent() {
     }
   };
 
+  const handleCopyDirectLink = () => {
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(directTrackUrl);
+      setCopiedLink(true);
+      setTimeout(() => setCopiedLink(false), 2500);
+    }
+  };
+
   const handlePrint = () => {
     if (typeof window !== 'undefined') {
       window.print();
     }
   };
+
+  // WhatsApp concierge message formatting
+  const customerPhoneClean = (order?.customerPhone || '').replace(/\D/g, '');
+  const recipientPhone = customerPhoneClean.startsWith('0') ? '2' + customerPhoneClean : customerPhoneClean;
+
+  const conciergeWhatsAppMessage = `👑 *مرحباً بك في عالم VARELLION الفاخر* 👑
+
+عزيزنا العميل: *${order?.customerName || 'المميز'}*،
+تم تأكيد طلبك بنجاح وجارٍ تجهيزه بعناية فائقة 📦✨
+
+🔖 *رقم الطلب:* ${displayOrderNumber}
+📍 *العنوان:* ${order?.shippingGovernorate || ''} — ${order?.shippingCityArea || ''}
+💰 *المبلغ المطلوب:* ${(order?.totalAmount || 0).toLocaleString('ar-EG')} ج.م
+
+🔗 *تتبع مسار شحنتك وموعد وصول المندوب بضغطة واحدة مباشرة:*
+${directTrackUrl}
+
+نشكرك على اختيارك VARELLION ✨`;
+
+  const customerWhatsAppUrl = recipientPhone
+    ? `https://wa.me/${recipientPhone}?text=${encodeURIComponent(conciergeWhatsAppMessage)}`
+    : `https://wa.me/?text=${encodeURIComponent(conciergeWhatsAppMessage)}`;
 
   return (
     <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-4xl py-10 md:py-16 text-start">
@@ -201,10 +241,69 @@ function OrderSuccessContent() {
             </Card>
           )}
 
+          {/* WhatsApp Tracking Concierge Card */}
+          <Card className="border border-emerald-500/30 bg-emerald-500/5 shadow-xs">
+            <CardHeader className="border-b border-emerald-500/20 pb-3">
+              <CardTitle className="text-sm font-bold flex items-center justify-between">
+                <div className="flex items-center gap-2 text-emerald-800 dark:text-emerald-400">
+                  <MessageCircle className="h-4 w-4" aria-hidden="true" />
+                  <span>خدمة تتبع الطلب عبر واتساب (WhatsApp Concierge)</span>
+                </div>
+                <span className="text-[10px] bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 font-bold px-2 py-0.5 rounded-full">
+                  تتبع مباشر بنقرة واحدة
+                </span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3 pt-3 text-xs">
+              <p className="text-muted-foreground leading-relaxed">
+                يمكن لصاحب المتجر إرسال رسالة واتساب رسمية ومجهزة للعميل برابط تتبع مباشر، كما يمكن للعميل مشاركة الرابط لفتح التتبع مباشرة دون الحاجة لإدخال أرقام.
+              </p>
+
+              <div className="flex flex-col sm:flex-row gap-2 pt-1">
+                <a
+                  href={customerWhatsAppUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-1"
+                >
+                  <Button
+                    type="button"
+                    variant="default"
+                    size="default"
+                    className="w-full gap-2 text-xs font-bold bg-[#25D366] hover:bg-[#20ba5a] text-white cursor-pointer min-h-[42px]"
+                  >
+                    <MessageCircle className="w-4 h-4" aria-hidden="true" />
+                    <span>إرسال رابط التتبع عبر واتساب للعميل</span>
+                  </Button>
+                </a>
+
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="default"
+                  onClick={handleCopyDirectLink}
+                  className="gap-2 text-xs font-semibold cursor-pointer border-emerald-600/30 text-emerald-800 dark:text-emerald-400 hover:bg-emerald-500/10 min-h-[42px]"
+                >
+                  {copiedLink ? (
+                    <>
+                      <Check className="w-4 h-4 text-emerald-600" aria-hidden="true" />
+                      <span>تم نسخ الرابط المباشر</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-4 h-4" aria-hidden="true" />
+                      <span>نسخ رابط التتبع المباشر</span>
+                    </>
+                  )}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
           {/* Action Buttons */}
           <div className="space-y-3 pt-2">
             <Link
-              href={`/track-order?orderNumber=${encodeURIComponent(displayOrderNumber)}`}
+              href={directTrackUrl}
               className="block w-full"
             >
               <Button

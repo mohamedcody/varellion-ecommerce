@@ -14,51 +14,51 @@ import {
 
 export function Footer() {
   return (
-    <footer className="w-full border-t border-border bg-[#1C2426] text-white" aria-labelledby="footer-heading">
+    <footer className="w-full border-t border-[#22262B] bg-[#0E0F11] text-white" aria-labelledby="footer-heading">
       <h2 id="footer-heading" className="sr-only">
         تذييل صفحة متجر VARELLION
       </h2>
 
       {/* 1. Value Guarantee Badges Banner */}
-      <div className="border-b border-white/10 py-8 px-4 sm:px-6 lg:px-8">
+      <div className="border-b border-[#22262B] py-8 px-4 sm:px-6 lg:px-8 bg-[#141619]">
         <div className="container mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           <div className="flex items-center gap-3.5">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#12363B] text-[#C5A059] border border-[#2D7F83]/30">
-              <ShieldCheck className="h-6 w-6" aria-hidden="true" />
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-[#0E0F11] text-[#C5A059] border border-[#C5A059]/30 shadow-xs">
+              <ShieldCheck className="h-5 w-5" aria-hidden="true" />
             </div>
             <div>
-              <h3 className="font-bold text-sm text-white">معاينة قبل الدفع</h3>
-              <p className="text-xs text-white/60">يحق لك فحص المنتج قبل سداد أي مبلغ</p>
+              <h3 className="font-bold text-sm text-[#FAF9F6]">معاينة قبل الدفع</h3>
+              <p className="text-xs text-white/70">يحق لك فحص المنتج وخامته قبل سداد أي مبلغ</p>
             </div>
           </div>
 
           <div className="flex items-center gap-3.5">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#12363B] text-[#C5A059] border border-[#2D7F83]/30">
-              <Banknote className="h-6 w-6" aria-hidden="true" />
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-[#0E0F11] text-[#C5A059] border border-[#C5A059]/30 shadow-xs">
+              <Banknote className="h-5 w-5" aria-hidden="true" />
             </div>
             <div>
-              <h3 className="font-bold text-sm text-white">الدفع عند الاستلام</h3>
-              <p className="text-xs text-white/60">سداد نقدي مريح ومتاح لكل المحافظات</p>
+              <h3 className="font-bold text-sm text-[#FAF9F6]">الدفع عند الاستلام</h3>
+              <p className="text-xs text-white/70">سداد نقدي مريح ومتاح لكل الـ 27 محافظة</p>
             </div>
           </div>
 
           <div className="flex items-center gap-3.5">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#12363B] text-[#C5A059] border border-[#2D7F83]/30">
-              <RotateCcw className="h-6 w-6" aria-hidden="true" />
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-[#0E0F11] text-[#C5A059] border border-[#C5A059]/30 shadow-xs">
+              <RotateCcw className="h-5 w-5" aria-hidden="true" />
             </div>
             <div>
-              <h3 className="font-bold text-sm text-white">ضمان استبدال 14 يوماً</h3>
-              <p className="text-xs text-white/60">استرجاع وتبديل مرن وسريع</p>
+              <h3 className="font-bold text-sm text-[#FAF9F6]">ضمان استبدال 14 يوماً</h3>
+              <p className="text-xs text-white/70">استرجاع وتبديل مرن وسريع وفقاً للقانون</p>
             </div>
           </div>
 
           <div className="flex items-center gap-3.5">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#12363B] text-[#C5A059] border border-[#2D7F83]/30">
-              <Truck className="h-6 w-6" aria-hidden="true" />
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-[#0E0F11] text-[#C5A059] border border-[#C5A059]/30 shadow-xs">
+              <Truck className="h-5 w-5" aria-hidden="true" />
             </div>
             <div>
-              <h3 className="font-bold text-sm text-white">شحن لـ 27 محافظة</h3>
-              <p className="text-xs text-white/60">توصيل لباب بيتك خلال 24-72 ساعة</p>
+              <h3 className="font-bold text-sm text-[#FAF9F6]">شحن لـ 27 محافظة</h3>
+              <p className="text-xs text-white/70">توصيل لباب بيتك خلال 24 إلى 72 ساعة</p>
             </div>
           </div>
         </div>
@@ -71,20 +71,20 @@ export function Footer() {
           {/* Brand Info */}
           <div className="lg:col-span-2 space-y-4">
             <div className="flex items-center gap-2.5">
-              <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#12363B] text-white font-black text-lg shadow-sm border border-[#2D7F83]/40">
+              <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#0E0F11] text-[#C5A059] font-serif font-black text-xl shadow-xs border border-[#C5A059]/40">
                 V
               </span>
               <div>
-                <span className="font-black text-xl tracking-wider text-white">
+                <span className="font-serif font-black text-xl tracking-[0.14em] text-white">
                   VARELLION
                 </span>
-                <span className="block text-[10px] uppercase font-bold tracking-widest text-[#79B8B8]">
-                  Accessories
+                <span className="block text-[9px] uppercase font-bold tracking-[0.24em] text-[#C5A059]">
+                  Haute Horlogerie & Cuir
                 </span>
               </div>
             </div>
 
-            <p className="text-xs text-white/70 leading-relaxed max-w-sm">
+            <p className="text-xs text-white/75 leading-relaxed max-w-sm">
               براند مصري راقٍ متخصص في الساعات الفاخرة، المصنوعات والمحافظ الجلدية الطبيعية 100%، وحاملات البطاقات الذكية، وإكسسوارات الرجل العصري.
             </p>
 
@@ -102,27 +102,27 @@ export function Footer() {
 
           {/* Quick Categories */}
           <div className="space-y-3">
-            <h3 className="text-sm font-bold text-white uppercase tracking-wider">
+            <h3 className="text-xs font-bold text-[#FAF9F6] uppercase tracking-wider">
               أقسام المنتجات
             </h3>
-            <ul className="space-y-2 text-xs text-white/70" role="list">
+            <ul className="space-y-2 text-xs text-white/75" role="list">
               <li>
-                <Link href="/products?category=watches" className="hover:text-white transition-colors">
+                <Link href="/products?category=watches" className="hover:text-[#C5A059] transition-colors">
                   ساعات يد فاخرة رجالية
                 </Link>
               </li>
               <li>
-                <Link href="/products?category=leather-goods" className="hover:text-white transition-colors">
+                <Link href="/products?category=leather-goods" className="hover:text-[#C5A059] transition-colors">
                   محافظ جلد طبيعي وحاملات كروت
                 </Link>
               </li>
               <li>
-                <Link href="/products?category=accessories" className="hover:text-white transition-colors">
-                  إكسسوارات رجالية وملحقات تقنية
+                <Link href="/products?category=accessories" className="hover:text-[#C5A059] transition-colors">
+                  إكسسوارات رجالية راقية
                 </Link>
               </li>
               <li>
-                <Link href="/products?featured=true" className="hover:text-white transition-colors">
+                <Link href="/products?featured=true" className="hover:text-[#C5A059] transition-colors">
                   القطع الأكثر مبيعاً في مصر
                 </Link>
               </li>
@@ -131,27 +131,27 @@ export function Footer() {
 
           {/* Customer Service & Policies */}
           <div className="space-y-3">
-            <h3 className="text-sm font-bold text-white uppercase tracking-wider">
+            <h3 className="text-xs font-bold text-[#FAF9F6] uppercase tracking-wider">
               خدمة العملاء والضمان
             </h3>
-            <ul className="space-y-2 text-xs text-white/70" role="list">
+            <ul className="space-y-2 text-xs text-white/75" role="list">
               <li>
-                <Link href="/track-order" className="hover:text-white transition-colors">
+                <Link href="/track-order" className="hover:text-[#C5A059] transition-colors">
                   تتبع حالة طلبك
                 </Link>
               </li>
               <li>
-                <Link href="/return-policy" className="hover:text-white transition-colors">
+                <Link href="/return-policy" className="hover:text-[#C5A059] transition-colors">
                   سياسة الاسترجاع والمعاينة
                 </Link>
               </li>
               <li>
-                <Link href="/shipping-rates" className="hover:text-white transition-colors">
+                <Link href="/shipping-rates" className="hover:text-[#C5A059] transition-colors">
                   أسعار ومواعيد الشحن للمحافظات
                 </Link>
               </li>
               <li>
-                <Link href="/faq" className="hover:text-white transition-colors">
+                <Link href="/faq" className="hover:text-[#C5A059] transition-colors">
                   الأسئلة الشائعة
                 </Link>
               </li>
@@ -160,17 +160,17 @@ export function Footer() {
 
           {/* Direct WhatsApp Contact & COD Notice */}
           <div className="space-y-3">
-            <h3 className="text-sm font-bold text-white uppercase tracking-wider">
+            <h3 className="text-xs font-bold text-[#FAF9F6] uppercase tracking-wider">
               تواصل وطلب سريع
             </h3>
-            <p className="text-xs text-white/70 leading-relaxed">
+            <p className="text-xs text-white/75 leading-relaxed">
               تحتاج مساعدة أو استفسار عن مقاس أو خامة؟ فريقنا جاهز لمساعدتك عبر واتساب:
             </p>
             <a
               href={siteConfig.whatsappUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2.5 text-xs font-bold text-white hover:bg-emerald-500 transition-colors shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
+              className="inline-flex min-h-[44px] items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2.5 text-xs font-bold text-white hover:bg-emerald-500 transition-colors shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
             >
               <span>محادثة فورية عبر واتساب</span>
               <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
@@ -181,16 +181,16 @@ export function Footer() {
       </div>
 
       {/* 3. Bottom Bar: Copyright & Payment Badges */}
-      <div className="border-t border-white/10 bg-[#121819] py-6 px-4 sm:px-6 lg:px-8">
+      <div className="border-t border-[#1C1F23] bg-[#0A0B0D] py-6 px-4 sm:px-6 lg:px-8">
         <div className="container mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-white/60">
-          <p>© 2026 VARELLION Accessories. جميع الحقوق محفوظة — صنع وتطوير بأعلى معايير الجودة.</p>
+          <p>© 2026 VARELLION Accessories. جميع الحقوق محفوظة — صُنعت لتدوم بأعلى جودة.</p>
           
           {/* Payment Badges */}
           <div className="flex flex-wrap items-center gap-2 text-[11px]">
-            <span className="rounded bg-white/10 px-2 py-1 text-white font-medium">الدفع عند الاستلام (COD)</span>
-            <span className="rounded bg-white/10 px-2 py-1 text-white font-medium">فيزا / ماستركارد</span>
-            <span className="rounded bg-white/10 px-2 py-1 text-white font-medium">ميزة (Meeza)</span>
-            <span className="rounded bg-white/10 px-2 py-1 text-white font-medium">فودافون كاش ومحافظ المحمول</span>
+            <span className="rounded-md border border-white/10 bg-white/5 px-2.5 py-1 text-white font-medium">الدفع عند الاستلام (COD)</span>
+            <span className="rounded-md border border-white/10 bg-white/5 px-2.5 py-1 text-white font-medium">فيزا / ماستركارد</span>
+            <span className="rounded-md border border-white/10 bg-white/5 px-2.5 py-1 text-white font-medium">ميزة (Meeza)</span>
+            <span className="rounded-md border border-white/10 bg-white/5 px-2.5 py-1 text-white font-medium">فودافون كاش ومحافظ المحمول</span>
           </div>
         </div>
       </div>

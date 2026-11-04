@@ -18,7 +18,7 @@ import lombok.NoArgsConstructor;
 public class UpdateProfileRequest {
 
     @NotBlank(message = "الاسم بالكامل مطلوب")
-    @Size(min = 3, max = 150, message = "يجب أن يتراوح الاسم بين 3 و 150 حرفاً")
+    @Size(min = 3, max = 150, message = "يجب أن يتراوح الاسم بين 50 و 150 حرفاً")
     private String fullName;
 
     @Pattern(

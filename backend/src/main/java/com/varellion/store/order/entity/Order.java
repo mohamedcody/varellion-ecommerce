@@ -93,10 +93,12 @@ public class Order {
     private OffsetDateTime updatedAt;
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @org.hibernate.annotations.BatchSize(size = 25)
     private List<OrderItem> items = new ArrayList<>();
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @OrderBy("createdAt ASC")
+    @org.hibernate.annotations.BatchSize(size = 25)
     private List<OrderStatusHistory> statusHistory = new ArrayList<>();
 
     public Order() {

@@ -17,6 +17,7 @@ import {
   Check,
   ShoppingBag,
   ArrowRight,
+  Sparkles,
 } from 'lucide-react';
 
 export default function ProductDetailPage() {
@@ -32,23 +33,35 @@ export default function ProductDetailPage() {
   const { addItem, openCart } = useCart();
 
   useEffect(() => {
+    let isCancelled = false;
+
     async function loadProduct() {
       if (!slug) return;
       setIsLoading(true);
       try {
         const found = await catalogService.getProductBySlug(slug);
-        setProduct(found);
-        if (found && found.images.length > 0) {
-          const main = found.images.find((img) => img.isMain) || found.images[0];
-          setSelectedImage(main.imageUrl);
+        if (!isCancelled) {
+          setProduct(found);
+          if (found && found.images.length > 0) {
+            const main = found.images.find((img) => img.isMain) || found.images[0];
+            setSelectedImage(main.imageUrl);
+          }
         }
       } catch (err) {
-        console.error('Failed to load product detail:', err);
+        if (!isCancelled) {
+          console.error('Failed to load product detail:', err);
+        }
       } finally {
-        setIsLoading(false);
+        if (!isCancelled) {
+          setIsLoading(false);
+        }
       }
     }
     loadProduct();
+
+    return () => {
+      isCancelled = true;
+    };
   }, [slug]);
 
   if (isLoading) {
@@ -98,7 +111,7 @@ export default function ProductDetailPage() {
   };
 
   return (
-    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-10 max-w-6xl">
+    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-10 max-w-6xl text-start">
       {/* Breadcrumb Navigation */}
       <nav className="flex items-center gap-2 text-xs text-muted-foreground mb-8" aria-label="مسار التنقل">
         <Link href="/" className="hover:text-foreground transition-colors">
@@ -117,7 +130,7 @@ export default function ProductDetailPage() {
         {/* Left / Gallery Column */}
         <div className="flex flex-col gap-4">
           {/* Main Visual Display */}
-          <div className="relative aspect-square w-full overflow-hidden rounded-2xl border border-border/80 bg-muted/20">
+          <div className="relative aspect-square w-full overflow-hidden rounded-xl border border-border bg-card shadow-xs">
             {selectedImage ? (
               <img
                 src={selectedImage}
@@ -133,7 +146,7 @@ export default function ProductDetailPage() {
             {/* Out of Stock Overlay */}
             {product.availableStock <= 0 && (
               <div className="absolute top-4 right-4 z-10">
-                <Badge variant="outline" className="bg-background/90 text-rose-600 border-rose-300 font-bold text-xs shadow-md">
+                <Badge variant="outline" className="bg-card/95 text-rose-700 border-rose-300 font-bold text-xs shadow-md">
                   نفد من المخزون
                 </Badge>
               </div>
@@ -142,16 +155,16 @@ export default function ProductDetailPage() {
 
           {/* Thumbnails list if multiple */}
           {product.images.length > 1 && (
-            <div className="flex items-center gap-3 overflow-x-auto pb-2">
+            <div className="flex items-center gap-3 overflow-x-auto pb-2" role="group" aria-label="صور المنتج الإضافية">
               {product.images.map((img) => (
                 <button
                   key={img.imageId}
                   type="button"
                   onClick={() => setSelectedImage(img.imageUrl)}
-                  className={`relative h-20 w-20 shrink-0 overflow-hidden rounded-xl border-2 transition-all cursor-pointer ${
+                  className={`relative h-20 w-20 shrink-0 overflow-hidden rounded-lg border-2 transition-all cursor-pointer ${
                     selectedImage === img.imageUrl
-                      ? 'border-primary ring-2 ring-primary/30'
-                      : 'border-border/70 opacity-70 hover:opacity-100'
+                      ? 'border-[#C5A059] ring-2 ring-[#C5A059]/30 shadow-xs'
+                      : 'border-border/80 opacity-70 hover:opacity-100 hover:border-ivory-300'
                   }`}
                   aria-label="عرض صورة مصغرة للمنتج"
                 >
@@ -167,7 +180,7 @@ export default function ProductDetailPage() {
           {/* SKU & Category */}
           <div className="flex items-center justify-between text-xs text-muted-foreground">
             <span className="font-mono text-muted-foreground">كود الموديل: {product.sku}</span>
-            <span className="font-semibold text-primary/80">
+            <span className="font-semibold text-[#876725] tracking-wide">
               {product.category?.nameAr || 'منتج أصلي'}
             </span>
           </div>
@@ -177,21 +190,23 @@ export default function ProductDetailPage() {
             <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-foreground tracking-tight leading-tight">
               {product.nameAr}
             </h1>
-            <p className="text-xs text-muted-foreground mt-1 font-medium tracking-wide">
-              {product.nameEn}
-            </p>
+            {product.nameEn && (
+              <p className="font-serif text-xs font-semibold tracking-widest uppercase text-[#876725] mt-1.5">
+                {product.nameEn}
+              </p>
+            )}
           </div>
 
           {/* Price Box */}
-          <div className="flex items-baseline justify-between p-4 rounded-xl bg-muted/40 border border-border/60">
+          <div className="flex items-baseline justify-between p-4 rounded-xl bg-card border border-border shadow-2xs">
             <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-black text-foreground">
+              <span className="text-3xl font-black text-foreground tabular-nums">
                 {product.price.toLocaleString('ar-EG')}
               </span>
               <span className="text-sm font-bold text-muted-foreground">ج.م</span>
             </div>
 
-            <div className="text-xs font-semibold text-muted-foreground">
+            <div className="text-xs font-medium text-muted-foreground">
               تُحسب مصاريف الشحن عند تأكيد الطلب
             </div>
           </div>
@@ -199,14 +214,14 @@ export default function ProductDetailPage() {
           {/* Arabic Detailed Description */}
           <div className="space-y-3">
             <h3 className="font-bold text-sm text-foreground">تفاصيل ومواصفات القطعة:</h3>
-            <div className="text-sm text-foreground/90 leading-relaxed bg-card p-4 rounded-xl border border-border/70">
+            <div className="text-sm text-foreground/90 leading-relaxed bg-card p-4 rounded-xl border border-border shadow-2xs">
               <p>{product.descriptionAr}</p>
             </div>
           </div>
 
           {/* English Craftsmanship Note */}
           {product.descriptionEn && (
-            <div className="text-xs text-muted-foreground leading-relaxed italic border-r-2 border-primary/40 pr-3">
+            <div className="text-xs text-muted-foreground leading-relaxed italic border-r-2 border-[#C5A059] pr-3">
               <p>{product.descriptionEn}</p>
             </div>
           )}
@@ -214,15 +229,17 @@ export default function ProductDetailPage() {
           {/* Stock Indicator */}
           <div className="flex items-center gap-2 text-xs font-semibold">
             {product.availableStock > 0 ? (
-              <div className="inline-flex items-center gap-1.5 text-emerald-700 dark:text-emerald-400">
-                <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+              <div className="inline-flex items-center gap-2 text-emerald-800 bg-[#EAF7EE] px-3 py-1 rounded-md border border-emerald-200/50">
+                <span className="h-2 w-2 rounded-full bg-emerald-600 animate-pulse" />
                 <span>
                   متوفر في المخزون
                   {product.availableStock <= 5 ? ` (متبقي ${product.availableStock} قطع فقط)` : ' — جاهز للشحن الفوري للمحافظات'}
                 </span>
               </div>
             ) : (
-              <span className="text-rose-600 font-bold">غير متوفر حالياً</span>
+              <span className="text-rose-700 font-bold bg-rose-50 px-3 py-1 rounded-md">
+                غير متوفر حالياً
+              </span>
             )}
           </div>
 
@@ -233,16 +250,16 @@ export default function ProductDetailPage() {
               disabled={product.availableStock <= 0}
               variant={isAdded ? 'secondary' : 'luxury'}
               size="lg"
-              className="flex-1 gap-2.5 font-bold shadow-md min-h-[48px]"
+              className="flex-1 gap-2.5 font-bold shadow-xs min-h-[48px]"
             >
               {isAdded ? (
                 <>
-                  <Check className="h-5 w-5 text-emerald-600" aria-hidden="true" />
-                  <span className="text-emerald-700 dark:text-emerald-400">تمت الإضافة للسلة</span>
+                  <Check className="h-5 w-5 text-emerald-700" aria-hidden="true" />
+                  <span className="text-emerald-800">تمت الإضافة للسلة</span>
                 </>
               ) : (
                 <>
-                  <ShoppingBag className="h-5 w-5" aria-hidden="true" />
+                  <ShoppingBag className="h-5 w-5 text-[#C5A059]" aria-hidden="true" />
                   <span>أضف إلى سلة المشتريات</span>
                 </>
               )}
@@ -251,7 +268,7 @@ export default function ProductDetailPage() {
             <Button
               onClick={handleFastBuy}
               disabled={product.availableStock <= 0}
-              variant="default"
+              variant="outline"
               size="lg"
               className="sm:w-auto gap-2 font-bold min-h-[48px]"
             >
@@ -260,10 +277,10 @@ export default function ProductDetailPage() {
           </div>
 
           {/* Inspection and Guarantee Banner */}
-          <Card className="border-primary/20 bg-primary/5">
+          <Card className="border-border bg-card shadow-2xs">
             <CardContent className="p-4 space-y-3">
               <div className="flex items-start gap-3">
-                <ShieldCheck className="h-5 w-5 text-primary shrink-0 mt-0.5" aria-hidden="true" />
+                <ShieldCheck className="h-5 w-5 text-[#C5A059] shrink-0 mt-0.5" aria-hidden="true" />
                 <div className="text-xs">
                   <strong className="text-foreground block font-bold">
                     معاينة مجانية قبل دفع أي قرش للمندوب
@@ -275,19 +292,19 @@ export default function ProductDetailPage() {
               </div>
 
               <div className="flex items-start gap-3">
-                <RotateCcw className="h-5 w-5 text-primary shrink-0 mt-0.5" aria-hidden="true" />
+                <RotateCcw className="h-5 w-5 text-[#C5A059] shrink-0 mt-0.5" aria-hidden="true" />
                 <div className="text-xs">
                   <strong className="text-foreground block font-bold">
                     ضمان استبدال واسترجاع 14 يوماً
                   </strong>
                   <span className="text-muted-foreground">
-                    سياسة إرجاع مرنة وسهلة في حالة وجود أي عيب أو عدم رضا عن المنتج.
+                    سياسة إرجاع مرنة وسهلة في حالة وجود أي عيب أو رغبة في استبدال المقاس.
                   </span>
                 </div>
               </div>
 
               <div className="flex items-start gap-3">
-                <Truck className="h-5 w-5 text-primary shrink-0 mt-0.5" aria-hidden="true" />
+                <Truck className="h-5 w-5 text-[#C5A059] shrink-0 mt-0.5" aria-hidden="true" />
                 <div className="text-xs">
                   <strong className="text-foreground block font-bold">
                     توصيل آمن لـ 27 محافظة مصرية

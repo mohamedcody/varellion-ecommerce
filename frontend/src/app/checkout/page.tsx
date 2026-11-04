@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
+import { AuthGuard } from '@/components/auth/AuthGuard';
 import { CheckoutForm } from '@/components/checkout/CheckoutForm';
 import { OrderSummaryCard } from '@/components/checkout/OrderSummaryCard';
 import { calculateShippingFee } from '@/data/shippingZones';
@@ -15,7 +16,7 @@ import { CreateOrderRequest, OrderItem } from '@/types';
 import { Button } from '@/components/ui/Button';
 import { ShoppingBag, ArrowLeft, ArrowRight, ShieldCheck, ChevronDown, ChevronUp } from 'lucide-react';
 
-export default function CheckoutPage() {
+function CheckoutContent() {
   const router = useRouter();
   const { items, subtotal, clearCart } = useCart();
   const { user } = useAuth();
@@ -245,5 +246,13 @@ export default function CheckoutPage() {
         </div>
       </div>
     </main>
+  );
+}
+
+export default function CheckoutPage() {
+  return (
+    <AuthGuard>
+      <CheckoutContent />
+    </AuthGuard>
   );
 }
