@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { catalogService } from '@/services/api';
 import { Product, Category } from '@/types';
+import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/Card';
@@ -19,6 +20,61 @@ import {
   Gem,
   CheckCircle2,
 } from 'lucide-react';
+
+function HeroVisualCard({
+  product,
+  image,
+  aspectRatio = 'aspect-4/5',
+  className = '',
+}: {
+  product: Product | null;
+  image: string;
+  aspectRatio?: string;
+  className?: string;
+}) {
+  return (
+    <div
+      className={cn(
+        'relative w-full overflow-hidden rounded-2xl border border-gold-500/30 bg-obsidian-900 shadow-xl group',
+        aspectRatio,
+        className
+      )}
+    >
+      <img
+        src={image}
+        alt={product?.nameAr || 'ساعة VARELLION الفاخرة'}
+        className="h-full w-full object-cover object-center transition-transform duration-700 group-hover:scale-105"
+        loading="eager"
+      />
+
+      {/* Subtle Luxury Gradient Overlay */}
+      <div className="absolute inset-0 bg-gradient-to-t from-obsidian-950/90 via-obsidian-950/30 to-transparent flex flex-col justify-end p-5 sm:p-6 text-white text-start">
+        <Badge variant="luxury" className="self-start text-[10px] font-bold mb-1.5 sm:mb-2">
+          {product?.isFeatured ? 'الإصدار الرائد المميز' : 'الأكثر طلباً ومبيعاً'}
+        </Badge>
+        <h3 className="font-serif font-black text-base sm:text-xl text-white tracking-wide">
+          {product?.nameAr || 'ساعة فارليون كرونوغراف'}
+        </h3>
+        <p className="text-xs text-white/80 mt-0.5 sm:mt-1 line-clamp-1">
+          {product?.descriptionAr || 'دقة واحترافية لا تضاهى بتصميم يعكس هيبتك اليومية.'}
+        </p>
+        <div className="mt-2.5 sm:mt-3 flex items-center justify-between pt-2.5 sm:pt-3 border-t border-white/20">
+          <span className="text-base sm:text-lg font-black text-gold-500 tabular-nums">
+            {product ? product.price.toLocaleString('ar-EG') : '1,850'}{' '}
+            <span className="text-xs font-bold text-white/80">ج.م</span>
+          </span>
+          <Link
+            href={product ? `/products/${product.slug}` : '/products'}
+            className="text-xs font-bold text-white hover:text-gold-500 flex items-center gap-1 transition-colors"
+          >
+            <span>عرض تفاصيل القطعة</span>
+            <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default async function HomePage() {
   let bestSellers: Product[] = [];
@@ -68,6 +124,15 @@ export default async function HomePage() {
                 اختر قطعتك الاستثنائية من <strong className="text-foreground font-bold">VARELLION</strong>. دقة الماكينات الكوارتز اليابانية، الفولاذ المقاوم للصدأ 316L، وجلود العجل الطبيعية المدبوغة نباتياً، مع ميزة <span className="text-foreground font-bold">المعاينة والفحص قبل الاستلام</span> وشحن مباشر لكافة محافظات مصر.
               </p>
 
+              {/* Mobile-Only Showcase Card: Product visual renders immediately below headline before CTAs and trust pillars (UX-F02) */}
+              <div className="block lg:hidden my-2">
+                <HeroVisualCard
+                  product={flagshipProduct}
+                  image={flagshipImage}
+                  aspectRatio="aspect-4/3 sm:aspect-16/10"
+                />
+              </div>
+
               {/* Action CTAs */}
               <div className="flex flex-wrap items-center gap-4 pt-2">
                 <Link href="/products?category=watches">
@@ -103,42 +168,13 @@ export default async function HomePage() {
               </div>
             </div>
 
-            {/* Left Column (in RTL): Hero Visual Showcase Card */}
-            <div className="lg:col-span-5 relative">
-              <div className="relative aspect-4/5 w-full overflow-hidden rounded-2xl border border-gold-500/30 bg-obsidian-900 shadow-xl group">
-                <img
-                  src={flagshipImage}
-                  alt={flagshipProduct?.nameAr || 'ساعة VARELLION الفاخرة'}
-                  className="h-full w-full object-cover object-center transition-transform duration-700 group-hover:scale-105"
-                  loading="eager"
-                />
-                
-                {/* Subtle Luxury Gradient Overlay */}
-                <div className="absolute inset-0 bg-gradient-to-t from-obsidian-950/90 via-obsidian-950/30 to-transparent flex flex-col justify-end p-6 text-white text-start">
-                  <Badge variant="luxury" className="self-start text-[10px] font-bold mb-2">
-                    {flagshipProduct?.isFeatured ? 'الإصدار الرائد المميز' : 'الأكثر طلباً ومبيعاً'}
-                  </Badge>
-                  <h3 className="font-serif font-black text-lg sm:text-xl text-white tracking-wide">
-                    {flagshipProduct?.nameAr || 'ساعة فارليون كرونوغراف'}
-                  </h3>
-                  <p className="text-xs text-white/80 mt-1 line-clamp-1">
-                    {flagshipProduct?.descriptionAr || 'دقة واحترافية لا تضاهى بتصميم يعكس هيبتك اليومية.'}
-                  </p>
-                  <div className="mt-3 flex items-center justify-between pt-3 border-t border-white/20">
-                    <span className="text-lg font-black text-gold-500 tabular-nums">
-                      {flagshipProduct ? flagshipProduct.price.toLocaleString('ar-EG') : '1,850'}{' '}
-                      <span className="text-xs font-bold text-white/80">ج.م</span>
-                    </span>
-                    <Link
-                      href={flagshipProduct ? `/products/${flagshipProduct.slug}` : '/products'}
-                      className="text-xs font-bold text-white hover:text-gold-500 flex items-center gap-1 transition-colors"
-                    >
-                      <span>عرض تفاصيل القطعة</span>
-                      <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
-                    </Link>
-                  </div>
-                </div>
-              </div>
+            {/* Desktop Column: Hero Visual Showcase Card (hidden on mobile, rendered inside text flow for mobile above) */}
+            <div className="hidden lg:block lg:col-span-5 relative">
+              <HeroVisualCard
+                product={flagshipProduct}
+                image={flagshipImage}
+                aspectRatio="aspect-4/5"
+              />
             </div>
 
           </div>
