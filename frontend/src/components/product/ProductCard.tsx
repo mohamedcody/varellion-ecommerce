@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { useCart } from '@/context/CartContext';
 import { ShoppingBag, Check } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface ProductCardProps {
   product: Product;
@@ -15,10 +16,34 @@ interface ProductCardProps {
 
 export function ProductCard({ product, onAddToCart }: ProductCardProps) {
   const [isAdded, setIsAdded] = useState(false);
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const [touchStartX, setTouchStartX] = useState<number | null>(null);
   const { addItem } = useCart();
 
-  const mainImage = product.images.find((img) => img.isMain) || product.images[0];
-  const secondaryImage = product.images.find((img) => !img.isMain) || product.images[1];
+  const availableImages = product.images?.filter((img) => Boolean(img?.imageUrl)) || [];
+  const hasMultipleImages = availableImages.length > 1;
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchStartX(e.touches[0].clientX);
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX === null || !hasMultipleImages) return;
+    const touchEndX = e.changedTouches[0].clientX;
+    const diff = touchStartX - touchEndX;
+
+    // Minimum swipe threshold (40px)
+    if (Math.abs(diff) > 40) {
+      if (diff > 0) {
+        // Swipe forward (in RTL, swiping left is next image)
+        setActiveImageIndex((prev) => (prev + 1) % availableImages.length);
+      } else {
+        // Swipe backward
+        setActiveImageIndex((prev) => (prev - 1 + availableImages.length) % availableImages.length);
+      }
+    }
+    setTouchStartX(null);
+  };
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -41,29 +66,69 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
         href={`/products/${product.slug}`}
         className="flex flex-col focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-t-xl"
       >
-        {/* Product Image Frame with Dual-Image Luxury Crossfade */}
-        <div className="relative aspect-square w-full overflow-hidden bg-secondary/50">
-          {mainImage?.imageUrl ? (
-            <img
-              src={mainImage.imageUrl}
-              alt={mainImage.altAr || product.nameAr}
-              loading="lazy"
-              className="h-full w-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-105"
-            />
+        {/* Product Image Frame with Dual-Image Luxury Crossfade & Mobile Gestures (UX-F08) */}
+        <div
+          className="relative aspect-square w-full overflow-hidden bg-secondary/50 select-none"
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+        >
+          {availableImages.length > 0 ? (
+            availableImages.map((img, idx) => {
+              const isCurrent = activeImageIndex === idx;
+              const isSecondaryHover = activeImageIndex === 0 && idx === 1;
+
+              return (
+                <img
+                  key={img.imageId || idx}
+                  src={img.imageUrl}
+                  alt={img.altAr || product.nameAr}
+                  loading={idx === 0 ? 'lazy' : 'lazy'}
+                  className={cn(
+                    'absolute inset-0 h-full w-full object-cover object-center transition-all duration-500 ease-out',
+                    isCurrent
+                      ? 'opacity-100 z-1 scale-100 group-hover:scale-105'
+                      : isSecondaryHover
+                      ? 'opacity-0 group-hover:opacity-100 z-2 group-hover:scale-105'
+                      : 'opacity-0 z-0'
+                  )}
+                />
+              );
+            })
           ) : (
             <div className="flex h-full w-full items-center justify-center bg-secondary text-muted-foreground text-xs">
               لا توجد صورة
             </div>
           )}
 
-          {/* Secondary Detail Image (Luxury Crossfade on Hover) */}
-          {secondaryImage?.imageUrl && (
-            <img
-              src={secondaryImage.imageUrl}
-              alt={secondaryImage.altAr || product.nameAr}
-              loading="lazy"
-              className="absolute inset-0 h-full w-full object-cover object-center opacity-0 transition-opacity duration-500 ease-out group-hover:opacity-100"
-            />
+          {/* Mobile Dot Indicators for Multi-Image Preview */}
+          {hasMultipleImages && (
+            <div
+              className="absolute bottom-2.5 inset-x-0 flex items-center justify-center gap-1.5 z-10"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+              }}
+            >
+              {availableImages.map((_, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setActiveImageIndex(idx);
+                  }}
+                  className={cn(
+                    'h-1.5 rounded-full transition-all duration-300 cursor-pointer shadow-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-gold-500',
+                    activeImageIndex === idx
+                      ? 'w-4 bg-gold-500'
+                      : 'w-1.5 bg-white/70 hover:bg-white'
+                  )}
+                  aria-label={`عرض صورة ${idx + 1} من ${availableImages.length}`}
+                  aria-current={activeImageIndex === idx}
+                />
+              ))}
+            </div>
           )}
 
           {/* Stock Badges Overlay */}
@@ -73,7 +138,7 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
                 نفد من المخزون
               </Badge>
             ) : product.availableStock <= 5 ? (
-              <Badge variant="outline" className="bg-[#FFF8E6] text-[#995B00] border-amber-300/60 text-[11px] font-bold shadow-xs">
+              <Badge variant="outline" className="bg-amber-50 text-amber-800 border-amber-300/60 text-[11px] font-bold shadow-xs">
                 متبقي {product.availableStock} قطع فقط
               </Badge>
             ) : null}
@@ -93,7 +158,7 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
           </div>
 
           {/* Product Title */}
-          <h3 className="font-bold text-base text-foreground leading-snug line-clamp-2 group-hover:text-[#876725] transition-colors">
+          <h3 className="font-bold text-base text-foreground leading-snug line-clamp-2 group-hover:text-gold-700 transition-colors">
             {product.nameAr}
           </h3>
 
@@ -112,7 +177,7 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
             </div>
 
             {product.availableStock > 0 ? (
-              <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-800 bg-[#EAF7EE] px-2 py-0.5 rounded-md border border-emerald-200/50">
+              <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200/50">
                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-600 animate-pulse" />
                 <span>جاهز للشحن</span>
               </span>
@@ -144,7 +209,7 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
             <span className="text-muted-foreground">نفد من المخزون</span>
           ) : (
             <>
-              <ShoppingBag className="h-4 w-4 text-[#C5A059]" aria-hidden="true" />
+              <ShoppingBag className="h-4 w-4 text-gold-500" aria-hidden="true" />
               <span>أضف للسلة</span>
             </>
           )}
