@@ -141,18 +141,18 @@ export function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/return-policy" className="hover:text-[#C5A059] transition-colors">
+                <Link href="/policies/returns" className="hover:text-[#C5A059] transition-colors">
                   سياسة الاسترجاع والمعاينة
                 </Link>
               </li>
               <li>
-                <Link href="/shipping-rates" className="hover:text-[#C5A059] transition-colors">
+                <Link href="/policies/shipping" className="hover:text-[#C5A059] transition-colors">
                   أسعار ومواعيد الشحن للمحافظات
                 </Link>
               </li>
               <li>
-                <Link href="/faq" className="hover:text-[#C5A059] transition-colors">
-                  الأسئلة الشائعة
+                <Link href="/policies/terms" className="hover:text-[#C5A059] transition-colors">
+                  الشروط والأحكام وضمان الأصالة
                 </Link>
               </li>
             </ul>
