@@ -85,4 +85,13 @@ describe('ProductCard - Multi-image preview and interactive gestures', () => {
     // Active image indicator should now be active for the second dot
     expect(secondDot.getAttribute('aria-current')).toBe('true');
   });
+
+  it('ensures dot buttons are not nested inside link elements (WCAG 4.1.2)', () => {
+    render(<ProductCard product={mockProductWithMultipleImages} />);
+
+    const dots = screen.getAllByRole('button', { name: /عرض صورة/i });
+    for (const dot of dots) {
+      expect(dot.closest('a')).toBeNull();
+    }
+  });
 });

@@ -61,16 +61,17 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
 
   return (
     <div className="group relative flex flex-col justify-between overflow-hidden rounded-xl border border-border bg-card shadow-xs transition-all duration-300 hover:border-ivory-300 hover:shadow-md">
-      {/* Clickable Area for Image and Details */}
-      <Link
-        href={`/products/${product.slug}`}
-        className="flex flex-col focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-t-xl"
+      {/* Product Image Frame with Dual-Image Luxury Crossfade & Mobile Gestures (UX-F08) */}
+      <div
+        className="relative aspect-square w-full overflow-hidden bg-secondary/50 select-none rounded-t-xl"
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
       >
-        {/* Product Image Frame with Dual-Image Luxury Crossfade & Mobile Gestures (UX-F08) */}
-        <div
-          className="relative aspect-square w-full overflow-hidden bg-secondary/50 select-none"
-          onTouchStart={handleTouchStart}
-          onTouchEnd={handleTouchEnd}
+        {/* Clickable Image Layer Linking to Product Details */}
+        <Link
+          href={`/products/${product.slug}`}
+          className="absolute inset-0 z-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          aria-label={`عرض تفاصيل ${product.nameAr}`}
         >
           {availableImages.length > 0 ? (
             availableImages.map((img, idx) => {
@@ -99,54 +100,60 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
               لا توجد صورة
             </div>
           )}
+        </Link>
 
-          {/* Mobile Dot Indicators for Multi-Image Preview */}
-          {hasMultipleImages && (
-            <div
-              className="absolute bottom-2.5 inset-x-0 flex items-center justify-center gap-1.5 z-10"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-              }}
-            >
-              {availableImages.map((_, idx) => (
-                <button
-                  key={idx}
-                  type="button"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    setActiveImageIndex(idx);
-                  }}
-                  className={cn(
-                    'h-1.5 rounded-full transition-all duration-300 cursor-pointer shadow-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-gold-500',
-                    activeImageIndex === idx
-                      ? 'w-4 bg-gold-500'
-                      : 'w-1.5 bg-white/70 hover:bg-white'
-                  )}
-                  aria-label={`عرض صورة ${idx + 1} من ${availableImages.length}`}
-                  aria-current={activeImageIndex === idx}
-                />
-              ))}
-            </div>
-          )}
-
-          {/* Stock Badges Overlay */}
-          <div className="absolute top-3 right-3 flex flex-col gap-1.5 z-10">
-            {product.availableStock <= 0 ? (
-              <Badge variant="outline" className="bg-card/95 text-rose-700 border-rose-200 text-[11px] font-bold shadow-xs">
-                نفد من المخزون
-              </Badge>
-            ) : product.availableStock <= 5 ? (
-              <Badge variant="outline" className="bg-amber-50 text-amber-800 border-amber-300/60 text-[11px] font-bold shadow-xs">
-                متبقي {product.availableStock} قطع فقط
-              </Badge>
-            ) : null}
+        {/* Mobile Dot Indicators for Multi-Image Preview (Positioned as Sibling, Not Nested Inside Link) */}
+        {hasMultipleImages && (
+          <div
+            className="absolute bottom-2.5 inset-x-0 flex items-center justify-center gap-2 z-10 pointer-events-auto"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+            }}
+          >
+            {availableImages.map((_, idx) => (
+              <button
+                key={idx}
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setActiveImageIndex(idx);
+                }}
+                className={cn(
+                  'relative h-1.5 rounded-full transition-all duration-300 cursor-pointer shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500 p-0',
+                  'before:absolute before:-inset-2 before:content-[""]', // WCAG 2.5.8 Target size >= 24px
+                  activeImageIndex === idx
+                    ? 'w-4 bg-gold-500'
+                    : 'w-1.5 bg-white/75 hover:bg-white'
+                )}
+                aria-label={`عرض صورة ${idx + 1} من ${availableImages.length} لـ ${product.nameAr}`}
+                aria-current={activeImageIndex === idx}
+              />
+            ))}
           </div>
-        </div>
+        )}
 
-        {/* Content Section */}
-        <div className="p-4 flex flex-col flex-1 gap-2 text-start">
+        {/* Stock Badges Overlay */}
+        <div className="absolute top-3 right-3 flex flex-col gap-1.5 z-10 pointer-events-none">
+          {product.availableStock <= 0 ? (
+            <Badge variant="outline" className="bg-card/95 text-rose-700 border-rose-200 text-[11px] font-bold shadow-xs">
+              نفد من المخزون
+            </Badge>
+          ) : product.availableStock <= 5 ? (
+            <Badge variant="outline" className="bg-amber-50 text-amber-800 border-amber-300/60 text-[11px] font-bold shadow-xs">
+              متبقي {product.availableStock} قطع فقط
+            </Badge>
+          ) : null}
+        </div>
+      </div>
+
+      {/* Clickable Content Section */}
+      <Link
+        href={`/products/${product.slug}`}
+        className="p-4 flex flex-col flex-1 gap-2 text-start focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+        aria-label={`تفاصيل ${product.nameAr}`}
+      >
           {/* Category & SKU */}
           <div className="flex items-center justify-between text-xs text-muted-foreground">
             <span className="font-semibold text-foreground/80 tracking-wide">
@@ -187,8 +194,7 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
               </span>
             )}
           </div>
-        </div>
-      </Link>
+        </Link>
 
       {/* Action Footer (Quick Add to Cart) */}
       <div className="p-4 pt-0">
