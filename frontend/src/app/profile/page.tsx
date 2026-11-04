@@ -8,6 +8,7 @@ import { AuthGuard } from '@/components/auth/AuthGuard';
 import { PersonalInfoCard } from '@/components/profile/PersonalInfoCard';
 import { DeliveryAddressCard } from '@/components/profile/DeliveryAddressCard';
 import { DeleteAddressDialog } from '@/components/profile/DeleteAddressDialog';
+import { OrderHistoryList } from '@/components/profile/OrderHistoryList';
 import { useAuth } from '@/context/AuthContext';
 import { Package, ShoppingBag, ShieldCheck, AlertCircle } from 'lucide-react';
 
@@ -149,20 +150,25 @@ export default function ProfilePage() {
 
           {/* Main Profile Grid */}
           {!isLoading && customer && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
-              <PersonalInfoCard
-                customer={customer}
-                onUpdate={handleUpdateProfile}
-                isSaving={isSavingProfile}
-              />
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+                <PersonalInfoCard
+                  customer={customer}
+                  onUpdate={handleUpdateProfile}
+                  isSaving={isSavingProfile}
+                />
 
-              <DeliveryAddressCard
-                address={customer.address}
-                onSaveAddress={handleSaveAddress}
-                onDeleteRequest={() => setIsDeleteDialogOpen(true)}
-                isSaving={isSavingAddress}
-              />
-            </div>
+                <DeliveryAddressCard
+                  address={customer.address}
+                  onSaveAddress={handleSaveAddress}
+                  onDeleteRequest={() => setIsDeleteDialogOpen(true)}
+                  isSaving={isSavingAddress}
+                />
+              </div>
+
+              {/* Order History Section */}
+              <OrderHistoryList />
+            </>
           )}
 
           {/* Privacy & Security Note */}

@@ -226,4 +226,19 @@ export const ordersService = {
       sessionStorage.removeItem(SESSION_ORDER_KEY);
     }
   },
+
+  /**
+   * Retrieves the authenticated customer's order history with pagination.
+   */
+  async getMyOrders(page = 0, limit = 10): Promise<Order[]> {
+    try {
+      const res = await requestApi<{ data?: Order[] } | Order[]>(`/orders/my-orders?page=${page}&limit=${limit}`, {
+        method: 'GET',
+      });
+      return (res as { data?: Order[] }).data ?? (res as Order[]);
+    } catch (err) {
+      console.error('[ordersService] Failed to load customer order history:', err);
+      return [];
+    }
+  },
 };
