@@ -122,11 +122,11 @@ export async function requestApi<T>(endpoint: string, options?: RequestApiOption
 
   let res: Response;
   try {
-    const { signal: _callerSignal, timeoutMs: _timeoutMs, ...restOptions } = options || {};
+    const { signal: _callerSignal, timeoutMs: _timeoutMs, headers: _optionsHeaders, ...restOptions } = options || {};
     res = await fetch(url, {
+      ...restOptions,
       credentials: 'include',
       headers,
-      ...restOptions,
       signal,
     });
   } catch (err: unknown) {

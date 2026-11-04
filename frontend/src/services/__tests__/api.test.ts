@@ -54,6 +54,34 @@ describe('requestApi interceptor & refresh queue', () => {
     );
   });
 
+  it('preserves Content-Type and Authorization header when custom options.headers is provided', async () => {
+    setAccessTokenGetter(() => 'valid-mock-token');
+    const mockFetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ success: true, data: 'ok' }),
+    });
+    global.fetch = mockFetch;
+
+    await requestApi('/orders', {
+      method: 'POST',
+      headers: {
+        'Idempotency-Key': 'test-idempotency-uuid-123',
+      },
+      body: JSON.stringify({ items: [] }),
+    });
+
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.stringContaining('/orders'),
+      expect.objectContaining({
+        headers: expect.objectContaining({
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer valid-mock-token',
+          'Idempotency-Key': 'test-idempotency-uuid-123',
+        }),
+      })
+    );
+  });
+
   it('queues concurrent 401 requests and performs only a single refresh before replaying', async () => {
     let token = 'initial-expired-token';
     setAccessTokenGetter(() => token);
