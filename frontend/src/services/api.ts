@@ -54,11 +54,15 @@ export function setTokenRefreshHandler(fn: () => Promise<string | null>): void {
   tokenRefreshHandler = fn;
 }
 
+export interface RequestApiOptions extends RequestInit {
+  timeoutMs?: number;
+}
+
 interface PendingRequest {
   resolve: (value: unknown) => void;
   reject: (reason?: unknown) => void;
   endpoint: string;
-  options?: RequestInit;
+  options?: RequestApiOptions;
 }
 
 let isRefreshing = false;
@@ -86,7 +90,7 @@ function processQueue(error: unknown | null, newToken: string | null = null) {
 /**
  * Universal safe fetcher with credentials support for HTTP cookies and direct type T
  */
-export async function requestApi<T>(endpoint: string, options?: RequestInit): Promise<T> {
+export async function requestApi<T>(endpoint: string, options?: RequestApiOptions): Promise<T> {
   const url = buildEndpointUrl(endpoint);
 
   const headers: Record<string, string> = {
@@ -99,9 +103,10 @@ export async function requestApi<T>(endpoint: string, options?: RequestInit): Pr
     headers['Authorization'] = `Bearer ${token}`;
   }
 
-  // Network timeout safety (10 seconds timeout fallback linked with caller signal)
+  // Network timeout safety (30 seconds timeout fallback linked with caller signal)
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 10000);
+  const timeoutMs = options?.timeoutMs ?? 30000;
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
   let signal: AbortSignal;
   if (options?.signal) {
@@ -117,7 +122,7 @@ export async function requestApi<T>(endpoint: string, options?: RequestInit): Pr
 
   let res: Response;
   try {
-    const { signal: _callerSignal, ...restOptions } = options || {};
+    const { signal: _callerSignal, timeoutMs: _timeoutMs, ...restOptions } = options || {};
     res = await fetch(url, {
       credentials: 'include',
       headers,
