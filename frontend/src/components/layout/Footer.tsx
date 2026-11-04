@@ -78,7 +78,7 @@ export function Footer() {
                 <span className="font-serif font-black text-xl tracking-[0.14em] text-white">
                   VARELLION
                 </span>
-                <span className="block text-[9px] uppercase font-bold tracking-[0.24em] text-gold-500">
+                <span lang="fr" className="block text-[9px] uppercase font-bold tracking-[0.24em] text-gold-500">
                   Haute Horlogerie & Cuir
                 </span>
               </div>
@@ -173,6 +173,7 @@ export function Footer() {
               className="inline-flex min-h-[44px] items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2.5 text-xs font-bold text-white hover:bg-emerald-500 transition-colors shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
             >
               <span>محادثة فورية عبر واتساب</span>
+              <span className="sr-only">(يفتح في نافذة أو تطبيق جديد)</span>
               <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
             </a>
           </div>

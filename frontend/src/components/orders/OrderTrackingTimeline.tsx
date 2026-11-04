@@ -142,9 +142,9 @@ export function OrderTrackingTimeline({ status, createdAt, updatedAt, governorat
         </div>
       )}
 
-      {/* Main Horizontal/Vertical Stepper */}
+      {/* Main Horizontal/Vertical Stepper (Semantic Ordered List for Screen Readers) */}
       <div className="relative">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 md:gap-2">
+        <ol role="list" aria-label="مراحل تتبع الطلب" className="grid grid-cols-1 md:grid-cols-4 gap-4 md:gap-2">
           {TRACKING_STEPS.map((step, index) => {
             const isCompleted = !isCancelled && (isDelivered ? index <= activeIndex : index < activeIndex);
             const isCurrent = !isCancelled && !isDelivered && index === activeIndex;
@@ -152,11 +152,12 @@ export function OrderTrackingTimeline({ status, createdAt, updatedAt, governorat
             const stepTimestamp = getStepTimestamp(step.id);
 
             return (
-              <div
+              <li
                 key={step.id}
                 data-testid={`timeline-step-${step.id}`}
+                aria-current={isCurrent ? 'step' : undefined}
                 className={cn(
-                  'relative flex md:flex-col items-start gap-3.5 md:gap-2 p-3.5 rounded-xl border transition-all',
+                  'relative flex md:flex-col items-start gap-3.5 md:gap-2 p-3.5 rounded-xl border transition-all list-none',
                   isCurrent
                     ? 'border-primary bg-primary/5 ring-1 ring-primary/30 shadow-xs'
                     : isCompleted
@@ -217,10 +218,10 @@ export function OrderTrackingTimeline({ status, createdAt, updatedAt, governorat
                     </span>
                   )}
                 </div>
-              </div>
+              </li>
             );
           })}
-        </div>
+        </ol>
       </div>
 
       {/* Trust Notice / Delivered Confirmation */}

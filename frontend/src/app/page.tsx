@@ -183,6 +183,7 @@ export default async function HomePage() {
 
       {/* 2. 4 Egyptian Confidence Drivers Bar */}
       <section className="w-full border-b border-border bg-card py-8 px-4 sm:px-6 lg:px-8" aria-label="مميزات وثقة الشراء">
+        <h2 className="sr-only">مميزات وضمانات الشراء من VARELLION</h2>
         <div className="container mx-auto max-w-7xl grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <Card className="border-border bg-background hover:border-ivory-300 transition-colors">
             <CardHeader className="flex flex-row items-center gap-3 pb-2 text-start">

@@ -43,7 +43,7 @@ export default function RootLayout({
         <AuthProvider>
           <CartProvider>
             <Header />
-            <main id="main-content" className="flex-1">
+            <main id="main-content" className="flex-1 scroll-mt-24 focus:outline-none" tabIndex={-1}>
               {children}
             </main>
             <Footer />

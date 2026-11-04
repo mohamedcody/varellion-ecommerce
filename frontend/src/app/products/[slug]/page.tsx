@@ -156,9 +156,9 @@ export default function ProductDetailPage() {
           {/* Thumbnails list if multiple */}
           {product.images.length > 1 && (
             <div className="flex items-center gap-3 overflow-x-auto pb-2" role="group" aria-label="صور المنتج الإضافية">
-              {product.images.map((img) => (
+              {product.images.map((img, idx) => (
                 <button
-                  key={img.imageId}
+                  key={img.imageId || idx}
                   type="button"
                   onClick={() => setSelectedImage(img.imageUrl)}
                   className={`relative h-20 w-20 shrink-0 overflow-hidden rounded-lg border-2 transition-all cursor-pointer ${
@@ -166,9 +166,10 @@ export default function ProductDetailPage() {
                       ? 'border-[#C5A059] ring-2 ring-[#C5A059]/30 shadow-xs'
                       : 'border-border/80 opacity-70 hover:opacity-100 hover:border-ivory-300'
                   }`}
-                  aria-label="عرض صورة مصغرة للمنتج"
+                  aria-label={`عرض صورة رقم ${idx + 1} من ${product.images.length}`}
+                  aria-pressed={selectedImage === img.imageUrl}
                 >
-                  <img src={img.imageUrl} alt="" className="h-full w-full object-cover" />
+                  <img src={img.imageUrl} alt="" aria-hidden="true" className="h-full w-full object-cover" />
                 </button>
               ))}
             </div>
@@ -191,7 +192,7 @@ export default function ProductDetailPage() {
               {product.nameAr}
             </h1>
             {product.nameEn && (
-              <p className="font-serif text-xs font-semibold tracking-widest uppercase text-[#876725] mt-1.5">
+              <p lang="en" className="font-serif text-xs font-semibold tracking-widest uppercase text-[#876725] mt-1.5">
                 {product.nameEn}
               </p>
             )}
@@ -213,7 +214,7 @@ export default function ProductDetailPage() {
 
           {/* Arabic Detailed Description */}
           <div className="space-y-3">
-            <h3 className="font-bold text-sm text-foreground">تفاصيل ومواصفات القطعة:</h3>
+            <h2 className="font-bold text-sm text-foreground">تفاصيل ومواصفات القطعة:</h2>
             <div className="text-sm text-foreground/90 leading-relaxed bg-card p-4 rounded-xl border border-border shadow-2xs">
               <p>{product.descriptionAr}</p>
             </div>
@@ -221,54 +222,61 @@ export default function ProductDetailPage() {
 
           {/* Structured Craftsmanship & Technical Specs Table */}
           <div className="space-y-2 pt-1">
-            <h4 className="font-bold text-xs text-foreground flex items-center gap-1.5">
+            <h3 className="font-bold text-xs text-foreground flex items-center gap-1.5">
               <Sparkles className="h-3.5 w-3.5 text-[#C5A059]" aria-hidden="true" />
               <span>المواصفات الفنية والحرفية المعتمدة:</span>
-            </h4>
-            <div className="rounded-xl border border-border bg-card overflow-hidden text-xs">
-              <div className="grid grid-cols-2 divide-x divide-x-reverse divide-border/60 border-b border-border/60 p-2.5 bg-muted/40 font-semibold text-muted-foreground">
-                <span>المعيار / الخاصية</span>
-                <span>المواصفات وخامات التصنيع</span>
-              </div>
-              {product.category?.slug?.includes('watch') || product.nameEn?.toLowerCase().includes('watch') ? (
-                <>
-                  <div className="grid grid-cols-2 divide-x divide-x-reverse divide-border/60 border-b border-border/40 p-2.5">
-                    <span className="text-muted-foreground font-medium">نوع الماكينة والحركة</span>
-                    <span className="font-bold text-foreground">كوارتز يابانية دقيقة (Precision Quartz)</span>
-                  </div>
-                  <div className="grid grid-cols-2 divide-x divide-x-reverse divide-border/60 border-b border-border/40 p-2.5">
-                    <span className="text-muted-foreground font-medium">مادة الهيكل والمينا</span>
-                    <span className="font-bold text-foreground">فولاذ مقاوم للصدأ 316L فائق الصلابة</span>
-                  </div>
-                  <div className="grid grid-cols-2 divide-x divide-x-reverse divide-border/60 border-b border-border/40 p-2.5">
-                    <span className="text-muted-foreground font-medium">زجاج الساعة</span>
-                    <span className="font-bold text-foreground">كريستال مقوى ضد الخدوش والانعكاس</span>
-                  </div>
-                  <div className="grid grid-cols-2 divide-x divide-x-reverse divide-border/60 p-2.5">
-                    <span className="text-muted-foreground font-medium">مقاومة الماء</span>
-                    <span className="font-bold text-foreground">3ATM / 30 متراً (مقاومة للرذاذ والاستخدام اليومي)</span>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div className="grid grid-cols-2 divide-x divide-x-reverse divide-border/60 border-b border-border/40 p-2.5">
-                    <span className="text-muted-foreground font-medium">نوع وخامة الجلد</span>
-                    <span className="font-bold text-foreground">جلد طبيعي 100% مدبوغ نباتياً (Full-Grain)</span>
-                  </div>
-                  <div className="grid grid-cols-2 divide-x divide-x-reverse divide-border/60 border-b border-border/40 p-2.5">
-                    <span className="text-muted-foreground font-medium">الحماية والتقنية</span>
-                    <span className="font-bold text-foreground">حماية RFID مدمجة لمنع سرقة البطاقات</span>
-                  </div>
-                  <div className="grid grid-cols-2 divide-x divide-x-reverse divide-border/60 border-b border-border/40 p-2.5">
-                    <span className="text-muted-foreground font-medium">التشطيب والخياطة</span>
-                    <span className="font-bold text-foreground">خياطة يدوية معززة بخيوط شمعية مقاومة للتلف</span>
-                  </div>
-                  <div className="grid grid-cols-2 divide-x divide-x-reverse divide-border/60 p-2.5">
-                    <span className="text-muted-foreground font-medium">ملمس وجودة الخامة</span>
-                    <span className="font-bold text-foreground">ملمس ناعم وطبيعي يكتسب مظهراً أعمق مع الاستخدام</span>
-                  </div>
-                </>
-              )}
+            </h3>
+            <div className="rounded-xl border border-border bg-card overflow-hidden text-xs shadow-2xs">
+              <table className="w-full text-start border-collapse">
+                <caption className="sr-only">المواصفات الفنية ومواد تصنيع المنتج</caption>
+                <thead className="bg-muted/40 border-b border-border/60 font-semibold text-muted-foreground">
+                  <tr>
+                    <th scope="col" className="p-2.5 text-start font-semibold">المعيار / الخاصية</th>
+                    <th scope="col" className="p-2.5 text-start font-semibold border-r border-border/60">المواصفات وخامات التصنيع</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border/40">
+                  {product.category?.slug?.includes('watch') || product.nameEn?.toLowerCase().includes('watch') ? (
+                    <>
+                      <tr>
+                        <th scope="row" className="p-2.5 text-muted-foreground font-medium text-start">نوع الماكينة والحركة</th>
+                        <td className="p-2.5 font-bold text-foreground border-r border-border/40">كوارتز يابانية دقيقة (Precision Quartz)</td>
+                      </tr>
+                      <tr>
+                        <th scope="row" className="p-2.5 text-muted-foreground font-medium text-start">مادة الهيكل والمينا</th>
+                        <td className="p-2.5 font-bold text-foreground border-r border-border/40">فولاذ مقاوم للصدأ 316L فائق الصلابة</td>
+                      </tr>
+                      <tr>
+                        <th scope="row" className="p-2.5 text-muted-foreground font-medium text-start">زجاج الساعة</th>
+                        <td className="p-2.5 font-bold text-foreground border-r border-border/40">كريستال مقوى ضد الخدوش والانعكاس</td>
+                      </tr>
+                      <tr>
+                        <th scope="row" className="p-2.5 text-muted-foreground font-medium text-start">مقاومة الماء</th>
+                        <td className="p-2.5 font-bold text-foreground border-r border-border/40">3ATM / 30 متراً (مقاومة للرذاذ والاستخدام اليومي)</td>
+                      </tr>
+                    </>
+                  ) : (
+                    <>
+                      <tr>
+                        <th scope="row" className="p-2.5 text-muted-foreground font-medium text-start">نوع وخامة الجلد</th>
+                        <td className="p-2.5 font-bold text-foreground border-r border-border/40">جلد طبيعي 100% مدبوغ نباتياً (Full-Grain)</td>
+                      </tr>
+                      <tr>
+                        <th scope="row" className="p-2.5 text-muted-foreground font-medium text-start">الحماية والتقنية</th>
+                        <td className="p-2.5 font-bold text-foreground border-r border-border/40">حماية RFID مدمجة لمنع سرقة البطاقات</td>
+                      </tr>
+                      <tr>
+                        <th scope="row" className="p-2.5 text-muted-foreground font-medium text-start">التشطيب والخياطة</th>
+                        <td className="p-2.5 font-bold text-foreground border-r border-border/40">خياطة يدوية معززة بخيوط شمعية مقاومة للتلف</td>
+                      </tr>
+                      <tr>
+                        <th scope="row" className="p-2.5 text-muted-foreground font-medium text-start">ملمس وجودة الخامة</th>
+                        <td className="p-2.5 font-bold text-foreground border-r border-border/40">ملمس ناعم وطبيعي يكتسب مظهراً أعمق مع الاستخدام</td>
+                      </tr>
+                    </>
+                  )}
+                </tbody>
+              </table>
             </div>
           </div>
 
