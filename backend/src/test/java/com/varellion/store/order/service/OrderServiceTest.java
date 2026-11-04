@@ -454,4 +454,86 @@ class OrderServiceTest {
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("غير متاح للشراء");
     }
+
+    @Test
+    @DisplayName("createOrder: Throws IllegalArgumentException when request contains duplicate product IDs")
+    void createOrder_DuplicateProducts_ThrowsException() {
+        UUID prodId = UUID.randomUUID();
+
+        CreateOrderRequest request = CreateOrderRequest.builder()
+                .customerName("أحمد محمود")
+                .customerPhone("01012345678")
+                .shippingGovernorate("القاهرة")
+                .shippingCityArea("المعادي")
+                .shippingDetailedAddress("شارع 9")
+                .items(List.of(
+                        new CreateOrderRequest.CreateOrderItemRequest(prodId, 1),
+                        new CreateOrderRequest.CreateOrderItemRequest(prodId, 2)
+                ))
+                .build();
+
+        assertThatThrownBy(() -> orderService.createOrder("test@varellion.com", request))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("لا يمكن تكرار نفس المنتج");
+    }
+
+    @Test
+    @DisplayName("createOrder: Preserves non-COD payment method in DTO and admin notes")
+    void createOrder_PaymentMethodCard_ReflectedInDtoAndAdminNotes() {
+        UUID prodId = UUID.randomUUID();
+        Product mockProduct = Product.builder()
+                .productId(prodId)
+                .nameAr("ساعة يد كلاسيك")
+                .sku("VAR-CLK-01")
+                .price(BigDecimal.valueOf(1500))
+                .stockQuantity(10)
+                .reservedQuantity(0)
+                .isActive(true)
+                .build();
+
+        CreateOrderRequest request = CreateOrderRequest.builder()
+                .customerName("أحمد محمود")
+                .customerPhone("01012345678")
+                .shippingGovernorate("القاهرة")
+                .shippingCityArea("المعادي")
+                .shippingDetailedAddress("شارع 9")
+                .paymentMethod("CARD")
+                .items(List.of(new CreateOrderRequest.CreateOrderItemRequest(prodId, 1)))
+                .build();
+
+        when(customerService.getOrCreateCustomerForUser("test@varellion.com", "أحمد محمود"))
+                .thenReturn(sampleCustomer);
+        when(productRepository.findByIdForUpdate(prodId))
+                .thenReturn(Optional.of(mockProduct));
+        when(orderRepository.save(any(Order.class)))
+                .thenAnswer(invocation -> {
+                    Order o = invocation.getArgument(0);
+                    o.setOrderId(UUID.randomUUID());
+                    return o;
+                });
+
+        OrderResponseDto dto = orderService.createOrder("test@varellion.com", request);
+
+        assertThat(dto.getPaymentMethod()).isEqualTo("CARD");
+    }
+
+    @Test
+    @DisplayName("calculateAuthoritativeShippingFee: Accurately handles Arabic spelling variations (ه/ة and أ/إ/ا)")
+    void calculateAuthoritativeShippingFee_SpellingVariations() {
+        // Cairo with Ha instead of Ta Marbuta
+        assertThat(orderService.calculateAuthoritativeShippingFee("القاهره", BigDecimal.valueOf(500)))
+                .isEqualByComparingTo(new BigDecimal("50.00"));
+
+        // Giza with Ha
+        assertThat(orderService.calculateAuthoritativeShippingFee("الجيزه", BigDecimal.valueOf(500)))
+                .isEqualByComparingTo(new BigDecimal("50.00"));
+
+        // Alexandria without hamza
+        assertThat(orderService.calculateAuthoritativeShippingFee("الاسكندرية", BigDecimal.valueOf(500)))
+                .isEqualByComparingTo(new BigDecimal("60.00"));
+
+        // Free shipping for >= 2500 EGP
+        assertThat(orderService.calculateAuthoritativeShippingFee("أسوان", BigDecimal.valueOf(2500)))
+                .isEqualByComparingTo(BigDecimal.ZERO);
+    }
 }

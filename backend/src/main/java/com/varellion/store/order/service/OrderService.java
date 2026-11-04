@@ -66,6 +66,16 @@ public class OrderService {
         return digits;
     }
 
+    private String normalizeArabicGov(String input) {
+        if (input == null) return "";
+        return input.trim()
+                .replace('إ', 'ا')
+                .replace('أ', 'ا')
+                .replace('آ', 'ا')
+                .replace('ة', 'ه')
+                .replace('ى', 'ي');
+    }
+
     /**
      * Calculates the estimated delivery duration according to the customer's governorate.
      */
@@ -73,13 +83,13 @@ public class OrderService {
         if (governorate == null || governorate.isBlank()) {
             return "2 - 3 أيام عمل";
         }
-        String gov = governorate.trim();
-        if (gov.contains("القاهرة") || gov.contains("الجيزة") || gov.contains("Cairo") || gov.contains("Giza")) {
+        String govNorm = normalizeArabicGov(governorate);
+        if (govNorm.contains("القاهره") || govNorm.contains("الجيزه") || govNorm.equalsIgnoreCase("Cairo") || govNorm.equalsIgnoreCase("Giza")) {
             return "1 - 2 يوم عمل (شحن سريع)";
-        } else if (gov.contains("الإسكندرية") || gov.contains("Alexandria") || gov.contains("الدقهلية")
-                || gov.contains("الغربية") || gov.contains("الشرقية") || gov.contains("المنوفية")
-                || gov.contains("القليوبية") || gov.contains("البحيرة") || gov.contains("كفر الشيخ")
-                || gov.contains("دمياط") || gov.contains("بورسعيد") || gov.contains("الإسماعيلية") || gov.contains("السويس")) {
+        } else if (govNorm.contains("الاسكندريه") || govNorm.equalsIgnoreCase("Alexandria") || govNorm.contains("الدقهليه")
+                || govNorm.contains("الغربيه") || govNorm.contains("الشرقيه") || govNorm.contains("المنوفيه")
+                || govNorm.contains("القليوبيه") || govNorm.contains("البحيره") || govNorm.contains("كفر الشيخ")
+                || govNorm.contains("دمياط") || govNorm.contains("بورسعيد") || govNorm.contains("الاسماعيليه") || govNorm.contains("السويس")) {
             return "2 - 3 أيام عمل";
         } else {
             return "3 - 5 أيام عمل (محافظات الصعيد والحدود)";
@@ -97,18 +107,18 @@ public class OrderService {
         if (governorate == null || governorate.isBlank()) {
             return new BigDecimal("60.00");
         }
-        String gov = governorate.trim();
-        if (gov.contains("القاهرة") || gov.contains("الجيزة") || gov.contains("القليوبية")
-                || gov.equalsIgnoreCase("Cairo") || gov.equalsIgnoreCase("Giza") || gov.equalsIgnoreCase("Qalyubia")) {
+        String govNorm = normalizeArabicGov(governorate);
+        if (govNorm.contains("القاهره") || govNorm.contains("الجيزه") || govNorm.contains("القليوبيه")
+                || govNorm.equalsIgnoreCase("Cairo") || govNorm.equalsIgnoreCase("Giza") || govNorm.equalsIgnoreCase("Qalyubia")) {
             return new BigDecimal("50.00");
-        } else if (gov.contains("الإسكندرية") || gov.contains("مطروح")
-                || gov.equalsIgnoreCase("Alexandria") || gov.equalsIgnoreCase("Matrouh")) {
+        } else if (govNorm.contains("الاسكندريه") || govNorm.contains("مطروح")
+                || govNorm.equalsIgnoreCase("Alexandria") || govNorm.equalsIgnoreCase("Matrouh")) {
             return new BigDecimal("60.00");
-        } else if (gov.contains("الدقهلية") || gov.contains("الغربية") || gov.contains("الشرقية")
-                || gov.contains("المنوفية") || gov.contains("كفر الشيخ") || gov.contains("البحيرة")
-                || gov.contains("دمياط") || gov.contains("بورسعيد") || gov.contains("الإسماعيلية") || gov.contains("السويس")) {
+        } else if (govNorm.contains("الدقهليه") || govNorm.contains("الغربيه") || govNorm.contains("الشرقيه")
+                || govNorm.contains("المنوفيه") || govNorm.contains("كفر الشيخ") || govNorm.contains("البحيره")
+                || govNorm.contains("دمياط") || govNorm.contains("بورسعيد") || govNorm.contains("الاسماعيليه") || govNorm.contains("السويس")) {
             return new BigDecimal("65.00");
-        } else if (gov.contains("الفيوم") || gov.contains("بني سويف") || gov.contains("المنيا") || gov.contains("أسيوط")) {
+        } else if (govNorm.contains("الفيوم") || govNorm.contains("بني سويف") || govNorm.contains("المنيا") || govNorm.contains("اسيوط")) {
             return new BigDecimal("75.00");
         } else {
             return new BigDecimal("85.00");
@@ -129,14 +139,27 @@ public class OrderService {
             throw new IllegalArgumentException("يجب أن يحتوي الطلب على منتج واحد على الأقل");
         }
 
-        // 1. Resolve Customer profile
+        // 1. Validate against duplicate product IDs in the order request
+        long uniqueProductCount = request.getItems().stream()
+                .map(CreateOrderRequest.CreateOrderItemRequest::getProductId)
+                .distinct()
+                .count();
+        if (uniqueProductCount != request.getItems().size()) {
+            throw new IllegalArgumentException("لا يمكن تكرار نفس المنتج في بنود الطلب الواحد");
+        }
+
+        // 2. Resolve Customer profile
         Customer customer = customerService.getOrCreateCustomerForUser(userEmail, request.getCustomerName());
 
-        // 2. Lock and verify stock for each requested product
+        // 3. Lock and verify stock for each requested product in deterministic sorted order (Deadlock Prevention)
+        List<CreateOrderRequest.CreateOrderItemRequest> sortedItems = request.getItems().stream()
+                .sorted(Comparator.comparing(CreateOrderRequest.CreateOrderItemRequest::getProductId))
+                .toList();
+
         List<OrderItem> orderItems = new ArrayList<>();
         BigDecimal subtotal = BigDecimal.ZERO;
 
-        for (CreateOrderRequest.CreateOrderItemRequest itemReq : request.getItems()) {
+        for (CreateOrderRequest.CreateOrderItemRequest itemReq : sortedItems) {
             Product product = productRepository.findByIdForUpdate(itemReq.getProductId())
                     .orElseThrow(() -> new ResourceNotFoundException("المنتج المطلوب غير موجود: " + itemReq.getProductId()));
 
@@ -180,13 +203,18 @@ public class OrderService {
         // 4. Generate Unique Order Number
         String orderNumber = generateUniqueOrderNumber();
 
-        // 5. Notes handling (including alternativePhone if present)
+        // 5. Notes and Payment Method handling
         String combinedNotes = request.getCustomerNotes();
         if (request.getAlternativePhone() != null && !request.getAlternativePhone().isBlank()) {
             String altNote = "هاتف بديل: " + request.getAlternativePhone().trim();
             combinedNotes = (combinedNotes != null && !combinedNotes.isBlank())
                     ? combinedNotes + " | " + altNote
                     : altNote;
+        }
+
+        String adminNotes = null;
+        if (request.getPaymentMethod() != null && !request.getPaymentMethod().isBlank()) {
+            adminNotes = "طريقة الدفع المطلوبة: " + request.getPaymentMethod().trim();
         }
 
         // 6. Instantiate and Persist Order
@@ -207,6 +235,7 @@ public class OrderService {
                 .shippingFeeStatus(ShippingFeeStatus.PENDING)
                 .confirmationDeadline(OffsetDateTime.now().plusHours(24))
                 .customerNotes(combinedNotes)
+                .adminNotes(adminNotes)
                 .items(new ArrayList<>())
                 .statusHistory(new ArrayList<>())
                 .build();
@@ -233,7 +262,11 @@ public class OrderService {
         }
 
         log.info("[OrderService] Successfully placed order {} for user {}", orderNumber, userEmail);
-        return mapToDto(savedOrder);
+        OrderResponseDto dto = mapToDto(savedOrder);
+        if (request.getPaymentMethod() != null && !request.getPaymentMethod().isBlank()) {
+            dto.setPaymentMethod(request.getPaymentMethod().trim());
+        }
+        return dto;
     }
 
     private String generateUniqueOrderNumber() {
@@ -246,7 +279,7 @@ public class OrderService {
                 return candidate;
             }
         }
-        return "VAR-" + datePart + "-" + (System.currentTimeMillis() % 10000);
+        return String.format("VAR-%s-%04d", datePart, Math.abs(System.currentTimeMillis() % 10000));
     }
 
     /**
