@@ -116,3 +116,27 @@
     -moz-osx-font-smoothing: grayscale;
   }
 }
+
+/* Custom luxury scrollbar for drawers, dialogs, and modal sheets */
+.scrollbar-luxury {
+  scrollbar-width: thin;
+  scrollbar-color: var(--ivory-300) transparent;
+}
+
+.scrollbar-luxury::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+.scrollbar-luxury::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-luxury::-webkit-scrollbar-thumb {
+  background: var(--ivory-300);
+  border-radius: 9999px;
+}
+
+.scrollbar-luxury::-webkit-scrollbar-thumb:hover {
+  background: var(--gold-500);
+}

@@ -44,8 +44,8 @@ export function CartDrawer() {
       {items.length === 0 ? (
         /* Empty State */
         <div className="flex flex-col items-center justify-center flex-1 px-6 py-16 text-center">
-          <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-[#0E0F11] text-[#C5A059] mb-5 border border-[#C5A059]/30 shadow-xs">
-            <PackageOpen className="h-10 w-10 text-[#C5A059]" aria-hidden="true" />
+          <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-obsidian-950 text-gold-500 mb-5 border border-gold-500/30 shadow-xs">
+            <PackageOpen className="h-10 w-10 text-gold-500" aria-hidden="true" />
           </div>
           <h3 className="text-lg font-black text-foreground mb-2">
             سلة مشترياتك فارغة حالياً
@@ -64,7 +64,7 @@ export function CartDrawer() {
         /* Cart Content */
         <div className="flex flex-col flex-1 h-full overflow-hidden">
           {/* Scrollable Items List */}
-          <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4 divide-y divide-border/60">
+          <div className="flex-1 overflow-y-auto scrollbar-luxury px-6 py-4 space-y-4 divide-y divide-border/60">
             {items.map((item) => {
               const mainImg =
                 item.product.images.find((img) => img.isMain) || item.product.images[0];
@@ -102,7 +102,7 @@ export function CartDrawer() {
                     <Link
                       href={`/products/${item.product.slug}`}
                       onClick={closeCart}
-                      className="font-bold text-xs sm:text-sm text-foreground hover:text-[#876725] transition-colors line-clamp-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-xs"
+                      className="font-bold text-xs sm:text-sm text-foreground hover:text-gold-700 transition-colors line-clamp-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-xs"
                     >
                       {item.product.nameAr}
                     </Link>
@@ -202,7 +202,7 @@ export function CartDrawer() {
                 onClick={handleCheckoutClick}
                 className="w-full gap-2 font-bold min-h-[48px] shadow-sm text-sm"
               >
-                <ShoppingBag className="h-4 w-4 text-[#C5A059]" aria-hidden="true" />
+                <ShoppingBag className="h-4 w-4 text-gold-500" aria-hidden="true" />
                 <span>المتابعة لإتمام الطلب</span>
               </Button>
 
