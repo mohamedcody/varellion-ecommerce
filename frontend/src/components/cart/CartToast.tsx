@@ -8,7 +8,9 @@ import { Button } from '@/components/ui/Button';
 export function CartToast() {
   const { toastMessage, clearToast, openCart } = useCart();
 
-  if (!toastMessage) return null;
+  if (!toastMessage) {
+    return <div role="status" aria-live="polite" className="sr-only" />;
+  }
 
   return (
     <div
@@ -38,7 +40,7 @@ export function CartToast() {
       <button
         type="button"
         onClick={clearToast}
-        className="text-muted-foreground hover:text-foreground p-1 transition-colors rounded-md min-h-[32px] min-w-[32px] flex items-center justify-center cursor-pointer"
+        className="text-muted-foreground hover:text-foreground p-1 transition-colors rounded-md min-h-[44px] min-w-[44px] flex items-center justify-center cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         aria-label="إغلاق الإشعار"
       >
         <X className="h-4 w-4" />

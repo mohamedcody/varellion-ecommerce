@@ -39,8 +39,13 @@ export function SearchDialog({ isOpen, onClose }: SearchDialogProps) {
     : POPULAR_SEARCHES;
 
   return (
-    <Dialog isOpen={isOpen} onClose={onClose} className="p-0 overflow-hidden max-w-xl">
+    <Dialog isOpen={isOpen} onClose={onClose} title="البحث عن منتجات VARELLION" className="p-0 overflow-hidden max-w-xl">
       <div className="border-b border-border p-4 bg-card">
+        {/* Polite Live Region for Search Results Count */}
+        <div className="sr-only" role="status" aria-live="polite" aria-atomic="true">
+          {query.trim() ? `تم العثور على ${filteredSearches.length} نتائج مقترحة` : ''}
+        </div>
+
         <form
           onSubmit={(e) => {
             e.preventDefault();

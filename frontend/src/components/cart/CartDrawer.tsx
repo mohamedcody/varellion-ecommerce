@@ -63,6 +63,11 @@ export function CartDrawer() {
       ) : (
         /* Cart Content */
         <div className="flex flex-col flex-1 h-full overflow-hidden">
+          {/* Polite Live Region for Cart State Announcements */}
+          <div className="sr-only" role="status" aria-live="polite">
+            {`سلة المشتريات: ${totalItems} قطع، المجموع الفرعي ${subtotal.toLocaleString('ar-EG')} جنيه مصري`}
+          </div>
+
           {/* Scrollable Items List */}
           <div className="flex-1 overflow-y-auto scrollbar-luxury px-6 py-4 space-y-4 divide-y divide-border/60">
             {items.map((item) => {
