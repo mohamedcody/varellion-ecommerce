@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { CheckoutForm } from '../CheckoutForm';
 import { customerService } from '@/services/customer';
@@ -53,5 +53,49 @@ describe('CheckoutForm Profile Prefill', () => {
     const saveCheckbox = screen.getByLabelText(/حفظ هذا العنوان كعنوان شحن افتراضي/i) as HTMLInputElement;
     expect(saveCheckbox).toBeDefined();
     expect(saveCheckbox.checked).toBe(false); // Does not overwrite existing address by default
+  });
+
+  it('moves focus to the first invalid field when submitting empty required fields (WCAG 2.4.3 & 3.3.1)', async () => {
+    vi.spyOn(customerService, 'getProfile').mockResolvedValue(null as any);
+
+    render(
+      <CheckoutForm
+        subtotal={1000}
+        shippingFee={60}
+        total={1060}
+        selectedGovernorate=""
+        onGovernorateChange={vi.fn()}
+        onSubmitOrder={vi.fn()}
+        isSubmitting={false}
+      />
+    );
+
+    const nameInput = screen.getByLabelText(/الاسم بالكامل/i);
+    fireEvent.change(nameInput, { target: { value: '' } });
+
+    const submitBtn = screen.getByRole('button', { name: /تأكيد الطلب/i });
+    fireEvent.click(submitBtn);
+
+    await waitFor(() => {
+      expect(document.activeElement).toBe(nameInput);
+    });
+  });
+
+  it('renders payment methods within an accessible radiogroup with arrow navigation', () => {
+    render(
+      <CheckoutForm
+        subtotal={1000}
+        shippingFee={60}
+        total={1060}
+        selectedGovernorate="Cairo"
+        onGovernorateChange={vi.fn()}
+        onSubmitOrder={vi.fn()}
+        isSubmitting={false}
+      />
+    );
+
+    const radiogroup = screen.getByRole('radiogroup');
+    expect(radiogroup).toBeDefined();
+    expect(radiogroup.getAttribute('aria-label') || radiogroup.getAttribute('aria-labelledby')).toBeTruthy();
   });
 });

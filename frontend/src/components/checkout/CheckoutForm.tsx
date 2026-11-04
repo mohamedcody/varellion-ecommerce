@@ -120,7 +120,7 @@ export function CheckoutForm({
     if (!validation.isValid) {
       setFieldErrors(validation.errors);
 
-      // Smooth scroll to the first erroneous input
+      // Smooth scroll and move programmatic focus to the first erroneous input (WCAG 2.4.3 & 3.3.1)
       const firstErrorField = Object.keys(validation.errors)[0];
       if (firstErrorField) {
         const elem = document.getElementById(
@@ -128,7 +128,10 @@ export function CheckoutForm({
             ? 'shipping-governorate-select'
             : `checkout-${firstErrorField}`
         );
-        elem?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        if (typeof elem?.scrollIntoView === 'function') {
+          elem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        elem?.focus();
       }
       return;
     }

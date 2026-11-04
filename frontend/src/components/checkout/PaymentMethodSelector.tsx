@@ -16,10 +16,25 @@ export function PaymentMethodSelector({
   onChange,
   disabled = false,
 }: PaymentMethodSelectorProps) {
+  const handleKeyDown = (e: React.KeyboardEvent, currentMethod: PaymentMethod) => {
+    if (disabled) return;
+
+    if (e.key === ' ' || e.key === 'Enter') {
+      e.preventDefault();
+      onChange(currentMethod);
+    } else if (e.key === 'ArrowDown' || e.key === 'ArrowRight' || e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
+      e.preventDefault();
+      const nextMethod: PaymentMethod = currentMethod === 'CASH_ON_DELIVERY' ? 'CARD' : 'CASH_ON_DELIVERY';
+      onChange(nextMethod);
+      const nextElement = document.getElementById(nextMethod === 'CASH_ON_DELIVERY' ? 'payment-opt-cod' : 'payment-opt-card');
+      nextElement?.focus();
+    }
+  };
+
   return (
     <div className="w-full space-y-3 text-start">
       <div className="flex items-center justify-between">
-        <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+        <label id="payment-methods-label" className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground">
           طريقة الدفع <span className="text-destructive">*</span>
         </label>
         <span className="text-[11px] text-emerald-700 dark:text-emerald-400 font-semibold flex items-center gap-1">
@@ -28,19 +43,19 @@ export function PaymentMethodSelector({
         </span>
       </div>
 
-      <div className="space-y-3">
+      <div
+        role="radiogroup"
+        aria-labelledby="payment-methods-label"
+        className="space-y-3"
+      >
         {/* Option 1: Cash on Delivery */}
         <div
+          id="payment-opt-cod"
           role="radio"
           aria-checked={value === 'CASH_ON_DELIVERY'}
-          tabIndex={0}
+          tabIndex={value === 'CASH_ON_DELIVERY' ? 0 : -1}
           onClick={() => !disabled && onChange('CASH_ON_DELIVERY')}
-          onKeyDown={(e) => {
-            if (e.key === ' ' || e.key === 'Enter') {
-              e.preventDefault();
-              if (!disabled) onChange('CASH_ON_DELIVERY');
-            }
-          }}
+          onKeyDown={(e) => handleKeyDown(e, 'CASH_ON_DELIVERY')}
           className={cn(
             'relative flex flex-col md:flex-row md:items-center justify-between p-4 rounded-xl border transition-all cursor-pointer select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
             value === 'CASH_ON_DELIVERY'
@@ -88,16 +103,12 @@ export function PaymentMethodSelector({
 
         {/* Option 2: Paymob Unified Hosted Checkout (Card, Meeza, Wallets, InstaPay) */}
         <div
+          id="payment-opt-card"
           role="radio"
           aria-checked={value === 'CARD'}
-          tabIndex={0}
+          tabIndex={value === 'CARD' ? 0 : -1}
           onClick={() => !disabled && onChange('CARD')}
-          onKeyDown={(e) => {
-            if (e.key === ' ' || e.key === 'Enter') {
-              e.preventDefault();
-              if (!disabled) onChange('CARD');
-            }
-          }}
+          onKeyDown={(e) => handleKeyDown(e, 'CARD')}
           className={cn(
             'relative flex flex-col md:flex-row md:items-center justify-between p-4 rounded-xl border transition-all cursor-pointer select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
             value === 'CARD'
