@@ -219,6 +219,59 @@ export default function ProductDetailPage() {
             </div>
           </div>
 
+          {/* Structured Craftsmanship & Technical Specs Table */}
+          <div className="space-y-2 pt-1">
+            <h4 className="font-bold text-xs text-foreground flex items-center gap-1.5">
+              <Sparkles className="h-3.5 w-3.5 text-[#C5A059]" aria-hidden="true" />
+              <span>المواصفات الفنية والحرفية المعتمدة:</span>
+            </h4>
+            <div className="rounded-xl border border-border bg-card overflow-hidden text-xs">
+              <div className="grid grid-cols-2 divide-x divide-x-reverse divide-border/60 border-b border-border/60 p-2.5 bg-muted/40 font-semibold text-muted-foreground">
+                <span>المعيار / الخاصية</span>
+                <span>المواصفات وخامات التصنيع</span>
+              </div>
+              {product.category?.slug?.includes('watch') || product.nameEn?.toLowerCase().includes('watch') ? (
+                <>
+                  <div className="grid grid-cols-2 divide-x divide-x-reverse divide-border/60 border-b border-border/40 p-2.5">
+                    <span className="text-muted-foreground font-medium">نوع الماكينة والحركة</span>
+                    <span className="font-bold text-foreground">كوارتز يابانية دقيقة (Precision Quartz)</span>
+                  </div>
+                  <div className="grid grid-cols-2 divide-x divide-x-reverse divide-border/60 border-b border-border/40 p-2.5">
+                    <span className="text-muted-foreground font-medium">مادة الهيكل والمينا</span>
+                    <span className="font-bold text-foreground">فولاذ مقاوم للصدأ 316L فائق الصلابة</span>
+                  </div>
+                  <div className="grid grid-cols-2 divide-x divide-x-reverse divide-border/60 border-b border-border/40 p-2.5">
+                    <span className="text-muted-foreground font-medium">زجاج الساعة</span>
+                    <span className="font-bold text-foreground">كريستال مقوى ضد الخدوش والانعكاس</span>
+                  </div>
+                  <div className="grid grid-cols-2 divide-x divide-x-reverse divide-border/60 p-2.5">
+                    <span className="text-muted-foreground font-medium">مقاومة الماء</span>
+                    <span className="font-bold text-foreground">3ATM / 30 متراً (مقاومة للرذاذ والاستخدام اليومي)</span>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="grid grid-cols-2 divide-x divide-x-reverse divide-border/60 border-b border-border/40 p-2.5">
+                    <span className="text-muted-foreground font-medium">نوع وخامة الجلد</span>
+                    <span className="font-bold text-foreground">جلد طبيعي 100% مدبوغ نباتياً (Full-Grain)</span>
+                  </div>
+                  <div className="grid grid-cols-2 divide-x divide-x-reverse divide-border/60 border-b border-border/40 p-2.5">
+                    <span className="text-muted-foreground font-medium">الحماية والتقنية</span>
+                    <span className="font-bold text-foreground">حماية RFID مدمجة لمنع سرقة البطاقات</span>
+                  </div>
+                  <div className="grid grid-cols-2 divide-x divide-x-reverse divide-border/60 border-b border-border/40 p-2.5">
+                    <span className="text-muted-foreground font-medium">التشطيب والخياطة</span>
+                    <span className="font-bold text-foreground">خياطة يدوية معززة بخيوط شمعية مقاومة للتلف</span>
+                  </div>
+                  <div className="grid grid-cols-2 divide-x divide-x-reverse divide-border/60 p-2.5">
+                    <span className="text-muted-foreground font-medium">ملمس وجودة الخامة</span>
+                    <span className="font-bold text-foreground">ملمس ناعم وطبيعي يكتسب مظهراً أعمق مع الاستخدام</span>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+
           {/* English Craftsmanship Note */}
           {product.descriptionEn && (
             <div className="text-xs text-muted-foreground leading-relaxed italic border-r-2 border-[#C5A059] pr-3">
