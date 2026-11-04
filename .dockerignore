@@ -1,0 +1,20 @@
+.git
+.gitignore
+.superpowers
+_references
+docs
+*.md
+.env
+.env.local
+.env.*.local
+
+# Backend
+backend/target
+backend/.mvn
+backend/*.log
+
+# Frontend
+frontend/node_modules
+frontend/.next
+frontend/coverage
+frontend/*.log
