@@ -50,8 +50,14 @@ export const ordersService = {
   async createOrder(params: PlaceOrderParams): Promise<Order> {
     const { request } = params;
 
+    const headers: Record<string, string> = {};
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+      headers['Idempotency-Key'] = crypto.randomUUID();
+    }
+
     const response = await requestApi<{ data?: Order } | Order>('/orders', {
       method: 'POST',
+      headers,
       body: JSON.stringify(request),
     });
 

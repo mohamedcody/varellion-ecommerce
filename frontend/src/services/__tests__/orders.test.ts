@@ -117,6 +117,9 @@ describe('ordersService - Track Order & DELIVERED status', () => {
 
       expect(requestApiSpy).toHaveBeenCalledWith('/orders', {
         method: 'POST',
+        headers: {
+          'Idempotency-Key': expect.any(String),
+        },
         body: JSON.stringify(sampleRequest),
       });
       expect(result).toEqual(serverOrder);

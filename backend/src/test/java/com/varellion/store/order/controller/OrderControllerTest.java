@@ -36,6 +36,9 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 import org.springframework.http.MediaType;
 
+import com.varellion.store.order.service.IdempotencyService;
+import org.mockito.Spy;
+
 @ExtendWith(MockitoExtension.class)
 class OrderControllerTest {
 
@@ -43,6 +46,9 @@ class OrderControllerTest {
 
     @Mock
     private OrderService orderService;
+
+    @Spy
+    private IdempotencyService idempotencyService = new IdempotencyService();
 
     @InjectMocks
     private OrderController orderController;
@@ -208,5 +214,52 @@ class OrderControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status").value(400))
                 .andExpect(jsonPath("$.validationErrors.customerPhone").value("رقم الهاتف مطلوب"));
+    }
+
+    @Test
+    @DisplayName("POST /api/orders: Duplicate request with same Idempotency-Key returns cached order without re-executing service")
+    void createOrder_DuplicateIdempotencyKey_ReturnsCachedResponse() throws Exception {
+        UUID prodId = UUID.randomUUID();
+        String jsonPayload = """
+            {
+              "customerName": "أحمد محمود",
+              "customerPhone": "01012345678",
+              "shippingGovernorate": "القاهرة",
+              "shippingCityArea": "المعادي",
+              "shippingDetailedAddress": "شارع 9، برج الصفا",
+              "paymentMethod": "CASH_ON_DELIVERY",
+              "items": [
+                {
+                  "productId": "%s",
+                  "quantity": 1
+                }
+              ]
+            }
+        """.formatted(prodId);
+
+        when(orderService.createOrder(eq("customer@varellion.com"), any()))
+                .thenReturn(sampleResponse);
+
+        String idempotencyKey = "unique-order-uuid-9999";
+
+        // First call: fresh creation
+        mockMvc.perform(post("/api/orders")
+                        .header("Idempotency-Key", idempotencyKey)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(jsonPayload))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.data.orderNumber").value("VAR-20261028-0001"));
+
+        // Second call with identical key: returns cached response
+        mockMvc.perform(post("/api/orders")
+                        .header("Idempotency-Key", idempotencyKey)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(jsonPayload))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.data.orderNumber").value("VAR-20261028-0001"));
+
+        // Verify orderService.createOrder was called exactly ONCE!
+        org.mockito.Mockito.verify(orderService, org.mockito.Mockito.times(1))
+                .createOrder(eq("customer@varellion.com"), any());
     }
 }
