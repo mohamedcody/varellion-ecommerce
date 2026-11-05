@@ -114,7 +114,7 @@ export function OrderSummaryCard({
             aria-valuemax={100}
           >
             <div
-              className="h-full bg-primary transition-all duration-300 rounded-full"
+              className="h-full bg-primary transition-[width] duration-300 rounded-full"
               style={{ width: `${freeShippingProgress}%` }}
             />
           </div>

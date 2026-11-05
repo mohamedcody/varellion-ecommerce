@@ -237,7 +237,7 @@ function ProductsContent() {
             <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" aria-hidden="true" />
             <Input
               type="search"
-              placeholder="ابحث بالاسم أو الموديل..."
+              placeholder="ابحث بالاسم أو الموديل…"
               value={searchInput}
               onChange={handleSearchChange}
               className="pr-9 pl-8 text-xs h-10 rounded-lg"
@@ -338,7 +338,7 @@ export default function ProductsPage() {
       fallback={
         <div className="container mx-auto px-4 py-20 text-center max-w-7xl">
           <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" aria-hidden="true" />
-          <p className="text-xs text-muted-foreground mt-3">جارٍ تحميل الكتالوج...</p>
+          <p className="text-xs text-muted-foreground mt-3">جارٍ تحميل الكتالوج…</p>
         </div>
       }
     >

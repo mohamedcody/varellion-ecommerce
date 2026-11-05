@@ -409,7 +409,7 @@ export default function OrderSuccessPage() {
       <Suspense
         fallback={
           <div className="min-h-[50vh] flex items-center justify-center text-xs text-muted-foreground">
-            جاري تحميل تفاصيل الطلب...
+            جاري تحميل تفاصيل الطلب…
           </div>
         }
       >

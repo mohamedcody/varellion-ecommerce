@@ -157,7 +157,7 @@ export function OrderTrackingTimeline({ status, createdAt, updatedAt, governorat
                 data-testid={`timeline-step-${step.id}`}
                 aria-current={isCurrent ? 'step' : undefined}
                 className={cn(
-                  'relative flex md:flex-col items-start gap-3.5 md:gap-2 p-3.5 rounded-xl border transition-all list-none',
+                  'relative flex md:flex-col items-start gap-3.5 md:gap-2 p-3.5 rounded-xl border transition-[background-color,border-color,box-shadow] list-none',
                   isCurrent
                     ? 'border-primary bg-primary/5 ring-1 ring-primary/30 shadow-xs'
                     : isCompleted

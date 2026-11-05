@@ -82,7 +82,7 @@ function PaymentCallbackContent() {
 
           <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground pt-4">
             <Loader2 className="h-4 w-4 animate-spin text-primary" aria-hidden="true" />
-            <span>جاري نقلك إلى إشعار الفاتورة الرسمية...</span>
+            <span>جاري نقلك إلى إشعار الفاتورة الرسمية…</span>
           </div>
         </div>
       </div>
@@ -129,7 +129,7 @@ function PaymentCallbackContent() {
               {isConvertingToCod ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
-                  <span>جاري تحويل الطلب للدفع كاش...</span>
+                  <span>جاري تحويل الطلب للدفع كاش…</span>
                 </>
               ) : (
                 <>
@@ -174,7 +174,7 @@ export default function PaymentCallbackPage() {
       <Suspense
         fallback={
           <div className="min-h-[50vh] flex items-center justify-center text-xs text-muted-foreground">
-            جاري تأكيد حالة المعاملة البنكية...
+            جاري تأكيد حالة المعاملة البنكية…
           </div>
         }
       >

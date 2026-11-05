@@ -171,6 +171,8 @@ function RegisterFormContent() {
                   type="text"
                   name="username"
                   autoComplete="username"
+                  autoCapitalize="none"
+                  spellCheck={false}
                   required
                   disabled={isSubmitting}
                   value={username}
@@ -213,6 +215,8 @@ function RegisterFormContent() {
                   type="email"
                   name="email"
                   autoComplete="email"
+                  autoCapitalize="none"
+                  spellCheck={false}
                   required
                   disabled={isSubmitting}
                   value={email}
@@ -360,7 +364,7 @@ function RegisterFormContent() {
               {isSubmitting ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
-                  <span>جارٍ إنشاء الحساب وتأكيد التسجيل...</span>
+                  <span>جارٍ إنشاء الحساب وتأكيد التسجيل…</span>
                 </>
               ) : (
                 <span>إنشاء الحساب</span>
@@ -413,7 +417,7 @@ export default function RegisterPage() {
       fallback={
         <div className="container mx-auto px-4 py-20 text-center max-w-md">
           <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" aria-hidden="true" />
-          <p className="text-xs text-muted-foreground mt-3">جارٍ تحميل صفحة إنشاء الحساب...</p>
+          <p className="text-xs text-muted-foreground mt-3">جارٍ تحميل صفحة إنشاء الحساب…</p>
         </div>
       }
     >

@@ -136,6 +136,8 @@ function LoginFormContent() {
                   type="text"
                   name="identifier"
                   autoComplete="username"
+                  autoCapitalize="none"
+                  spellCheck={false}
                   required
                   disabled={isSubmitting}
                   value={identifier}
@@ -205,7 +207,7 @@ function LoginFormContent() {
               {isSubmitting ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
-                  <span>جارٍ تسجيل الدخول...</span>
+                  <span>جارٍ تسجيل الدخول…</span>
                 </>
               ) : (
                 <span>تسجيل الدخول</span>
@@ -258,7 +260,7 @@ export default function LoginPage() {
       fallback={
         <div className="container mx-auto px-4 py-20 text-center max-w-md">
           <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" aria-hidden="true" />
-          <p className="text-xs text-muted-foreground mt-3">جارٍ تحميل صفحة تسجيل الدخول...</p>
+          <p className="text-xs text-muted-foreground mt-3">جارٍ تحميل صفحة تسجيل الدخول…</p>
         </div>
       }
     >

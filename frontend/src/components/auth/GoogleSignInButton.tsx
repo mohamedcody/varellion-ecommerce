@@ -221,7 +221,7 @@ export function GoogleSignInButton({
       {/* Primary container where Google renders its official secure iframe button */}
       <div
         ref={googleContainerRef}
-        className={`w-full flex justify-center transition-all ${
+        className={`w-full flex justify-center transition-opacity ${
           buttonRendered && !isSubmitting ? 'block min-h-[44px]' : 'hidden'
         }`}
         aria-label="تسجيل الدخول باستخدام حساب Google"
@@ -241,12 +241,12 @@ export function GoogleSignInButton({
           {isSubmitting ? (
             <>
               <Loader2 className="h-4 w-4 animate-spin text-primary" aria-hidden="true" />
-              <span>جارٍ التحقق من حساب Google...</span>
+              <span>جارٍ التحقق من حساب Google…</span>
             </>
           ) : isInitializing ? (
             <>
               <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" aria-hidden="true" />
-              <span>جارٍ إعداد Google...</span>
+              <span>جارٍ إعداد Google…</span>
             </>
           ) : (
             <>

@@ -112,7 +112,7 @@ export function Header({ cartItemCount, onOpenCart }: HeaderProps) {
       </div>
 
       {/* 2. Main Sticky Header */}
-      <header className="sticky top-0 z-40 w-full border-b border-border/80 bg-background/95 backdrop-blur-md transition-all duration-200">
+      <header className="sticky top-0 z-40 w-full border-b border-border/80 bg-background/95 backdrop-blur-md transition-[background-color,border-color,box-shadow] duration-200">
         <div className="container mx-auto flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
           
           {/* Right Section (in RTL): Mobile Hamburger + Brand Logo */}
@@ -197,7 +197,7 @@ export function Header({ cartItemCount, onOpenCart }: HeaderProps) {
                   type="button"
                   onClick={() => setIsUserMenuOpen((prev) => !prev)}
                   className={cn(
-                    "flex min-h-[44px] items-center gap-2 rounded-xl px-2.5 sm:px-3 py-1.5 text-xs font-bold transition-all cursor-pointer",
+                    "flex min-h-[44px] items-center gap-2 rounded-xl px-2.5 sm:px-3 py-1.5 text-xs font-bold transition-colors cursor-pointer",
                     "border border-border bg-card hover:bg-secondary shadow-xs",
                     "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500",
                     isUserMenuOpen && "bg-secondary border-gold-500/60 ring-2 ring-gold-500/20"
@@ -333,7 +333,7 @@ export function Header({ cartItemCount, onOpenCart }: HeaderProps) {
             <button
               type="button"
               onClick={handleCartClick}
-              className="relative flex min-h-[44px] items-center gap-2 rounded-lg bg-obsidian-950 text-white hover:bg-obsidian-850 px-3.5 transition-all border border-gold-500/30 shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500 cursor-pointer"
+              className="relative flex min-h-[44px] items-center gap-2 rounded-lg bg-obsidian-950 text-white hover:bg-obsidian-850 px-3.5 transition-colors border border-gold-500/30 shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500 cursor-pointer"
               aria-label={`سلة المشتريات، تحتوي على ${effectiveCartCount} قطع`}
             >
               <ShoppingBag className="h-4 w-4 text-gold-500" aria-hidden="true" />

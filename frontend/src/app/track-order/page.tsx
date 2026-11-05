@@ -178,6 +178,8 @@ function TrackOrderContent() {
                   error={fieldErrors.orderNumber}
                   disabled={isSearching}
                   dir="ltr"
+                  autoCapitalize="none"
+                  spellCheck={false}
                   required
                 />
               </div>
@@ -189,6 +191,8 @@ function TrackOrderContent() {
                   label="رقم الموبايل المسجل به الطلب *"
                   placeholder="010xxxxxxxx"
                   type="tel"
+                  inputMode="tel"
+                  autoComplete="tel"
                   value={phone}
                   onChange={(e) => {
                     setPhone(e.target.value);
@@ -213,7 +217,7 @@ function TrackOrderContent() {
                   {isSearching ? (
                     <>
                       <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
-                      <span>بحث...</span>
+                      <span>بحث…</span>
                     </>
                   ) : (
                     <>
@@ -272,7 +276,7 @@ export default function TrackOrderPage() {
       <Suspense
         fallback={
           <div className="min-h-[50vh] flex items-center justify-center text-xs text-muted-foreground">
-            جاري تحميل بوابة تتبع الشحنات...
+            جاري تحميل بوابة تتبع الشحنات…
           </div>
         }
       >

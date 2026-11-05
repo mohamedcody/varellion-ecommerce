@@ -188,7 +188,7 @@ export default function ProductDetailPage() {
 
           {/* Product Title & English Subtitle */}
           <div>
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-foreground tracking-tight leading-tight">
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-foreground tracking-tight leading-tight text-balance">
               {product.nameAr}
             </h1>
             {product.nameEn && (

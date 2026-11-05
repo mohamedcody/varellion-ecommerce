@@ -6,6 +6,7 @@ import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { CartDrawer } from '@/components/cart/CartDrawer';
 import { CartToast } from '@/components/cart/CartToast';
+import { UtmTracker } from '@/components/providers/UtmTracker';
 
 export const metadata: Metadata = {
   title: 'VARELLION — الفخامة الرجالية اليومية | الساعات والمصنوعات الجلدية',
@@ -42,6 +43,7 @@ export default function RootLayout({
 
         <AuthProvider>
           <CartProvider>
+            <UtmTracker />
             <Header />
             <main id="main-content" className="flex-1 scroll-mt-24 focus:outline-none" tabIndex={-1}>
               {children}

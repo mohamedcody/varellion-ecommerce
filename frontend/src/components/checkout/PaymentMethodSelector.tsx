@@ -57,7 +57,7 @@ export function PaymentMethodSelector({
           onClick={() => !disabled && onChange('CASH_ON_DELIVERY')}
           onKeyDown={(e) => handleKeyDown(e, 'CASH_ON_DELIVERY')}
           className={cn(
-            'relative flex flex-col md:flex-row md:items-center justify-between p-4 rounded-xl border transition-all cursor-pointer select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+            'relative flex flex-col md:flex-row md:items-center justify-between p-4 rounded-xl border transition-[background-color,border-color,box-shadow] cursor-pointer select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
             value === 'CASH_ON_DELIVERY'
               ? 'border-primary bg-primary/5 shadow-sm ring-1 ring-primary/20'
               : 'border-border bg-card/50 hover:bg-card/80 opacity-90'
@@ -110,7 +110,7 @@ export function PaymentMethodSelector({
           onClick={() => !disabled && onChange('CARD')}
           onKeyDown={(e) => handleKeyDown(e, 'CARD')}
           className={cn(
-            'relative flex flex-col md:flex-row md:items-center justify-between p-4 rounded-xl border transition-all cursor-pointer select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+            'relative flex flex-col md:flex-row md:items-center justify-between p-4 rounded-xl border transition-[background-color,border-color,box-shadow] cursor-pointer select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
             value === 'CARD'
               ? 'border-primary bg-primary/5 shadow-sm ring-1 ring-primary/20'
               : 'border-border bg-card/50 hover:bg-card/80 opacity-90'

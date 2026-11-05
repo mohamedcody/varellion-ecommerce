@@ -284,7 +284,7 @@ export function CheckoutForm({
             <Input
               id="checkout-shippingCityArea"
               label="المنطقة / الحي / المركز *"
-              placeholder="مثال: المعادي، مدينة نصر، سموحة..."
+              placeholder="مثال: المعادي، مدينة نصر، سموحة…"
               value={shippingCityArea}
               onChange={(e) => {
                 setShippingCityArea(e.target.value);
@@ -307,7 +307,7 @@ export function CheckoutForm({
             <textarea
               id="checkout-shippingDetailedAddress"
               rows={3}
-              placeholder="اسم الشارع، رقم العمارة، رقم الدور والشقة، أو أقرب علامة مميزة..."
+              placeholder="اسم الشارع، رقم العمارة، رقم الدور والشقة، أو أقرب علامة مميزة…"
               value={shippingDetailedAddress}
               onChange={(e) => {
                 setShippingDetailedAddress(e.target.value);
@@ -357,7 +357,7 @@ export function CheckoutForm({
             <textarea
               id="checkout-customerNotes"
               rows={2}
-              placeholder="مثال: يرجى التوصيل بعد الساعة 5 مساءً، أو الاتصال قبل الوصول بنصف ساعة..."
+              placeholder="مثال: يرجى التوصيل بعد الساعة 5 مساءً، أو الاتصال قبل الوصول بنصف ساعة…"
               value={customerNotes}
               onChange={(e) => {
                 setCustomerNotes(e.target.value);
@@ -398,7 +398,7 @@ export function CheckoutForm({
           {isSubmitting ? (
             <>
               <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />
-              <span>جاري معالجة طلبك بأمان...</span>
+              <span>جاري معالجة طلبك بأمان…</span>
             </>
           ) : paymentMethod === 'CARD' ? (
             <>

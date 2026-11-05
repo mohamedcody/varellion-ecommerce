@@ -80,7 +80,7 @@ export default function ShippingPolicyPage() {
                   <span className="font-bold text-foreground tabular-nums">60 ج.م</span>
                 </div>
                 <div className="grid grid-cols-2 p-3 border-b border-border/40">
-                  <span>الدلتا ومدن القناة (الشرقية، الدقهلية، الغربية، المنوفية، بورسعيد، السويس...)</span>
+                  <span>الدلتا ومدن القناة (الشرقية، الدقهلية، الغربية، المنوفية، بورسعيد، السويس…)</span>
                   <span className="font-bold text-foreground tabular-nums">65 ج.م</span>
                 </div>
                 <div className="grid grid-cols-2 p-3 border-b border-border/40">
@@ -88,7 +88,7 @@ export default function ShippingPolicyPage() {
                   <span className="font-bold text-foreground tabular-nums">75 ج.م</span>
                 </div>
                 <div className="grid grid-cols-2 p-3">
-                  <span>جنوب الصعيد والمحافظات الحدودية (سوهاج، قنا، الأقصر، أسوان، البحر الأحمر...)</span>
+                  <span>جنوب الصعيد والمحافظات الحدودية (سوهاج، قنا، الأقصر، أسوان، البحر الأحمر…)</span>
                   <span className="font-bold text-foreground tabular-nums">85 ج.م</span>
                 </div>
               </div>

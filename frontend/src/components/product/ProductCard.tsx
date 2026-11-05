@@ -9,6 +9,9 @@ import { useCart } from '@/context/CartContext';
 import { ShoppingBag, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
+const FALLBACK_IMAGE =
+  'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400"><rect width="400" height="400" fill="%231a1917"/><text x="50%" y="50%" fill="%23C5A059" font-family="sans-serif" font-size="20" text-anchor="middle" dominant-baseline="middle">VARELLION</text></svg>';
+
 interface ProductCardProps {
   product: Product;
   onAddToCart?: (product: Product) => void;
@@ -60,7 +63,7 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
   };
 
   return (
-    <div className="group relative flex flex-col justify-between overflow-hidden rounded-xl border border-border bg-card shadow-xs transition-all duration-300 hover:border-ivory-300 hover:shadow-md">
+    <div className="group relative flex flex-col justify-between overflow-hidden rounded-xl border border-border bg-card shadow-xs transition-[border-color,box-shadow] duration-300 hover:border-ivory-300 hover:shadow-md">
       {/* Product Image Frame with Dual-Image Luxury Crossfade & Mobile Gestures (UX-F08) */}
       <div
         className="relative aspect-square w-full overflow-hidden bg-secondary/50 select-none rounded-t-xl"
@@ -84,8 +87,12 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
                   src={img.imageUrl}
                   alt={img.altAr || product.nameAr}
                   loading={idx === 0 ? 'lazy' : 'lazy'}
+                  onError={(e) => {
+                    e.currentTarget.onerror = null;
+                    e.currentTarget.src = FALLBACK_IMAGE;
+                  }}
                   className={cn(
-                    'absolute inset-0 h-full w-full object-cover object-center transition-all duration-500 ease-out',
+                    'absolute inset-0 h-full w-full object-cover object-center transition-[opacity,transform] duration-500 ease-out',
                     isCurrent
                       ? 'opacity-100 z-1 scale-100 group-hover:scale-105'
                       : isSecondaryHover
@@ -121,7 +128,7 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
                   setActiveImageIndex(idx);
                 }}
                 className={cn(
-                  'relative h-1.5 rounded-full transition-all duration-300 cursor-pointer shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500 p-0',
+                  'relative h-1.5 rounded-full transition-[width,background-color] duration-300 cursor-pointer shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500 p-0',
                   'before:absolute before:-inset-2 before:content-[""]', // WCAG 2.5.8 Target size >= 24px
                   activeImageIndex === idx
                     ? 'w-4 bg-gold-500'
@@ -203,7 +210,7 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
           disabled={product.availableStock <= 0}
           variant={isAdded ? 'secondary' : 'luxury'}
           size="default"
-          className="w-full gap-2 transition-all min-h-[44px]"
+          className="w-full gap-2 min-h-[44px]"
           aria-label={`إضافة ${product.nameAr} إلى سلة المشتريات`}
         >
           {isAdded ? (

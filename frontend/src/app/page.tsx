@@ -21,6 +21,9 @@ import {
   CheckCircle2,
 } from 'lucide-react';
 
+const FALLBACK_IMAGE =
+  'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400"><rect width="400" height="400" fill="%231a1917"/><text x="50%" y="50%" fill="%23C5A059" font-family="sans-serif" font-size="20" text-anchor="middle" dominant-baseline="middle">VARELLION</text></svg>';
+
 function HeroVisualCard({
   product,
   image,
@@ -45,6 +48,10 @@ function HeroVisualCard({
         alt={product?.nameAr || 'ساعة VARELLION الفاخرة'}
         className="h-full w-full object-cover object-center transition-transform duration-700 group-hover:scale-105"
         loading="eager"
+        onError={(e) => {
+          e.currentTarget.onerror = null;
+          e.currentTarget.src = FALLBACK_IMAGE;
+        }}
       />
 
       {/* Subtle Luxury Gradient Overlay */}
@@ -318,6 +325,10 @@ export default async function HomePage() {
                     alt={cat.nameAr}
                     className="absolute inset-0 h-full w-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-105 opacity-65 group-hover:opacity-75"
                     loading="lazy"
+                    onError={(e) => {
+                      e.currentTarget.onerror = null;
+                      e.currentTarget.src = FALLBACK_IMAGE;
+                    }}
                   />
 
                   {/* Deep Obsidian Vignette */}
@@ -395,6 +406,10 @@ export default async function HomePage() {
                 alt="حرفية تصنيع ساعات VARELLION"
                 className="h-full w-full object-cover"
                 loading="lazy"
+                onError={(e) => {
+                  e.currentTarget.onerror = null;
+                  e.currentTarget.src = FALLBACK_IMAGE;
+                }}
               />
               <div className="absolute inset-0 bg-gradient-to-t from-obsidian-950/85 via-transparent to-transparent flex items-end p-6">
                 <span className="text-sm font-bold text-white">

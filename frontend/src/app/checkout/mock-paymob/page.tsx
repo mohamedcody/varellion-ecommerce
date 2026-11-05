@@ -103,7 +103,7 @@ function MockPaymobContent() {
                 {loadingAction === 'success' ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
-                    <span>جاري معالجة موافقة البنك...</span>
+                    <span>جاري معالجة موافقة البنك…</span>
                   </>
                 ) : (
                   <>
@@ -122,7 +122,7 @@ function MockPaymobContent() {
                 {loadingAction === 'failure' ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
-                    <span>جاري تسجيل رفض البنك...</span>
+                    <span>جاري تسجيل رفض البنك…</span>
                   </>
                 ) : (
                   <>
@@ -153,7 +153,7 @@ export default function MockPaymobPage() {
     <Suspense
       fallback={
         <div className="min-h-screen bg-slate-900 flex items-center justify-center text-white text-xs">
-          جاري فتح بوابة الدفع...
+          جاري فتح بوابة الدفع…
         </div>
       }
     >

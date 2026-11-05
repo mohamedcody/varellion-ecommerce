@@ -51,7 +51,7 @@ export function ShippingGovernorateSelect({
           )}
         >
           <option value="" disabled>
-            اختر المحافظة لتحديد تكلفة ومدة الشحن...
+            اختر المحافظة لتحديد تكلفة ومدة الشحن…
           </option>
           {EGYPTIAN_GOVERNORATES.map((gov) => (
             <option key={gov.governorateAr} value={gov.governorateAr} className="bg-background text-foreground py-1">
