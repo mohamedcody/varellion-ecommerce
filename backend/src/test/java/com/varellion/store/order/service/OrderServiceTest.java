@@ -4,6 +4,7 @@ import com.varellion.store.cart.service.CartService;
 import com.varellion.store.catalog.entity.Product;
 import com.varellion.store.catalog.entity.ProductImage;
 import com.varellion.store.catalog.repository.ProductRepository;
+import com.varellion.store.common.exception.BusinessException;
 import com.varellion.store.common.exception.ResourceNotFoundException;
 import com.varellion.store.customer.entity.Customer;
 import com.varellion.store.customer.service.CustomerService;
@@ -38,6 +39,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -296,6 +299,106 @@ class OrderServiceTest {
         assertThat(dto.getStatusDisplayAr()).isEqualTo("تم التسليم بنجاح");
         assertThat(dto.getEstimatedDeliveryAr()).isEqualTo("تم التسليم بنجاح");
         assertThat(dto.getStatusHistory()).anyMatch(h -> "DELIVERED".equals(h.getNewStatus()));
+    }
+
+    @Test
+    @DisplayName("updateOrderStatus: Saves actorId in OrderStatusHistory when provided")
+    void updateOrderStatus_SavesActorIdInHistory() {
+        Long actorId = 100L;
+        when(orderRepository.findByOrderNumberWithDetails("VAR-20261028-0001"))
+                .thenReturn(Optional.of(sampleOrder));
+        when(orderRepository.save(any(Order.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        OrderResponseDto dto = orderService.updateOrderStatus(
+                "VAR-20261028-0001",
+                OrderStatus.DELIVERED,
+                "Delivered by courier",
+                actorId
+        );
+
+        assertThat(dto.getOrderStatus()).isEqualTo(OrderStatus.DELIVERED);
+        verify(orderRepository).save(any(Order.class));
+        assertThat(sampleOrder.getStatusHistory()).anyMatch(h ->
+                "DELIVERED".equals(h.getNewStatus()) && actorId.equals(h.getActorId()));
+    }
+
+    @Test
+    @DisplayName("updateOrderStatus: Three-arg backward-compatible overload delegates with null actorId")
+    void updateOrderStatus_ThreeArgOverload_DelegatesWithNullActorId() {
+        when(orderRepository.findByOrderNumberWithDetails("VAR-20261028-0001"))
+                .thenReturn(Optional.of(sampleOrder));
+        when(orderRepository.save(any(Order.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        OrderResponseDto dto = orderService.updateOrderStatus(
+                "VAR-20261028-0001",
+                OrderStatus.DELIVERED,
+                "Delivered by courier"
+        );
+
+        assertThat(dto.getOrderStatus()).isEqualTo(OrderStatus.DELIVERED);
+        verify(orderRepository).save(any(Order.class));
+        assertThat(sampleOrder.getStatusHistory()).anyMatch(h ->
+                "DELIVERED".equals(h.getNewStatus()) && h.getActorId() == null);
+    }
+
+    @Test
+    @DisplayName("updateOrderStatus: Returns immediately without saving duplicate history when status is unchanged")
+    void updateOrderStatus_Idempotent_WhenSameStatus() {
+        // sampleOrder is currently in SHIPPED status
+        int initialHistorySize = sampleOrder.getStatusHistory().size();
+        when(orderRepository.findByOrderNumberWithDetails("VAR-20261028-0001"))
+                .thenReturn(Optional.of(sampleOrder));
+
+        OrderResponseDto dto = orderService.updateOrderStatus(
+                "VAR-20261028-0001",
+                OrderStatus.SHIPPED,
+                "Redundant update",
+                100L
+        );
+
+        assertThat(dto.getOrderStatus()).isEqualTo(OrderStatus.SHIPPED);
+        assertThat(sampleOrder.getStatusHistory()).hasSize(initialHistorySize);
+        verify(orderRepository, never()).save(any(Order.class));
+    }
+
+    @Test
+    @DisplayName("updateOrderStatus: Throws BusinessException (400) when transitioning from terminal state DELIVERED")
+    void updateOrderStatus_ThrowsBusinessException_WhenTerminalState() {
+        sampleOrder.setOrderStatus(OrderStatus.DELIVERED);
+        when(orderRepository.findByOrderNumberWithDetails("VAR-20261028-0001"))
+                .thenReturn(Optional.of(sampleOrder));
+
+        assertThatThrownBy(() -> orderService.updateOrderStatus(
+                "VAR-20261028-0001",
+                OrderStatus.CANCELLED,
+                "Cannot cancel delivered order",
+                100L
+        ))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining("لا يمكن تحويل حالة الطلب");
+
+        verify(orderRepository, never()).save(any(Order.class));
+    }
+
+    @Test
+    @DisplayName("updateOrderStatus: Throws BusinessException (400) on illogical backward transition")
+    void updateOrderStatus_ThrowsBusinessException_WhenIllogicalBackwardTransition() {
+        sampleOrder.setOrderStatus(OrderStatus.CONFIRMED);
+        when(orderRepository.findByOrderNumberWithDetails("VAR-20261028-0001"))
+                .thenReturn(Optional.of(sampleOrder));
+
+        assertThatThrownBy(() -> orderService.updateOrderStatus(
+                "VAR-20261028-0001",
+                OrderStatus.PENDING_CUSTOMER_CONFIRMATION,
+                "Cannot revert to pending",
+                100L
+        ))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining("لا يمكن تحويل حالة الطلب");
+
+        verify(orderRepository, never()).save(any(Order.class));
     }
 
     @Test

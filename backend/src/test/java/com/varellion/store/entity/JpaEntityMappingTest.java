@@ -223,7 +223,7 @@ class JpaEntityMappingTest {
                 .previousStatus(null)
                 .newStatus(OrderStatus.PENDING_CUSTOMER_CONFIRMATION.name())
                 .reason("Order created by customer via checkout")
-                .actorId(customer.getUserId())
+                .actorId(1L)
                 .build();
 
         OrderStatusHistory persistedHistory = entityManager.persistAndFlush(history);

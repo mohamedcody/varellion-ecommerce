@@ -39,7 +39,7 @@ public class OrderStatusHistory {
     private String reason;
 
     @Column(name = "actor_id")
-    private UUID actorId;
+    private Long actorId;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
@@ -49,7 +49,7 @@ public class OrderStatusHistory {
     }
 
     @Builder
-    public OrderStatusHistory(UUID historyId, Order order, String previousStatus, String newStatus, String reason, UUID actorId, OffsetDateTime createdAt) {
+    public OrderStatusHistory(UUID historyId, Order order, String previousStatus, String newStatus, String reason, Long actorId, OffsetDateTime createdAt) {
         this.historyId = historyId;
         this.order = order;
         this.previousStatus = previousStatus;

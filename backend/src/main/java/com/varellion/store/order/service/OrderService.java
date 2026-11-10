@@ -1,9 +1,11 @@
 package com.varellion.store.order.service;
 
+import com.varellion.store.admin.order.dto.PagedOrdersResponse;
 import com.varellion.store.cart.service.CartService;
 import com.varellion.store.catalog.entity.Product;
 import com.varellion.store.catalog.entity.ProductImage;
 import com.varellion.store.catalog.repository.ProductRepository;
+import com.varellion.store.common.exception.BusinessException;
 import com.varellion.store.common.exception.ResourceNotFoundException;
 import com.varellion.store.customer.entity.Customer;
 import com.varellion.store.customer.service.CustomerService;
@@ -34,6 +36,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
@@ -308,6 +311,41 @@ public class OrderService {
     }
 
     /**
+     * Retrieves paginated orders for administrative overview with optional status and search filtering.
+     */
+    @Transactional(readOnly = true)
+    public PagedOrdersResponse getAdminOrders(int page, int limit, OrderStatus status, String search) {
+        int sanitizedPage = Math.max(0, page);
+        int sanitizedLimit = Math.max(1, Math.min(100, limit));
+        Pageable pageable = PageRequest.of(sanitizedPage, sanitizedLimit);
+
+        String cleanSearch = (search != null && !search.isBlank()) ? search.trim() : null;
+        Page<Order> orderPage = orderRepository.findAdminOrders(status, cleanSearch, pageable);
+
+        List<OrderResponseDto> dtos = orderPage.getContent().stream()
+                .map(this::mapToDto)
+                .collect(Collectors.toList());
+
+        return new PagedOrdersResponse(
+                dtos,
+                orderPage.getTotalElements(),
+                orderPage.getTotalPages(),
+                orderPage.getNumber(),
+                orderPage.getSize()
+        );
+    }
+
+    /**
+     * Retrieves full administrative order details by orderNumber.
+     */
+    @Transactional(readOnly = true)
+    public OrderResponseDto getAdminOrderByNumber(String orderNumber) {
+        Order order = orderRepository.findByOrderNumberWithDetails(orderNumber.trim())
+                .orElseThrow(() -> new ResourceNotFoundException("لم نتمكن من العثور على الطلب رقم " + orderNumber));
+        return mapToDto(order);
+    }
+
+    /**
      * Retrieves paginated order history for the authenticated customer.
      */
     @Transactional(readOnly = true)
@@ -393,20 +431,53 @@ public class OrderService {
 
     /**
      * Programmatically updates an order's status and records the transition in status history.
+     * Backward-compatible 3-argument overload delegating to actor-aware transition method.
      */
     @Transactional
     public OrderResponseDto updateOrderStatus(String orderNumber, OrderStatus newStatus, String reason) {
+        return updateOrderStatus(orderNumber, newStatus, reason, (Long) null);
+    }
+
+    /**
+     * Updates order lifecycle status with audit actor tracking, idempotency, and state machine validation.
+     *
+     * @param orderNumber The order identifier
+     * @param newStatus   The target status
+     * @param reason      Optional reason description
+     * @param actorId     The Long ID of the admin/system actor initiating the transition
+     * @return Updated order details
+     */
+    @Transactional
+    public OrderResponseDto updateOrderStatus(String orderNumber, OrderStatus newStatus, String reason, Long actorId) {
         Order order = orderRepository.findByOrderNumberWithDetails(orderNumber.trim().toUpperCase())
                 .orElseThrow(() -> new ResourceNotFoundException("لم نتمكن من العثور على الطلب رقم " + orderNumber));
 
-        OrderStatus previousStatus = order.getOrderStatus();
+        OrderStatus currentStatus = order.getOrderStatus();
+
+        // 1. Idempotency Check: immediate return without saving duplicate history
+        if (currentStatus == newStatus) {
+            log.info("[OrderService] Order {} is already in status {}. Idempotent no-op.", orderNumber, newStatus);
+            return mapToDto(order);
+        }
+
+        // 2. State Machine Validation: prevent invalid and illogical backward transitions
+        if (currentStatus != null && !currentStatus.canTransitionTo(newStatus)) {
+            throw new BusinessException(String.format(
+                    "لا يمكن تحويل حالة الطلب من '%s' إلى '%s'",
+                    getStatusDisplayAr(currentStatus),
+                    getStatusDisplayAr(newStatus)
+            ));
+        }
+
+        // 3. Apply state transition
         order.setOrderStatus(newStatus);
 
         OrderStatusHistory history = OrderStatusHistory.builder()
                 .order(order)
-                .previousStatus(previousStatus != null ? previousStatus.name() : null)
+                .previousStatus(currentStatus != null ? currentStatus.name() : null)
                 .newStatus(newStatus.name())
                 .reason(reason != null ? reason : "Status changed to " + newStatus.name())
+                .actorId(actorId)
                 .createdAt(OffsetDateTime.now())
                 .build();
 
