@@ -1,0 +1,61 @@
+meta {
+  name: 10. Duplicate Products In Same Order
+  type: http
+  seq: 10
+}
+
+post {
+  url: {{baseUrl}}/api/orders
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "customerName": "أحمد فوزي",
+    "customerPhone": "01012345678",
+    "shippingGovernorate": "القاهرة",
+    "shippingCityArea": "المعادي",
+    "shippingDetailedAddress": "شارع النصر عمارة 15",
+    "paymentMethod": "CASH_ON_DELIVERY",
+    "items": [
+      {
+        "productId": "{{productIdWatch}}",
+        "quantity": 1
+      },
+      {
+        "productId": "{{productIdWatch}}",
+        "quantity": 2
+      }
+    ]
+  }
+}
+
+assert {
+  res.status: eq 400
+  res.body.status: eq 400
+  res.body.error: eq "Bad Request"
+  res.body.message: eq "لا يمكن تكرار نفس المنتج في بنود الطلب"
+}
+
+docs {
+  # 10. Duplicate Products In Same Order
+  
+  ### 1. Objective:
+  Verify business invariant in `OrderService`:
+  ```java
+  long distinctCount = request.getItems().stream().map(CreateOrderRequest.CreateOrderItemRequest::getProductId).distinct().count();
+  if (distinctCount < request.getItems().size()) {
+      throw new BusinessException(HttpStatus.BAD_REQUEST, "لا يمكن تكرار نفس المنتج في بنود الطلب");
+  }
+  ```
+  Prevents duplicate item rows and race condition double locks on the same product row.
+}

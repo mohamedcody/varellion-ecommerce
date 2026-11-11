@@ -1,0 +1,47 @@
+meta {
+  name: 01. Admin Update Order Status
+  type: http
+  seq: 1
+}
+
+put {
+  url: {{baseUrl}}/api/admin/orders/{{createdOrderNumber}}/status
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "newStatus": "SHIPPED",
+    "reason": "تم تسليم الشحنة لشركة الشحن ومندوب التوصيل"
+  }
+}
+
+assert {
+  res.status: eq 200
+  res.body.success: eq true
+  res.body.data.orderStatus: eq SHIPPED
+  res.body.data.statusDisplayAr: eq مع مندوب التوصيل
+  res.body.data.statusHistory.length: gte 2
+}
+
+docs {
+  # 01. Admin Update Order Status
+  
+  ### 1. Objective:
+  Verify `PUT /api/admin/orders/{orderNumber}/status` transitions an existing order's lifecycle status.
+  
+  ### 2. Business Invariants:
+  - Requires `ROLE_ADMIN` authentication.
+  - Updates `public.orders.order_status` in PostgreSQL.
+  - Records transition in `public.order_status_history`.
+  - Returns updated `OrderResponseDto` with localized status strings.
+}

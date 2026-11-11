@@ -1,0 +1,37 @@
+meta {
+  name: 05. Guest Tracking Phone Mismatch Anti-Enumeration
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/api/orders/lookup
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "orderNumber": "{{createdOrderNumber}}",
+    "phone": "01099999999"
+  }
+}
+
+assert {
+  res.status: eq 404
+  res.body.status: eq 404
+  res.body.error: eq "Not Found"
+  res.body.message: eq "لم نتمكن من العثور على طلب مطابق لرقم الطلب ورقم الهاتف المدخلين."
+}
+
+docs {
+  # 05. Guest Tracking Phone Mismatch Anti-Enumeration
+  
+  ### 1. Objective:
+  Verify privacy and anti-enumeration protection:
+  Providing a valid order number with the wrong phone number returns uniform `404 Not Found` without disclosing whether the order number exists.
+}

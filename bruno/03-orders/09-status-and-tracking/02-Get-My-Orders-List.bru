@@ -1,0 +1,32 @@
+meta {
+  name: 02. Get My Orders List (Paginated History)
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/orders/my-orders?page=0&limit=10
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+assert {
+  res.status: eq 200
+  res.body.success: eq true
+  res.body.data.length: gte 1
+}
+
+docs {
+  # 02. Get My Orders List (Paginated History)
+  
+  ### 1. Objective:
+  Verify `GET /api/orders/my-orders` returns the order history belonging specifically to the authenticated customer.
+}

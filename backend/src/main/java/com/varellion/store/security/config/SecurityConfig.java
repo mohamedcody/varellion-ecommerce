@@ -60,8 +60,9 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/actuator/health").permitAll()
 
-                        // Public Catalog endpoints (Browsing products and categories)
+                        // Public Catalog endpoints & Public Order Tracking
                         .requestMatchers(HttpMethod.GET, "/api/categories/**", "/api/products/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/orders/track").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/orders/guest", "/api/orders/lookup").permitAll()
 
                         // Admin documentation & admin management

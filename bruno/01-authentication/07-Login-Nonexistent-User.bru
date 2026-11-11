@@ -1,0 +1,29 @@
+meta {
+  name: 07. Login - Security Test - Nonexistent User (Anti-Enumeration)
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{baseUrl}}/api/auth/login
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "identifier": "nonexistent_probe_99999@varellion.com",
+    "password": "{{testPassword}}"
+  }
+}
+
+assert {
+  res.status: eq 401
+  res.body.status: eq 401
+  res.body.error: eq Unauthorized
+  res.body.message: eq Invalid username or password
+}

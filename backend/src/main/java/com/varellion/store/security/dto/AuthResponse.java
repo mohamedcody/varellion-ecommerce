@@ -1,6 +1,7 @@
 package com.varellion.store.security.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -14,6 +15,8 @@ import lombok.NoArgsConstructor;
 public class AuthResponse {
 
     private String accessToken;
+
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String refreshToken;
     private String email;
     private String username;

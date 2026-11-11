@@ -1,0 +1,38 @@
+meta {
+  name: 02. Update Customer Profile (Name & Phone)
+  type: http
+  seq: 2
+}
+
+put {
+  url: {{baseUrl}}/api/customer/profile
+  body: json
+  auth: bearer
+}
+
+headers {
+  Content-Type: application/json
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:json {
+  {
+    "fullName": "محمد سعد عبد الله احمد",
+    "phoneNumber": "01012345678",
+      "address":"حاره الحمايده"
+  }
+}
+
+vars:pre-request {
+  accessToken: eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1c2VyXzE3OTM5MDcwMzY5MjRAdmFyZWxsaW9uLmNvbSIsInRva2VuX3R5cGUiOiJBQ0NFU1MiLCJpYXQiOjE3OTM5MDcwMzgsImV4cCI6MTc5MzkwNzkzOH0.G-FRO7VJAo98fW7RTdRClUL72mq8idrLFukmaXvAyZo
+}
+
+assert {
+  res.status: eq 200
+  res.body.success: eq true
+  res.body.data.fullName: eq "محمد سعد"
+  res.body.data.phoneNumber: eq "01012345678"
+}

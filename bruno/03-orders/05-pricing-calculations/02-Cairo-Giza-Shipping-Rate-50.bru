@@ -1,0 +1,51 @@
+meta {
+  name: 02. Cairo / Giza Shipping Rate (50 EGP)
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/orders
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+headers {
+  Content-Type: application/json
+  Idempotency-Key: SHIP-CAIRO-{{$timestamp}}
+}
+
+body:json {
+  {
+    "customerName": "أحمد فوزي",
+    "customerPhone": "01012345678",
+    "shippingGovernorate": "الجيزة",
+    "shippingCityArea": "الدقي",
+    "shippingDetailedAddress": "شارع التحرير عمارة 12",
+    "paymentMethod": "CASH_ON_DELIVERY",
+    "items": [
+      {
+        "productId": "{{productIdCardholder}}",
+        "quantity": 1
+      }
+    ]
+  }
+}
+
+assert {
+  res.status: eq 201
+  res.body.data.shippingGovernorate: eq "الجيزة"
+  res.body.data.shippingFee: eq 50.00
+  res.body.data.totalAmount: eq 940.00
+}
+
+docs {
+  # 02. Cairo / Giza Shipping Rate (50 EGP)
+  
+  ### 1. Objective:
+  Verify Tier 1 shipping rate (50.00 EGP) for Greater Cairo (Cairo, Giza, Qalyubia).
+}

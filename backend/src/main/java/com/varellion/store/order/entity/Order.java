@@ -30,6 +30,10 @@ public class Order {
     @Column(name = "order_id", nullable = false, updatable = false)
     private UUID orderId;
 
+    @Version
+    @Column(name = "version", nullable = false)
+    private Long version;
+
     @Column(name = "order_number", nullable = false, unique = true, length = 32)
     private String orderNumber;
 
@@ -93,18 +97,21 @@ public class Order {
     private OffsetDateTime updatedAt;
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @org.hibernate.annotations.BatchSize(size = 25)
     private List<OrderItem> items = new ArrayList<>();
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @OrderBy("createdAt ASC")
+    @org.hibernate.annotations.BatchSize(size = 25)
     private List<OrderStatusHistory> statusHistory = new ArrayList<>();
 
     public Order() {
     }
 
     @Builder
-    public Order(UUID orderId, String orderNumber, Customer customer, String customerName, String customerPhone, String shippingGovernorate, String shippingCityArea, String shippingDetailedAddress, String currency, BigDecimal subtotal, BigDecimal discountTotal, BigDecimal shippingFee, BigDecimal totalAmount, OrderStatus orderStatus, ShippingFeeStatus shippingFeeStatus, OffsetDateTime confirmationDeadline, String customerNotes, String adminNotes, OffsetDateTime createdAt, OffsetDateTime updatedAt, List<OrderItem> items, List<OrderStatusHistory> statusHistory) {
+    public Order(UUID orderId, Long version, String orderNumber, Customer customer, String customerName, String customerPhone, String shippingGovernorate, String shippingCityArea, String shippingDetailedAddress, String currency, BigDecimal subtotal, BigDecimal discountTotal, BigDecimal shippingFee, BigDecimal totalAmount, OrderStatus orderStatus, ShippingFeeStatus shippingFeeStatus, OffsetDateTime confirmationDeadline, String customerNotes, String adminNotes, OffsetDateTime createdAt, OffsetDateTime updatedAt, List<OrderItem> items, List<OrderStatusHistory> statusHistory) {
         this.orderId = orderId;
+        this.version = version;
         this.orderNumber = orderNumber;
         this.customer = customer;
         this.customerName = customerName;

@@ -1,0 +1,60 @@
+meta {
+  name: 01. In-Flight Duplicate Key Collision (409 Conflict)
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/api/orders
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+headers {
+  Content-Type: application/json
+  Idempotency-Key: CONCURRENT-PROBE-KEY
+}
+
+body:json {
+  {
+    "customerName": "أحمد فوزي",
+    "customerPhone": "01012345678",
+    "shippingGovernorate": "القاهرة",
+    "shippingCityArea": "المعادي",
+    "shippingDetailedAddress": "شارع النصر عمارة 15",
+    "paymentMethod": "CASH_ON_DELIVERY",
+    "items": [
+      {
+        "productId": "{{productIdCardholder}}",
+        "quantity": 1
+      }
+    ]
+  }
+}
+
+assert {
+  res.status: in [201, 409]
+}
+
+docs {
+  # 01. In-Flight Duplicate Key Collision (409 Conflict)
+  
+  ### 1. Objective:
+  Verify concurrency guard in `IdempotencyService`:
+  When a request with an in-progress idempotency key arrives concurrently before the first completes, the second request is immediately rejected with:
+  `HTTP 409 Conflict`
+  ```json
+  {
+    "status": 409,
+    "error": "Conflict",
+    "message": "طلبك قيد المعالجة حالياً، يرجى الانتظار"
+  }
+  ```
+  
+  ### 2. How to reproduce manually:
+  Send two simultaneous requests with identical `Idempotency-Key` using Bruno Runner or `curl --parallel`.
+}

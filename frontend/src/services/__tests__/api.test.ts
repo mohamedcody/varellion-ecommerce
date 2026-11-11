@@ -1,0 +1,154 @@
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import {
+  requestApi,
+  setAccessToken,
+  setAccessTokenGetter,
+  setOnAuthExpired,
+  setTokenRefreshHandler,
+  ApiError,
+} from '../api';
+
+describe('requestApi interceptor & refresh queue', () => {
+  beforeEach(() => {
+    vi.restoreAllMocks();
+    setAccessToken(null);
+  });
+
+  it('injects Authorization Bearer header when in-memory setAccessToken is called directly', async () => {
+    setAccessToken('direct-sync-token');
+    const mockFetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ success: true, data: 'ok' }),
+    });
+    global.fetch = mockFetch;
+
+    await requestApi('/test-endpoint-sync');
+
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.stringContaining('/test-endpoint-sync'),
+      expect.objectContaining({
+        headers: expect.objectContaining({
+          Authorization: 'Bearer direct-sync-token',
+        }),
+      })
+    );
+  });
+
+  it('injects Authorization Bearer header when token getter returns token', async () => {
+    setAccessTokenGetter(() => 'valid-mock-token');
+    const mockFetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ success: true, data: 'ok' }),
+    });
+    global.fetch = mockFetch;
+
+    await requestApi('/test-endpoint');
+
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.stringContaining('/test-endpoint'),
+      expect.objectContaining({
+        headers: expect.objectContaining({
+          Authorization: 'Bearer valid-mock-token',
+        }),
+      })
+    );
+  });
+
+  it('preserves Content-Type and Authorization header when custom options.headers is provided', async () => {
+    setAccessTokenGetter(() => 'valid-mock-token');
+    const mockFetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ success: true, data: 'ok' }),
+    });
+    global.fetch = mockFetch;
+
+    await requestApi('/orders', {
+      method: 'POST',
+      headers: {
+        'Idempotency-Key': 'test-idempotency-uuid-123',
+      },
+      body: JSON.stringify({ items: [] }),
+    });
+
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.stringContaining('/orders'),
+      expect.objectContaining({
+        headers: expect.objectContaining({
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer valid-mock-token',
+          'Idempotency-Key': 'test-idempotency-uuid-123',
+        }),
+      })
+    );
+  });
+
+  it('queues concurrent 401 requests and performs only a single refresh before replaying', async () => {
+    let token = 'initial-expired-token';
+    setAccessTokenGetter(() => token);
+
+    let refreshCallCount = 0;
+    setTokenRefreshHandler(async () => {
+      refreshCallCount++;
+      token = 'new-refreshed-token';
+      return 'new-refreshed-token';
+    });
+
+    let firstCall = true;
+    let secondCall = true;
+
+    const mockFetch = vi.fn().mockImplementation(async (url: string, init: RequestInit) => {
+      const authHeader = (init?.headers as Record<string, string>)?.Authorization;
+
+      if (url.includes('/protected-resource-1')) {
+        if (firstCall && authHeader === 'Bearer initial-expired-token') {
+          firstCall = false;
+          return { ok: false, status: 401, json: async () => ({ message: 'Unauthorized' }) };
+        }
+        return { ok: true, status: 200, json: async () => ({ data: 'resource-1' }) };
+      }
+
+      if (url.includes('/protected-resource-2')) {
+        if (secondCall && authHeader === 'Bearer initial-expired-token') {
+          secondCall = false;
+          return { ok: false, status: 401, json: async () => ({ message: 'Unauthorized' }) };
+        }
+        return { ok: true, status: 200, json: async () => ({ data: 'resource-2' }) };
+      }
+
+      return { ok: true, status: 200, json: async () => ({ data: 'default' }) };
+    });
+
+    global.fetch = mockFetch;
+
+    // Fire two concurrent requests that both receive 401 with the initial token
+    const [res1, res2] = await Promise.all([
+      requestApi<{ data: string }>('/protected-resource-1'),
+      requestApi<{ data: string }>('/protected-resource-2'),
+    ]);
+
+    expect(res1.data).toBe('resource-1');
+    expect(res2.data).toBe('resource-2');
+    expect(refreshCallCount).toBe(1); // Single-flight refresh!
+  });
+
+  it('triggers onAuthExpired when refresh fails', async () => {
+    setAccessTokenGetter(() => 'expired-token');
+
+    const authExpiredSpy = vi.fn();
+    setOnAuthExpired(authExpiredSpy);
+
+    setTokenRefreshHandler(async () => {
+      throw new ApiError('Session expired', 401);
+    });
+
+    const mockFetch = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 401,
+      json: async () => ({ message: 'Unauthorized' }),
+    });
+    global.fetch = mockFetch;
+
+    await expect(requestApi('/some-protected-endpoint')).rejects.toThrow();
+    expect(authExpiredSpy).toHaveBeenCalledTimes(1);
+  });
+});

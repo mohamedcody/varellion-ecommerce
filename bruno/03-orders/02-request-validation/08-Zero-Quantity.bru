@@ -1,0 +1,50 @@
+meta {
+  name: 08. Zero Quantity in Item
+  type: http
+  seq: 8
+}
+
+post {
+  url: {{baseUrl}}/api/orders
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "customerName": "أحمد فوزي",
+    "customerPhone": "01012345678",
+    "shippingGovernorate": "القاهرة",
+    "shippingCityArea": "المعادي",
+    "shippingDetailedAddress": "شارع النصر عمارة 15",
+    "paymentMethod": "CASH_ON_DELIVERY",
+    "items": [
+      {
+        "productId": "{{productIdWatch}}",
+        "quantity": 0
+      }
+    ]
+  }
+}
+
+assert {
+  res.status: eq 400
+  res.body.status: eq 400
+  res.body.validationErrors["items[0].quantity"]: isDefined
+  res.body.validationErrors["items[0].quantity"]: eq "يجب أن تكون الكمية أكبر من الصفر"
+}
+
+docs {
+  # 08. Zero Quantity in Item
+  
+  ### 1. Objective:
+  Verify `@Positive(message = "يجب أن تكون الكمية أكبر من الصفر")` rejects `quantity: 0`.
+}

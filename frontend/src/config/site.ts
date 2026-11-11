@@ -15,8 +15,8 @@ export const siteConfig = {
     'متجر VARELLION الرائد في الساعات الفاخرة، المصنوعات الجلدية الطبيعية 100%، وحاملات البطاقات والإكسسوارات الرجالية الراقية في مصر. شحن لجميع المحافظات مع معاينة قبل الاستلام.',
   descriptionEn:
     'VARELLION is Egypt’s destination for refined men’s watches, 100% genuine leather wallets, cardholders, and curated tech accessories.',
-  phone: '+20 100 000 0000',
-  whatsappUrl: 'https://wa.me/201000000000',
+  phone: process.env.NEXT_PUBLIC_SUPPORT_PHONE || '+20 100 000 0000',
+  whatsappUrl: process.env.NEXT_PUBLIC_WHATSAPP_URL || 'https://wa.me/201000000000',
   mainNav: [
     {
       titleAr: 'الرئيسية',
@@ -48,6 +48,11 @@ export const siteConfig = {
       href: '/products?featured=true',
       badge: 'تخفيضات',
       badgeColor: 'success',
+    },
+    {
+      titleAr: 'تتبع طلبك',
+      titleEn: 'Track Order',
+      href: '/track-order',
     },
   ] as NavItem[],
   trustPillars: [

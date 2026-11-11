@@ -1,0 +1,51 @@
+meta {
+  name: 04. Delta & Canal Shipping Rate (65 EGP)
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/api/orders
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+headers {
+  Content-Type: application/json
+  Idempotency-Key: SHIP-DELTA-{{$timestamp}}
+}
+
+body:json {
+  {
+    "customerName": "أحمد فوزي",
+    "customerPhone": "01012345678",
+    "shippingGovernorate": "الدقهلية",
+    "shippingCityArea": "المنصورة",
+    "shippingDetailedAddress": "شارع المشاية السفلية",
+    "paymentMethod": "CASH_ON_DELIVERY",
+    "items": [
+      {
+        "productId": "{{productIdCardholder}}",
+        "quantity": 1
+      }
+    ]
+  }
+}
+
+assert {
+  res.status: eq 201
+  res.body.data.shippingGovernorate: eq "الدقهلية"
+  res.body.data.shippingFee: eq 65.00
+  res.body.data.totalAmount: eq 955.00
+}
+
+docs {
+  # 04. Delta & Canal Shipping Rate (65 EGP)
+  
+  ### 1. Objective:
+  Verify Tier 3 shipping rate (65.00 EGP) for Nile Delta & Suez Canal governorates (Dakahlia, Gharbia, Sharqia, Menofia, Kafr El Sheikh, Beheira, Damietta, Port Said, Ismailia, Suez).
+}

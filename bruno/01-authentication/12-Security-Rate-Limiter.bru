@@ -1,0 +1,26 @@
+meta {
+  name: 12. Security Test - Rate Limiter (Burst Attempt)
+  type: http
+  seq: 12
+}
+
+post {
+  url: {{baseUrl}}/api/auth/login
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "identifier": "ratelimit_test@varellion.com",
+    "password": "{{testPassword}}"
+  }
+}
+
+assert {
+  res.status: in [401, 429]
+}

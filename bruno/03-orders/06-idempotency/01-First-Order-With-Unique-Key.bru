@@ -1,0 +1,57 @@
+meta {
+  name: 01. First Order With Unique Idempotency Key
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/api/orders
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+headers {
+  Content-Type: application/json
+  Idempotency-Key: FIXED-IDEM-KEY-99999
+}
+
+body:json {
+  {
+    "customerName": "أحمد فوزي",
+    "customerPhone": "01012345678",
+    "shippingGovernorate": "القاهرة",
+    "shippingCityArea": "المعادي",
+    "shippingDetailedAddress": "شارع النصر عمارة 15",
+    "paymentMethod": "CASH_ON_DELIVERY",
+    "items": [
+      {
+        "productId": "{{productIdCardholder}}",
+        "quantity": 1
+      }
+    ]
+  }
+}
+
+assert {
+  res.status: eq 201
+  res.body.success: eq true
+  res.body.data.orderNumber: isDefined
+}
+
+script:post-response {
+  if (res.status === 201 && res.body.data) {
+    bru.setVar("idemSavedOrderNumber", res.body.data.orderNumber);
+  }
+}
+
+docs {
+  # 01. First Order With Unique Idempotency Key
+  
+  ### 1. Objective:
+  Executes an order placement with a fixed `Idempotency-Key: FIXED-IDEM-KEY-99999`.
+  The backend processes the order, reserves stock, creates the DB record, and caches the response in `IdempotencyService` (TTL: 15 minutes).
+}

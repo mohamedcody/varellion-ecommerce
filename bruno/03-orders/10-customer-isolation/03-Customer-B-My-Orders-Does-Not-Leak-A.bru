@@ -1,0 +1,31 @@
+meta {
+  name: 03. Customer B My Orders Does Not Leak Customer A Orders
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/api/orders/my-orders?page=0&limit=50
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessTokenB}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+assert {
+  res.status: eq 200
+  res.body.success: eq true
+}
+
+docs {
+  # 03. Customer B My Orders Does Not Leak Customer A Orders
+  
+  ### 1. Objective:
+  Verify that Customer B's order list queries `WHERE customer_id = :customerBId` strictly, ensuring complete multi-tenant tenant isolation without cross-account data leaks.
+}

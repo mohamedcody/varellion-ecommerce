@@ -1,0 +1,50 @@
+meta {
+  name: 09. Negative Quantity in Item
+  type: http
+  seq: 9
+}
+
+post {
+  url: {{baseUrl}}/api/orders
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "customerName": "أحمد فوزي",
+    "customerPhone": "01012345678",
+    "shippingGovernorate": "القاهرة",
+    "shippingCityArea": "المعادي",
+    "shippingDetailedAddress": "شارع النصر عمارة 15",
+    "paymentMethod": "CASH_ON_DELIVERY",
+    "items": [
+      {
+        "productId": "{{productIdWatch}}",
+        "quantity": -5
+      }
+    ]
+  }
+}
+
+assert {
+  res.status: eq 400
+  res.body.status: eq 400
+  res.body.validationErrors["items[0].quantity"]: isDefined
+  res.body.validationErrors["items[0].quantity"]: eq "يجب أن تكون الكمية أكبر من الصفر"
+}
+
+docs {
+  # 09. Negative Quantity in Item
+  
+  ### 1. Objective:
+  Verify `@Positive` rejects negative quantities, preventing stock corruption or underflow attacks.
+}

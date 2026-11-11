@@ -1,5 +1,6 @@
 package com.varellion.store.security.service;
 
+import com.varellion.store.customer.service.CustomerService;
 import com.varellion.store.security.dto.AuthResponse;
 import com.varellion.store.security.dto.GoogleIdentity;
 import com.varellion.store.security.dto.GoogleLoginRequest;
@@ -35,6 +36,7 @@ public class AuthService {
     private final JwtService jwtService;
     private final CustomUserDetailsService customUserDetailsService;
     private final GoogleTokenVerifier googleTokenVerifier;
+    private final CustomerService customerService;
 
     @Value("${ADMIN_EMAILS:admin@varellion.com}")
     private String adminEmails;
@@ -85,6 +87,11 @@ public class AuthService {
         user.setLockoutTime(null);
         userRepository.save(user);
 
+        // Auto-provision Customer profile upon successful login for non-admin accounts
+        if (!"ADMIN".equalsIgnoreCase(user.getRole())) {
+            customerService.getOrCreateCustomerForUser(user.getUsername());
+        }
+
         UserDetails userDetails = customUserDetailsService.loadUserByUsername(user.getEmail());
         String accessToken = jwtService.generateToken(userDetails);
         String refreshToken = jwtService.generateRefreshToken(userDetails);
@@ -127,6 +134,9 @@ public class AuthService {
                 .build();
 
         User savedUser = userRepository.save(newUser);
+
+        // Auto-provision Customer profile immediately upon registration
+        customerService.getOrCreateCustomerForUser(savedUser.getUsername());
 
         UserDetails userDetails = customUserDetailsService.loadUserByUsername(savedUser.getEmail());
         String accessToken = jwtService.generateToken(userDetails);
@@ -174,6 +184,11 @@ public class AuthService {
 
         if (!user.isEnabled()) {
             throw new BadCredentialsException("Account is disabled. Please contact support.");
+        }
+
+        // Auto-provision Customer profile upon Google Login for customer accounts
+        if (!"ADMIN".equalsIgnoreCase(user.getRole())) {
+            customerService.getOrCreateCustomerForUser(user.getUsername(), identity.name());
         }
 
         UserDetails details = customUserDetailsService.loadUserByUsername(user.getEmail());

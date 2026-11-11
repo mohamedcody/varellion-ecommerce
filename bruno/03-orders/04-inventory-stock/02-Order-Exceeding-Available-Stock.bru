@@ -1,0 +1,50 @@
+meta {
+  name: 02. Order Exceeding Available Stock
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/orders
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "customerName": "أحمد فوزي",
+    "customerPhone": "01012345678",
+    "shippingGovernorate": "القاهرة",
+    "shippingCityArea": "المعادي",
+    "shippingDetailedAddress": "شارع النصر عمارة 15",
+    "paymentMethod": "CASH_ON_DELIVERY",
+    "items": [
+      {
+        "productId": "{{productIdWatch}}",
+        "quantity": 99999
+      }
+    ]
+  }
+}
+
+assert {
+  res.status: eq 400
+  res.body.status: eq 400
+  res.body.error: eq "Bad Request"
+  res.body.message: contains "غير متوفرة في المخزون"
+}
+
+docs {
+  # 02. Order Exceeding Available Stock
+  
+  ### 1. Objective:
+  Verify that ordering more than `stock_quantity - reserved_quantity` throws `BusinessException(400 Bad Request)` with available stock feedback.
+}

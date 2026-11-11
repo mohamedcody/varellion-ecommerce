@@ -13,7 +13,7 @@ import java.util.UUID;
 
 /**
  * JPA Entity representing registered customer profile in public.customers.
- * Note: user_id is the primary key and references auth.users(id).
+ * user_id is the primary key (UUID), linked to public.users(id) via user_account_id.
  */
 @Entity
 @Table(name = "customers", schema = "public")
@@ -24,6 +24,9 @@ public class Customer {
     @Id
     @Column(name = "user_id", nullable = false, updatable = false)
     private UUID userId;
+
+    @Column(name = "user_account_id", unique = true)
+    private Long userAccountId;
 
     @Column(name = "full_name")
     private String fullName;
@@ -42,15 +45,16 @@ public class Customer {
     @Column(name = "updated_at", nullable = false)
     private OffsetDateTime updatedAt;
 
-    @OneToOne(mappedBy = "customer", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToOne(mappedBy = "customer", fetch = FetchType.LAZY)
     private CustomerAddress address;
 
     public Customer() {
     }
 
     @Builder
-    public Customer(UUID userId, String fullName, String phoneNumber, Boolean isActive, OffsetDateTime createdAt, OffsetDateTime updatedAt, CustomerAddress address) {
+    public Customer(UUID userId, Long userAccountId, String fullName, String phoneNumber, Boolean isActive, OffsetDateTime createdAt, OffsetDateTime updatedAt, CustomerAddress address) {
         this.userId = userId;
+        this.userAccountId = userAccountId;
         this.fullName = fullName;
         this.phoneNumber = phoneNumber;
         this.isActive = isActive != null ? isActive : true;

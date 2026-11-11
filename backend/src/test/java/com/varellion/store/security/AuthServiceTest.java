@@ -1,5 +1,6 @@
 package com.varellion.store.security;
 
+import com.varellion.store.customer.service.CustomerService;
 import com.varellion.store.security.dto.AuthResponse;
 import com.varellion.store.security.dto.LoginRequest;
 import com.varellion.store.security.dto.RegisterRequest;
@@ -30,6 +31,8 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -49,6 +52,9 @@ class AuthServiceTest {
 
     @Mock
     private GoogleTokenVerifier googleTokenVerifier;
+
+    @Mock
+    private CustomerService customerService;
 
     @InjectMocks
     private AuthService authService;
@@ -96,6 +102,25 @@ class AuthServiceTest {
         assertThat(response.getEmail()).isEqualTo("test@varellion.com");
         assertThat(testUser.getFailedAttempts()).isEqualTo(0);
         verify(userRepository).save(testUser);
+        verify(customerService).getOrCreateCustomerForUser(testUser.getUsername());
+    }
+
+    @Test
+    @DisplayName("Should NOT auto-provision customer profile when admin logs in")
+    void testAdminLoginDoesNotAutoProvisionCustomer() {
+        testUser.setRole("ADMIN");
+        when(userRepository.findByUsername("test@varellion.com")).thenReturn(Optional.empty());
+        when(userRepository.findByEmail("test@varellion.com")).thenReturn(Optional.of(testUser));
+        when(passwordEncoder.matches("correctPassword", testUser.getPassword())).thenReturn(true);
+        when(customUserDetailsService.loadUserByUsername(testUser.getEmail())).thenReturn(userDetails);
+        when(jwtService.generateToken(userDetails)).thenReturn("mock-access-token");
+        when(jwtService.generateRefreshToken(userDetails)).thenReturn("mock-refresh-token");
+
+        LoginRequest request = new LoginRequest("test@varellion.com", "correctPassword");
+        authService.login(request);
+
+        verify(customerService, never()).getOrCreateCustomerForUser(anyString());
+        verify(customerService, never()).getOrCreateCustomerForUser(anyString(), anyString());
     }
 
     @Test
@@ -166,6 +191,7 @@ class AuthServiceTest {
 
         assertThat(response.getAccessToken()).isEqualTo("mock-access");
         assertThat(response.getEmail()).isEqualTo("new@varellion.com");
+        verify(customerService).getOrCreateCustomerForUser("newuser");
     }
 
     @Test
@@ -189,6 +215,7 @@ class AuthServiceTest {
         assertThat(response.getEmail()).isEqualTo("test@varellion.com");
         assertThat(response.getMessage()).isEqualTo("Google login successful");
         verify(userRepository, never()).save(any(User.class));
+        verify(customerService).getOrCreateCustomerForUser(testUser.getUsername(), "Test User");
     }
 
     @Test
@@ -218,6 +245,7 @@ class AuthServiceTest {
         assertThat(response.getAccessToken()).isEqualTo("new-access-token");
         assertThat(response.getEmail()).isEqualTo("newgoogle@varellion.com");
         verify(userRepository).save(any(User.class));
+        verify(customerService).getOrCreateCustomerForUser(anyString(), eq("Google Guy"));
     }
 
     @Test

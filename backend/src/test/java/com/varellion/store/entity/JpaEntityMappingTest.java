@@ -17,6 +17,9 @@ import org.springframework.test.context.TestPropertySource;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import com.varellion.store.catalog.repository.ProductRepository;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -27,6 +30,9 @@ class JpaEntityMappingTest {
 
     @Autowired
     private TestEntityManager entityManager;
+
+    @Autowired
+    private ProductRepository productRepository;
 
     @Test
     @DisplayName("Should successfully persist and query Customer and CustomerAddress 1:1 mapping")
@@ -217,10 +223,68 @@ class JpaEntityMappingTest {
                 .previousStatus(null)
                 .newStatus(OrderStatus.PENDING_CUSTOMER_CONFIRMATION.name())
                 .reason("Order created by customer via checkout")
-                .actorId(customer.getUserId())
+                .actorId(1L)
                 .build();
 
         OrderStatusHistory persistedHistory = entityManager.persistAndFlush(history);
         assertThat(persistedHistory.getHistoryId()).isNotNull();
+
+        // Update order status to DELIVERED in database
+        persistedOrder.setOrderStatus(OrderStatus.DELIVERED);
+        entityManager.persistAndFlush(persistedOrder);
+
+        OrderStatusHistory deliveredHistory = OrderStatusHistory.builder()
+                .order(persistedOrder)
+                .previousStatus(OrderStatus.PENDING_CUSTOMER_CONFIRMATION.name())
+                .newStatus(OrderStatus.DELIVERED.name())
+                .reason("تم تسليم الشحنة بنجاح للعميل")
+                .actorId(null)
+                .build();
+        entityManager.persistAndFlush(deliveredHistory);
+
+        entityManager.clear();
+
+        Order reloadedOrder = entityManager.find(Order.class, persistedOrder.getOrderId());
+        assertThat(reloadedOrder).isNotNull();
+        assertThat(reloadedOrder.getOrderStatus()).isEqualTo(OrderStatus.DELIVERED);
+        assertThat(reloadedOrder.getStatusHistory()).hasSize(2);
+        assertThat(reloadedOrder.getStatusHistory().get(1).getNewStatus()).isEqualTo(OrderStatus.DELIVERED.name());
+    }
+
+    @Test
+    @DisplayName("Should successfully query ProductRepository.findFilteredProducts with nulls, category and search")
+    void testProductRepositoryFiltering() {
+        Category category = Category.builder()
+                .nameAr("إكسسوارات تجريبية")
+                .nameEn("Test Accessories")
+                .slug("test-acc")
+                .isActive(true)
+                .build();
+        entityManager.persistAndFlush(category);
+
+        Product product = Product.builder()
+                .category(category)
+                .nameAr("خاتم فضة أصلي")
+                .nameEn("Original Silver Ring")
+                .sku("VAR-RING-01")
+                .price(new BigDecimal("450.00"))
+                .costPrice(new BigDecimal("200.00"))
+                .stockQuantity(10)
+                .reservedQuantity(0)
+                .isActive(true)
+                .build();
+        entityManager.persistAndFlush(product);
+
+        // Test with nulls
+        Page<Product> pageAll = productRepository.findFilteredProducts(null, null, PageRequest.of(0, 10));
+        assertThat(pageAll.getContent()).isNotEmpty();
+
+        // Test with category
+        Page<Product> pageCategory = productRepository.findFilteredProducts("test-acc", null, PageRequest.of(0, 10));
+        assertThat(pageCategory.getContent()).isNotEmpty();
+
+        // Test with search
+        Page<Product> pageSearch = productRepository.findFilteredProducts(null, "فضة", PageRequest.of(0, 10));
+        assertThat(pageSearch.getContent()).isNotEmpty();
     }
 }

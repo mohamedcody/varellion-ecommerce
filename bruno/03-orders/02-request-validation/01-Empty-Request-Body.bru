@@ -1,0 +1,40 @@
+meta {
+  name: 01. Empty Request Body
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/api/orders
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {}
+}
+
+assert {
+  res.status: eq 400
+  res.body.status: eq 400
+  res.body.error: eq "Validation Failed"
+  res.body.validationErrors: isDefined
+}
+
+docs {
+  # 01. Empty Request Body
+  
+  ### 1. Objective:
+  Sending `{}` to `POST /api/orders` to ensure Jakarta Bean Validation triggers on all `@NotBlank` and `@NotEmpty` root constraints.
+  
+  ### 2. Expected Status:
+  `400 Bad Request` with `validationErrors` object containing constraint violations for missing fields.
+}

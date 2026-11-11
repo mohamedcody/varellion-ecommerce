@@ -1,0 +1,50 @@
+meta {
+  name: 04. Order Without Idempotency Key Header
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/api/orders
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "customerName": "أحمد فوزي",
+    "customerPhone": "01012345678",
+    "shippingGovernorate": "القاهرة",
+    "shippingCityArea": "المعادي",
+    "shippingDetailedAddress": "شارع النصر عمارة 15",
+    "paymentMethod": "CASH_ON_DELIVERY",
+    "items": [
+      {
+        "productId": "{{productIdCardholder}}",
+        "quantity": 1
+      }
+    ]
+  }
+}
+
+assert {
+  res.status: eq 201
+  res.body.success: eq true
+  res.body.data.orderNumber: isDefined
+}
+
+docs {
+  # 04. Order Without Idempotency Key Header
+  
+  ### 1. Objective:
+  Verify that the `Idempotency-Key` header is strictly optional (`@RequestHeader(value = "Idempotency-Key", required = false)`).
+  Clients that do not send the header still succeed normally.
+}

@@ -1,9 +1,9 @@
 # VARELLION Frontend — Progress Tracker
 
-> **Current Phase:** Phase 2 — Shared Layouts & Navigation  
-> **Current Feature ID:** F-205 COMPLETED (Ready for Phase 3: Storefront Homepage & Product Discovery)  
-> **Overall Progress:** Phase 0 (100%) | Phase 1 (100%) | Phase 2 (100%) | Phase 3 (Queued)  
-> **Last Updated:** 2026-10-25  
+> **Current Phase:** Phase 6 Storefront Funnel Complete (Customer Authentication, Checkout, COD, Paymob, and Order Tracking)  
+> **Current Feature ID:** F-605 COMPLETED (Ready for Phase 7: Admin Dashboard Shell & Authentication)  
+> **Overall Progress:** Phase 0 (100%) | Phase 1 (100%) | Phase 2 (100%) | Phase 3 (100%) | Phase 4 (100%) | Phase 5 (100%) | Phase 6 Storefront & Payments (100%) | Phase 7 Admin (Queued)  
+> **Last Updated:** 2026-10-28  
 
 ---
 
@@ -33,15 +33,30 @@
 | **F-203** | Mobile Touch Navigation Drawer | 2 | **VERIFIED** | Built in `src/components/layout/MobileNav.tsx` with 44px+ touch targets & WhatsApp quick link. |
 | **F-204** | Quick Search Modal Dialog | 2 | **VERIFIED** | Built in `src/components/layout/SearchDialog.tsx` with instant suggestions across catalog. |
 | **F-205** | Comprehensive Trust-Building Footer | 2 | **VERIFIED** | Built in `src/components/layout/Footer.tsx` with payment badges, guarantee badges & customer care. |
+| **F-301** | TypeScript Domain Contracts & DTOs | 3 | **VERIFIED** | Defined in `src/types/index.ts` matching 1:1 with PostgreSQL & Spring Boot models. |
+| **F-302** | Catalog & Shipping Service Layer | 3 | **VERIFIED** | Built in `src/services/api.ts` & `src/data/mockProducts.ts` with transparent mock/live switch. |
+| **F-303** | Accessible Luxury ProductCard & ProductGrid | 3 | **VERIFIED** | Built in `src/components/product/` with 44px+ targets, rating, badges, and EGP prices. |
+| **F-304** | Dynamic Homepage Best-Sellers & Categories | 3 | **VERIFIED** | Updated `src/app/page.tsx` with live Best-Sellers, Category Banners & Craftsmanship story. |
+| **F-401** | Products Catalog Page with Live Filters & Sorting | 4 | **VERIFIED** | Built `/products` with pills filter, search, EGP sorting and active product count. |
+| **F-402** | Product Details Page (PDP) with Gallery & Trust Specs | 4 | **VERIFIED** | Built `/products/[slug]` with interactive gallery, color picker, inspection guarantee & specs. |
+| **F-501** | Cart State Management & Local Storage Persistence | 5 | **VERIFIED** | Built `src/context/CartContext.tsx` with React 19 Context, SSR-safe hydration, line-keying. |
+| **F-502** | Interactive Shopping Cart Drawer & Toast System | 5 | **VERIFIED** | Built `src/components/cart/CartDrawer.tsx` (left-slide in RTL) + `CartToast.tsx` with 44px targets. |
+| **F-600** | Customer Auth & Google Sign-In with GIS | 6 | **VERIFIED** | Built `/login` & `/register`, HttpOnly session cookie, zero tokens in localStorage. |
+| **F-601** | One-Page Egyptian Checkout & Cash on Delivery | 6 | **VERIFIED** | Built `/checkout` matching 1:1 with PostgreSQL `public.orders`, Egyptian phone validation. |
+| **F-602** | Egypt 27 Governorates Dynamic Shipping Engine | 6 | **VERIFIED** | Built `src/data/shippingZones.ts` with instant calculation & free shipping threshold. |
+| **F-603** | Paymob Hosted Online Payments & Simulator | 6 | **VERIFIED** | Built `/checkout/mock-paymob` & `/checkout/callback` with automatic COD fallback. |
+| **F-604** | Order Confirmation & Dynamic Invoice Screen | 6 | **VERIFIED** | Built `/checkout/success` with human-readable order number (`VAR-YYYYMMDD-XXXX`). |
+| **F-605** | Guest & Customer Order Tracking Portal | 6 | **VERIFIED** | Built `/track-order`, dual lookup (Order + Phone), visual timeline & WhatsApp link. |
 
 ---
 
 ## Verification Gates & Audit Log
 
-- **2026-10-25 (Web Design Guidelines Audit):**
-  - Minimum touch targets: All mobile buttons enforced to >= 44x44px.
-  - Visible focus rings: `focus-visible:ring-2 focus-visible:ring-ring` on all interactive links and buttons.
-  - Semantic HTML: Proper `<header>`, `<nav>`, `<main>`, `<footer>` landmarks.
-  - Accessibility: `aria-label` on icon buttons, `aria-hidden="true"` on decorative icons, `text-balance` on headings.
-  - Build Check: Next.js 15.5.28 compiled successfully in 6.7s with zero errors.
-- **Next Action:** Begin **Phase 3: Storefront Homepage & Product Discovery** (Rich Hero Banner, Best-Sellers Product Grid, Craftsmanship Story).
+- **2026-10-27 (Phase 5 Shopping Cart & Drawer Verification):**
+  - **Type Checking:** `tsc --noEmit` passed with 0 errors.
+  - **Zero New Dependencies:** Implemented cleanly using native React 19 Context (`createContext`, `useContext`) and `localStorage` cache (`varellion_local_cart_v1`).
+  - **Web Design Guidelines Compliance:** All increment/decrement/delete buttons $\ge 44\times 44\text{px}$, drawer slides from left in RTL matching header icon, Escape key closes drawer, body scroll locked while open.
+  - **Accurate Financials:** Subtotal calculated in EGP without fictional taxes or free-shipping claims. Clear disclaimer that shipping fees are calculated at checkout.
+  - **Dependency Decoupling:** Proceed-to-checkout button provides inline guidance that account login is required before checkout, without routing to broken pages.
+  - **Production Build:** Next.js 15.5.28 compiled successfully in 8.6s across all 5 routes.
+- **Next Action:** Begin **Phase 6: Customer Authentication & Registration Flow** (`/login`, `/register`, JWT session management matching backend `AuthController`).

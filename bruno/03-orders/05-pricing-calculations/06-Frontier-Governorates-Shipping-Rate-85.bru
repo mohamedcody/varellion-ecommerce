@@ -1,0 +1,51 @@
+meta {
+  name: 06. Frontier / Remote Governorates Shipping Rate (85 EGP)
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{baseUrl}}/api/orders
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+headers {
+  Content-Type: application/json
+  Idempotency-Key: SHIP-FRONTIER-{{$timestamp}}
+}
+
+body:json {
+  {
+    "customerName": "أحمد فوزي",
+    "customerPhone": "01012345678",
+    "shippingGovernorate": "البحر الأحمر",
+    "shippingCityArea": "الغردقة",
+    "shippingDetailedAddress": "طريق الممشى السياحي",
+    "paymentMethod": "CASH_ON_DELIVERY",
+    "items": [
+      {
+        "productId": "{{productIdCardholder}}",
+        "quantity": 1
+      }
+    ]
+  }
+}
+
+assert {
+  res.status: eq 201
+  res.body.data.shippingGovernorate: eq "البحر الأحمر"
+  res.body.data.shippingFee: eq 85.00
+  res.body.data.totalAmount: eq 975.00
+}
+
+docs {
+  # 06. Frontier / Remote Governorates Shipping Rate (85 EGP)
+  
+  ### 1. Objective:
+  Verify Tier 5 shipping rate (85.00 EGP) for remote frontier and deep Upper Egypt governorates (Red Sea, New Valley, North/South Sinai, Sohag, Qena, Luxor, Aswan).
+}

@@ -1,0 +1,55 @@
+meta {
+  name: 04. Create Order With Customer Delivery Notes
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/api/orders
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+headers {
+  Content-Type: application/json
+  Idempotency-Key: NOTES-{{$timestamp}}
+}
+
+body:json {
+  {
+    "customerName": "أحمد فوزي الشناوي",
+    "customerPhone": "01012345678",
+    "shippingGovernorate": "الجيزة",
+    "shippingCityArea": "الدقي",
+    "shippingDetailedAddress": "شارع مصدق عمارة 10",
+    "paymentMethod": "CASH_ON_DELIVERY",
+    "customerNotes": "يرجى ترك الشحنة لدى مكتب الاستقبال في حالة عدم الرد والتأكد من سلامة الصندوق",
+    "items": [
+      {
+        "productId": "{{productIdCardholder}}",
+        "quantity": 1
+      }
+    ]
+  }
+}
+
+assert {
+  res.status: eq 201
+  res.body.success: eq true
+  res.body.data.orderNumber: isDefined
+  res.body.data.customerNotes: eq "يرجى ترك الشحنة لدى مكتب الاستقبال في حالة عدم الرد والتأكد من سلامة الصندوق"
+  res.body.data.subtotal: eq 890.00
+  res.body.data.shippingFee: eq 50.00
+  res.body.data.totalAmount: eq 940.00
+}
+
+docs {
+  # 04. Create Order With Customer Delivery Notes
+  
+  ### 1. Objective:
+  Verify optional customer delivery instructions / notes are properly captured during checkout, persisted into the `orders.customer_notes` database column, and returned back in the `OrderResponseDto`.
+}

@@ -1,0 +1,50 @@
+meta {
+  name: 07. Malformed UUID Product ID
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{baseUrl}}/api/orders
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "customerName": "أحمد فوزي",
+    "customerPhone": "01012345678",
+    "shippingGovernorate": "القاهرة",
+    "shippingCityArea": "المعادي",
+    "shippingDetailedAddress": "شارع النصر عمارة 15",
+    "paymentMethod": "CASH_ON_DELIVERY",
+    "items": [
+      {
+        "productId": "not-a-valid-uuid-format",
+        "quantity": 1
+      }
+    ]
+  }
+}
+
+assert {
+  res.status: eq 400
+  res.body.status: eq 400
+  res.body.error: eq "Bad Request"
+  res.body.message: eq "تنسيق البيانات المرسلة غير صالح"
+}
+
+docs {
+  # 07. Malformed UUID Product ID
+  
+  ### 1. Objective:
+  Sending a non-UUID string in `productId` triggers Jackson deserialization failure (`HttpMessageNotReadableException`), handled by `GlobalExceptionHandler.handleHttpMessageNotReadable()`.
+}

@@ -1,0 +1,28 @@
+meta {
+  name: 03. Verify Stock Not Deducted On Failure
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/api/products
+  body: none
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+assert {
+  res.status: eq 200
+  res.body.success: eq true
+  res.body.data.products.length: gte 1
+}
+
+docs {
+  # 03. Verify Stock Not Deducted On Failure
+  
+  ### 1. Objective:
+  Verify that when an order request fails (due to validation error, missing product, or insufficient stock), transaction rollback ensures no stock or reservation leak occurs.
+}

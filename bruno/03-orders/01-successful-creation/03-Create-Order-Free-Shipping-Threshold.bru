@@ -1,0 +1,57 @@
+meta {
+  name: 03. Create Order - Free Shipping Threshold (>= 2500 EGP)
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/api/orders
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+headers {
+  Content-Type: application/json
+  Idempotency-Key: FREE-SHIP-{{$timestamp}}
+}
+
+body:json {
+  {
+    "customerName": "أحمد فوزي",
+    "customerPhone": "01012345678",
+    "shippingGovernorate": "أسوان",
+    "shippingCityArea": "طريق الكورنيش",
+    "shippingDetailedAddress": "عمارة النيل بجوار فندق كتاراكت",
+    "paymentMethod": "CASH_ON_DELIVERY",
+    "items": [
+      {
+        "productId": "{{productIdWatch}}",
+        "quantity": 2
+      }
+    ]
+  }
+}
+
+assert {
+  res.status: eq 201
+  res.body.success: eq true
+  res.body.data.subtotal: eq 3700.00
+  res.body.data.shippingFee: eq 0.00
+  res.body.data.totalAmount: eq 3700.00
+}
+
+docs {
+  # 03. Create Order - Free Shipping Threshold (>= 2500 EGP)
+  
+  ### 1. Objective:
+  Verify business rule: Orders with subtotal >= 2500 EGP qualify for 100% Free Shipping nationwide, overriding the standard 85 EGP frontier rate.
+  
+  ### 2. Business Flow & Invariants:
+  - Subtotal: 2 x 1850.00 = 3700.00 EGP.
+  - Shipping fee: waived to 0.00 EGP.
+  - Total amount equals subtotal exactly.
+}
