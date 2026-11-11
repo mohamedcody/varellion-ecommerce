@@ -1,0 +1,50 @@
+meta {
+  name: 06. Null Product ID in Item
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{baseUrl}}/api/orders
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "customerName": "أحمد فوزي",
+    "customerPhone": "01012345678",
+    "shippingGovernorate": "القاهرة",
+    "shippingCityArea": "المعادي",
+    "shippingDetailedAddress": "شارع النصر عمارة 15",
+    "paymentMethod": "CASH_ON_DELIVERY",
+    "items": [
+      {
+        "productId": null,
+        "quantity": 1
+      }
+    ]
+  }
+}
+
+assert {
+  res.status: eq 400
+  res.body.status: eq 400
+  res.body.validationErrors["items[0].productId"]: isDefined
+  res.body.validationErrors["items[0].productId"]: eq "معرف المنتج مطلوب"
+}
+
+docs {
+  # 06. Null Product ID in Item
+  
+  ### 1. Objective:
+  Verify nested `@Valid` cascade validation triggering `@NotNull(message = "معرف المنتج مطلوب")` on `CreateOrderItemRequest.productId`.
+}

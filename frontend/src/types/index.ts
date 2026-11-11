@@ -101,6 +101,7 @@ export interface Product {
   isFeatured?: boolean;
   isBestSeller?: boolean;
   images: ProductImage[];
+  primaryImage?: string;
   createdAt?: string;
   updatedAt?: string;
 }

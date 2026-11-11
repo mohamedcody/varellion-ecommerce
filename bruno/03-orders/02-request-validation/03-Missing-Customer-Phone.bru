@@ -1,0 +1,49 @@
+meta {
+  name: 03. Missing Customer Phone
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/api/orders
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "customerName": "أحمد فوزي",
+    "shippingGovernorate": "القاهرة",
+    "shippingCityArea": "المعادي",
+    "shippingDetailedAddress": "شارع النصر عمارة 15",
+    "paymentMethod": "CASH_ON_DELIVERY",
+    "items": [
+      {
+        "productId": "{{productIdWatch}}",
+        "quantity": 1
+      }
+    ]
+  }
+}
+
+assert {
+  res.status: eq 400
+  res.body.status: eq 400
+  res.body.validationErrors.customerPhone: isDefined
+  res.body.validationErrors.customerPhone: eq "رقم الهاتف مطلوب"
+}
+
+docs {
+  # 03. Missing Customer Phone
+  
+  ### 1. Objective:
+  Verify `@NotBlank(message = "رقم الهاتف مطلوب")` on `CreateOrderRequest.customerPhone`.
+}

@@ -1,0 +1,50 @@
+meta {
+  name: 01. Order Nonexistent Product
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/api/orders
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "customerName": "أحمد فوزي",
+    "customerPhone": "01012345678",
+    "shippingGovernorate": "القاهرة",
+    "shippingCityArea": "المعادي",
+    "shippingDetailedAddress": "شارع النصر عمارة 15",
+    "paymentMethod": "CASH_ON_DELIVERY",
+    "items": [
+      {
+        "productId": "ffffffff-ffff-ffff-ffff-ffffffffffff",
+        "quantity": 1
+      }
+    ]
+  }
+}
+
+assert {
+  res.status: eq 404
+  res.body.status: eq 404
+  res.body.error: eq "Not Found"
+  res.body.message: contains "المنتج المطلوب غير موجود"
+}
+
+docs {
+  # 01. Order Nonexistent Product
+  
+  ### 1. Objective:
+  Verify ordering a non-existent UUID product returns `404 Not Found` with message `"المنتج المطلوب غير موجود"`.
+}

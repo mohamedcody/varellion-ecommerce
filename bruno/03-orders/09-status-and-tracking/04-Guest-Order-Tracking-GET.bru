@@ -1,0 +1,29 @@
+meta {
+  name: 04. Public Guest Order Track Deep-Link (GET)
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/api/orders/track?orderNumber={{createdOrderNumber}}&phone={{createdCustomerPhone}}
+  body: none
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+assert {
+  res.status: eq 200
+  res.body.success: eq true
+  res.body.data.orderNumber: eq {{createdOrderNumber}}
+  res.body.data.orderStatus: isDefined
+}
+
+docs {
+  # 04. Public Guest Order Track Deep-Link (GET)
+  
+  ### 1. Objective:
+  Verify `GET /api/orders/track?orderNumber=...&phone=...` deep-link tracking (used in transactional SMS and WhatsApp notifications).
+}

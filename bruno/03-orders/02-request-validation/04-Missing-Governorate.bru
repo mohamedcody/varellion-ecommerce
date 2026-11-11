@@ -1,0 +1,49 @@
+meta {
+  name: 04. Missing Governorate
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/api/orders
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "customerName": "أحمد فوزي",
+    "customerPhone": "01012345678",
+    "shippingCityArea": "المعادي",
+    "shippingDetailedAddress": "شارع النصر عمارة 15",
+    "paymentMethod": "CASH_ON_DELIVERY",
+    "items": [
+      {
+        "productId": "{{productIdWatch}}",
+        "quantity": 1
+      }
+    ]
+  }
+}
+
+assert {
+  res.status: eq 400
+  res.body.status: eq 400
+  res.body.validationErrors.shippingGovernorate: isDefined
+  res.body.validationErrors.shippingGovernorate: eq "المحافظة مطلوبة"
+}
+
+docs {
+  # 04. Missing Governorate
+  
+  ### 1. Objective:
+  Verify `@NotBlank(message = "المحافظة مطلوبة")` on `CreateOrderRequest.shippingGovernorate`. Shipping fee calculation strictly depends on the governorate name.
+}

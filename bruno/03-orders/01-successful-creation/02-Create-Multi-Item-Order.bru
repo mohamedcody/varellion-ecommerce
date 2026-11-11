@@ -1,0 +1,65 @@
+meta {
+  name: 02. Create Multi Item Order (Wallet + Cufflinks)
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/orders
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+headers {
+  Content-Type: application/json
+  Idempotency-Key: MULTI-ITEM-{{$timestamp}}
+}
+
+body:json {
+  {
+    "customerName": "أحمد فوزي الشناوي",
+    "customerPhone": "01012345678",
+    "shippingGovernorate": "الإسكندرية",
+    "shippingCityArea": "سموحة",
+    "shippingDetailedAddress": "شارع فوزي معاذ عمارة الصفوة",
+    "paymentMethod": "CASH_ON_DELIVERY",
+    "items": [
+      {
+        "productId": "{{productIdCardholder}}",
+        "quantity": 1
+      },
+      {
+        "productId": "c0000000-0000-0000-0000-000000000001",
+        "quantity": 1
+      }
+    ]
+  }
+}
+
+assert {
+  res.status: eq 201
+  res.body.success: eq true
+  res.body.data.orderNumber: isDefined
+  res.body.data.items.length: eq 2
+  res.body.data.subtotal: eq 1410.00
+  res.body.data.shippingFee: eq 60.00
+  res.body.data.totalAmount: eq 1470.00
+}
+
+docs {
+  # 02. Create Multi Item Order
+  
+  ### 1. Objective:
+  Verify ordering multiple distinct items in a single transaction (Cognac Leather Wallet: 890 EGP + Cufflinks: 520 EGP).
+  
+  ### 2. Business Flow & Invariants:
+  - Validates sorting and locking of multiple product rows ascending by UUID to prevent DB deadlocks.
+  - Subtotal calculated authoritatively: 890 + 520 = 1410.00 EGP.
+  - Alexandria shipping zone rate applied: 60.00 EGP.
+  - Total amount: 1470.00 EGP.
+  - Inserts 2 records in `order_items`.
+}

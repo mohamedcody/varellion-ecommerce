@@ -1,0 +1,32 @@
+meta {
+  name: 03. Pagination Boundary (page=0, limit=1)
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/api/orders/my-orders?page=0&limit=1
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+assert {
+  res.status: eq 200
+  res.body.success: eq true
+  res.body.data.length: lte 1
+}
+
+docs {
+  # 03. Pagination Boundary (page=0, limit=1)
+  
+  ### 1. Objective:
+  Verify pagination boundary handling: `page=0&limit=1` returns at most 1 order without off-by-one errors.
+}

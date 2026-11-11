@@ -80,4 +80,48 @@ describe('AuthGuard', () => {
     expect(screen.queryByText('Protected Content')).toBeNull();
     expect(mockPush).toHaveBeenCalledWith('/login?redirect=%2Fprofile');
   });
+
+  it('redirects to / when requiredRole is ADMIN but user role is USER', () => {
+    vi.spyOn(AuthContextModule, 'useAuth').mockReturnValue({
+      isAuthenticated: true,
+      isLoading: false,
+      user: { username: 'customer', email: 'cust@test.com', role: 'USER' },
+      accessToken: 'token',
+      login: vi.fn(),
+      register: vi.fn(),
+      loginWithGoogle: vi.fn(),
+      logout: vi.fn(),
+    });
+
+    render(
+      <AuthGuard requiredRole="ADMIN">
+        <div>Admin Content</div>
+      </AuthGuard>
+    );
+
+    expect(screen.queryByText('Admin Content')).toBeNull();
+    expect(mockPush).toHaveBeenCalledWith('/');
+  });
+
+  it('renders admin content when requiredRole is ADMIN and user role is ADMIN', () => {
+    vi.spyOn(AuthContextModule, 'useAuth').mockReturnValue({
+      isAuthenticated: true,
+      isLoading: false,
+      user: { username: 'admin', email: 'admin@varellion.com', role: 'ADMIN' },
+      accessToken: 'token',
+      login: vi.fn(),
+      register: vi.fn(),
+      loginWithGoogle: vi.fn(),
+      logout: vi.fn(),
+    });
+
+    render(
+      <AuthGuard requiredRole="ADMIN">
+        <div>Admin Content</div>
+      </AuthGuard>
+    );
+
+    expect(screen.getByText('Admin Content')).toBeDefined();
+    expect(mockPush).not.toHaveBeenCalled();
+  });
 });

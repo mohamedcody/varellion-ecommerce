@@ -9,6 +9,10 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Badge } from '@/components/ui/Badge';
 import { Search, Sparkles, X, Loader2, ChevronRight, ChevronLeft, RotateCcw } from 'lucide-react';
+import Link from 'next/link';
+import { getBaseSiteUrl } from '@/lib/url';
+import { buildBreadcrumbSchema } from '@/lib/seo/schema';
+import { JsonLd } from '@/components/seo/JsonLd';
 
 const PAGE_SIZE = 20;
 
@@ -167,8 +171,40 @@ function ProductsContent() {
 
   const totalPages = Math.ceil(totalProducts / PAGE_SIZE);
 
+  const baseUrl = getBaseSiteUrl();
+  const breadcrumbSchema = buildBreadcrumbSchema([
+    { name: 'الرئيسية', item: baseUrl },
+    { name: 'المنتجات', item: `${baseUrl}/products` },
+  ]);
+
   return (
     <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-10 max-w-7xl">
+      {/* Schema.org BreadcrumbList JSON-LD */}
+      <JsonLd data={breadcrumbSchema} id="catalog-breadcrumbs-schema" />
+
+      {/* Semantic Breadcrumb Navigation */}
+      <nav className="flex items-center gap-2 text-xs text-muted-foreground mb-6" aria-label="مسار التنقل">
+        <Link href="/" className="hover:text-foreground transition-colors">
+          الرئيسية
+        </Link>
+        <span aria-hidden="true" className="text-muted-foreground/60">/</span>
+        <Link
+          href="/products"
+          className={activeCategoryName ? 'hover:text-foreground transition-colors' : 'font-semibold text-foreground hover:text-primary transition-colors'}
+          {...(!activeCategoryName ? { 'aria-current': 'page' } : {})}
+        >
+          المنتجات
+        </Link>
+        {activeCategoryName && (
+          <>
+            <span aria-hidden="true" className="text-muted-foreground/60">/</span>
+            <span className="font-semibold text-foreground" aria-current="page">
+              {activeCategoryName}
+            </span>
+          </>
+        )}
+      </nav>
+
       {/* Header & Page Title */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-8 border-b border-border/80">
         <div>

@@ -1,0 +1,26 @@
+meta {
+  name: 04. Get Order By Number Without Token
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/api/orders/{{createdOrderNumber}}
+  body: none
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+assert {
+  res.status: eq 401
+}
+
+docs {
+  # 04. Get Order By Number Without Token
+  
+  ### 1. Objective:
+  Verify protected endpoint `GET /api/orders/{orderNumber}` cannot be queried without Bearer authentication, preventing anonymous reconnaissance of order numbers.
+}

@@ -1,0 +1,40 @@
+meta {
+  name: 01. Get Authenticated Order Details By Number
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/orders/{{createdOrderNumber}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+assert {
+  res.status: eq 200
+  res.body.success: eq true
+  res.body.data.orderNumber: eq {{createdOrderNumber}}
+  res.body.data.orderStatus: eq PENDING_CUSTOMER_CONFIRMATION
+  res.body.data.statusHistory.length: gte 1
+  res.body.data.statusHistory[0].newStatus: eq PENDING_CUSTOMER_CONFIRMATION
+}
+
+docs {
+  # 01. Get Authenticated Order Details By Number
+  
+  ### 1. Objective:
+  Verify `GET /api/orders/{orderNumber}` for the authenticated customer who placed it.
+  
+  ### 2. Business Invariants:
+  - Validates order number lookup.
+  - Confirms initial status is `PENDING_CUSTOMER_CONFIRMATION`.
+  - Verifies presence of audit history trail in `statusHistory` array.
+}

@@ -1,0 +1,47 @@
+meta {
+  name: 02. Simultaneous Purchase & Pessimistic Lock Architectural Guide
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/products
+  body: none
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+assert {
+  res.status: eq 200
+}
+
+docs {
+  # 02. Simultaneous Purchase & Pessimistic Lock Architectural Guide
+  
+  ### 1. The Real-World Scenario:
+  Two customers (Customer A and Customer B) click "Place Order" at the exact same millisecond for the LAST available unit of the VARELLION Emerald Chronograph (`availableStock = 1`).
+  
+  ### 2. How VARELLION Solves This at the Database Engine Level:
+  1. Both requests enter separate Spring `@Transactional` threads (`Thread-1` and `Thread-2`).
+  2. Before reading or modifying stock, `OrderService` sorts product IDs ascending by UUID:
+     `items.sort(Comparator.comparing(CreateOrderItemRequest::getProductId))`
+     *(Deadlock prevention: enforces universal lock hierarchy across all transactions)*.
+  3. `Thread-1` executes:
+     `SELECT * FROM products WHERE product_id = 'a000...0001' FOR UPDATE;`
+  4. PostgreSQL grants the exclusive row-level write lock (`PESSIMISTIC_WRITE`) to `Thread-1`.
+  5. `Thread-2` executes the identical query, but PostgreSQL blocks `Thread-2` at the kernel level until `Thread-1` finishes its transaction.
+  6. `Thread-1` checks stock: `availableStock (1) >= quantity (1) -> TRUE`.
+  7. `Thread-1` reserves the piece: `reserved_quantity = reserved_quantity + 1`.
+  8. `Thread-1` commits transaction. The exclusive row lock is released.
+  9. `Thread-2` immediately unblocks and reads the updated state:
+     `availableStock = stock_quantity (1) - reserved_quantity (1) = 0`.
+  10. `Thread-2` fails the check and throws:
+      `BusinessException(400 Bad Request, "الكمية المطلوبة غير متوفرة في المخزون (المتبقي: 0)")`.
+  11. `Thread-2` rolls back atomically. Customer B receives a clean 400 error.
+  
+  ### Result:
+  Zero over-selling, zero negative stock, zero deadlocks, and 100% database consistency.
+}

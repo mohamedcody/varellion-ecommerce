@@ -1,0 +1,42 @@
+meta {
+  name: 11. Malformed JSON Syntax
+  type: http
+  seq: 11
+}
+
+post {
+  url: {{baseUrl}}/api/orders
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "customerName": "أحمد فوزي",
+    "customerPhone": "01012345678",
+    "shippingGovernorate": "القاهرة"
+    "unclosed_bracket": [
+  }
+}
+
+assert {
+  res.status: eq 400
+  res.body.status: eq 400
+  res.body.error: eq "Bad Request"
+  res.body.message: eq "تنسيق البيانات المرسلة غير صالح"
+}
+
+docs {
+  # 11. Malformed JSON Syntax
+  
+  ### 1. Objective:
+  Sending raw invalid JSON triggers `HttpMessageNotReadableException`, returning standardized `400 Bad Request` with message `"تنسيق البيانات المرسلة غير صالح"`.
+}

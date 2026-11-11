@@ -1,0 +1,45 @@
+meta {
+  name: 05. Empty Items Array
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/api/orders
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "customerName": "أحمد فوزي",
+    "customerPhone": "01012345678",
+    "shippingGovernorate": "القاهرة",
+    "shippingCityArea": "المعادي",
+    "shippingDetailedAddress": "شارع النصر عمارة 15",
+    "paymentMethod": "CASH_ON_DELIVERY",
+    "items": []
+  }
+}
+
+assert {
+  res.status: eq 400
+  res.body.status: eq 400
+  res.body.validationErrors.items: isDefined
+  res.body.validationErrors.items: eq "يجب أن يحتوي الطلب على منتج واحد على الأقل"
+}
+
+docs {
+  # 05. Empty Items Array
+  
+  ### 1. Objective:
+  Verify `@NotEmpty(message = "يجب أن يحتوي الطلب على منتج واحد على الأقل")` on `CreateOrderRequest.items`. An order cannot be placed with zero items.
+}

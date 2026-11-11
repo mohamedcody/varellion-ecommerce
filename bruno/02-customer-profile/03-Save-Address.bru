@@ -10,12 +10,12 @@ put {
   auth: bearer
 }
 
-auth:bearer {
-  token: {{accessToken}}
-}
-
 headers {
   Content-Type: application/json
+}
+
+auth:bearer {
+  token: {{accessToken}}
 }
 
 body:json {
@@ -24,6 +24,10 @@ body:json {
     "cityArea": "مدينة نصر",
     "detailedAddress": "شارع عباس العقاد، عمارة 15، الدور الرابع"
   }
+}
+
+vars:pre-request {
+  accessToken: eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1c2VyXzE3OTM5MDcwMzY5MjRAdmFyZWxsaW9uLmNvbSIsInRva2VuX3R5cGUiOiJBQ0NFU1MiLCJpYXQiOjE3OTM5MDcwMzgsImV4cCI6MTc5MzkwNzkzOH0.G-FRO7VJAo98fW7RTdRClUL72mq8idrLFukmaXvAyZo
 }
 
 assert {

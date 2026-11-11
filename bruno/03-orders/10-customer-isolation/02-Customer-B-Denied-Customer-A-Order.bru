@@ -1,0 +1,37 @@
+meta {
+  name: 02. Customer B Denied Customer A Order (Anti-IDOR)
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/orders/{{createdOrderNumber}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessTokenB}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+assert {
+  res.status: eq 404
+  res.body.status: eq 404
+  res.body.error: eq "Not Found"
+  res.body.message: eq "الطلب غير موجود"
+}
+
+docs {
+  # 02. Customer B Denied Customer A Order (Anti-IDOR)
+  
+  ### 1. Objective:
+  Verify IDOR (Insecure Direct Object Reference) defense:
+  When Customer B attempts to fetch Customer A's order (`{{createdOrderNumber}}`), `OrderService` verifies ownership against `customer.getCustomerId()`.
+  
+  ### 2. Security Invariant:
+  Returns `404 Not Found` (rather than 403) to prevent order ID enumeration and existence confirmation.
+}

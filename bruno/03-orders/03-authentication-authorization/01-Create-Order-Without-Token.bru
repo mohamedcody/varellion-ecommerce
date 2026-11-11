@@ -1,0 +1,44 @@
+meta {
+  name: 01. Create Order Without Token
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/api/orders
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "customerName": "أحمد فوزي",
+    "customerPhone": "01012345678",
+    "shippingGovernorate": "القاهرة",
+    "shippingCityArea": "المعادي",
+    "shippingDetailedAddress": "شارع النصر عمارة 15",
+    "paymentMethod": "CASH_ON_DELIVERY",
+    "items": [
+      {
+        "productId": "{{productIdWatch}}",
+        "quantity": 1
+      }
+    ]
+  }
+}
+
+assert {
+  res.status: eq 401
+}
+
+docs {
+  # 01. Create Order Without Token
+  
+  ### 1. Objective:
+  Verify `POST /api/orders` rejects unauthenticated requests with `401 Unauthorized`.
+  Orders in VARELLION require authenticated customer context.
+}

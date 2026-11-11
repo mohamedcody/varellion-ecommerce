@@ -1,0 +1,61 @@
+meta {
+  name: 01. Multi-Item Atomic Rollback When Second Item Fails
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/api/orders
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+headers {
+  Content-Type: application/json
+  Idempotency-Key: ROLLBACK-TEST-{{$timestamp}}
+}
+
+body:json {
+  {
+    "customerName": "أحمد فوزي",
+    "customerPhone": "01012345678",
+    "shippingGovernorate": "القاهرة",
+    "shippingCityArea": "المعادي",
+    "shippingDetailedAddress": "شارع النصر عمارة 15",
+    "paymentMethod": "CASH_ON_DELIVERY",
+    "items": [
+      {
+        "productId": "{{productIdCardholder}}",
+        "quantity": 1
+      },
+      {
+        "productId": "{{productIdWatch}}",
+        "quantity": 99999
+      }
+    ]
+  }
+}
+
+assert {
+  res.status: eq 400
+  res.body.status: eq 400
+  res.body.error: eq "Bad Request"
+  res.body.message: contains "غير متوفرة في المخزون"
+}
+
+docs {
+  # 01. Multi-Item Atomic Rollback When Second Item Fails
+  
+  ### 1. Objective:
+  Verify Database Transaction Atomicity (the 'A' in ACID):
+  - In a multi-item order, Item 1 passes stock validation.
+  - Item 2 fails due to insufficient stock (quantity: 99999).
+  - Spring `@Transactional` triggers full rollback: Item 1's reserved quantity must NOT be incremented.
+  
+  ### 2. Database Verification:
+  Check that `reserved_quantity` for Item 1 remained completely untouched.
+}

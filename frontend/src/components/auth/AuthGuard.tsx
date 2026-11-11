@@ -8,19 +8,24 @@ import { Skeleton } from '@/components/ui/Skeleton';
 export interface AuthGuardProps {
   children: React.ReactNode;
   fallback?: React.ReactNode;
+  requiredRole?: 'ADMIN' | 'USER';
 }
 
-export function AuthGuard({ children, fallback }: AuthGuardProps) {
-  const { isAuthenticated, isLoading } = useAuth();
+export function AuthGuard({ children, fallback, requiredRole }: AuthGuardProps) {
+  const { user, isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
 
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      const redirectUrl = pathname ? `/login?redirect=${encodeURIComponent(pathname)}` : '/login';
-      router.push(redirectUrl);
+    if (!isLoading) {
+      if (!isAuthenticated) {
+        const redirectUrl = pathname ? `/login?redirect=${encodeURIComponent(pathname)}` : '/login';
+        router.push(redirectUrl);
+      } else if (requiredRole === 'ADMIN' && user?.role !== 'ADMIN') {
+        router.push('/');
+      }
     }
-  }, [isAuthenticated, isLoading, pathname, router]);
+  }, [isAuthenticated, isLoading, pathname, requiredRole, router, user?.role]);
 
   if (isLoading) {
     if (fallback) {
@@ -41,7 +46,7 @@ export function AuthGuard({ children, fallback }: AuthGuardProps) {
     );
   }
 
-  if (!isAuthenticated) {
+  if (!isAuthenticated || (requiredRole === 'ADMIN' && user?.role !== 'ADMIN')) {
     return null;
   }
 

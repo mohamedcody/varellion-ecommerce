@@ -1,0 +1,79 @@
+meta {
+  name: 01. Create Single Item Order (COD - Happy Path)
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/api/orders
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+headers {
+  Content-Type: application/json
+  Idempotency-Key: ORDER-COD-{{$timestamp}}
+}
+
+body:json {
+  {
+    "customerName": "أحمد فوزي الشناوي",
+    "customerPhone": "01012345678",
+    "alternativePhone": "01198765432",
+    "shippingGovernorate": "القاهرة",
+    "shippingCityArea": "المعادي",
+    "shippingDetailedAddress": "شارع النصر عمارة 15 الدور الرابع شقة 8",
+    "paymentMethod": "CASH_ON_DELIVERY",
+    "customerNotes": "يرجى الاتصال قبل الوصول بنصف ساعة",
+    "items": [
+      {
+        "productId": "{{productIdWatch}}",
+        "quantity": 1
+      }
+    ]
+  }
+}
+
+assert {
+  res.status: eq 201
+  res.body.success: eq true
+  res.body.data.orderNumber: isDefined
+  res.body.data.orderStatus: eq PENDING_CUSTOMER_CONFIRMATION
+  res.body.data.currency: eq EGP
+  res.body.data.shippingFee: eq 50.00
+  res.body.data.subtotal: eq 1850.00
+  res.body.data.totalAmount: eq 1900.00
+  res.body.data.items.length: eq 1
+  res.body.data.statusHistory.length: eq 1
+}
+
+script:post-response {
+  if (res.status === 201 && res.body.data && res.body.data.orderNumber) {
+    bru.setEnvVar("createdOrderNumber", res.body.data.orderNumber);
+    bru.setEnvVar("createdCustomerPhone", res.body.data.customerPhone);
+  }
+}
+
+docs {
+  # 01. Create Single Item Order (COD - Happy Path)
+  
+  ### 1. Objective:
+  Full authoritative creation of a Cash On Delivery order containing 1 VARELLION Emerald Chronograph watch for the authenticated customer.
+  
+  ### 2. Business Flow & Invariants:
+  - Generates unique order number with daily sequence (`VAR-YYYYMMDD-XXXX`).
+  - Sets initial lifecycle status to `PENDING_CUSTOMER_CONFIRMATION`.
+  - Calculates authoritative subtotal (`1850.00`) and Cairo shipping (`50.00`), totaling `1900.00 EGP`.
+  - Increments product's `reserved_quantity` by 1 in the database under a `PESSIMISTIC_WRITE` lock.
+  - Automatically records initial status history audit trail.
+  
+  ### 3. Prerequisites:
+  Run `bruno/01-authentication/05-Login-Success.bru` first to populate `{{accessToken}}`.
+  
+  ### 4. Post-Execution Effect:
+  Saves `createdOrderNumber` and `createdCustomerPhone` to Bruno environment variables for subsequent tracking, lifecycle, and security tests.
+}

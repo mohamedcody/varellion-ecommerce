@@ -1,0 +1,47 @@
+meta {
+  name: 02. Create Order With Invalid Token
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/orders
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.invalid_payload_signature.signature
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "customerName": "أحمد فوزي",
+    "customerPhone": "01012345678",
+    "shippingGovernorate": "القاهرة",
+    "shippingCityArea": "المعادي",
+    "shippingDetailedAddress": "شارع النصر عمارة 15",
+    "paymentMethod": "CASH_ON_DELIVERY",
+    "items": [
+      {
+        "productId": "{{productIdWatch}}",
+        "quantity": 1
+      }
+    ]
+  }
+}
+
+assert {
+  res.status: eq 401
+}
+
+docs {
+  # 02. Create Order With Invalid Token
+  
+  ### 1. Objective:
+  Verify `JwtAuthenticationFilter` rejects forged, tampered, or expired tokens with `401 Unauthorized`.
+}

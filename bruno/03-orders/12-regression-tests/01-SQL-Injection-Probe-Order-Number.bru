@@ -1,0 +1,31 @@
+meta {
+  name: 01. SQL Injection Probe on Order Number Path
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/orders/' OR 1=1 --
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+assert {
+  res.status: in [400, 404]
+}
+
+docs {
+  # 01. SQL Injection Probe on Order Number Path
+  
+  ### 1. Objective:
+  Verify parameterized Spring Data JPA queries:
+  Injecting SQL payloads (`' OR 1=1 --`) in the order number path does not cause SQL syntax errors or data dumps; it is treated as a literal search string and safely returns `404 Not Found`.
+}

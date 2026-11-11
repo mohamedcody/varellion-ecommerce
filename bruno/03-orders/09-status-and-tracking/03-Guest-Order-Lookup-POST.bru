@@ -1,0 +1,36 @@
+meta {
+  name: 03. Public Guest Order Lookup (POST)
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/api/orders/lookup
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "orderNumber": "{{createdOrderNumber}}",
+    "phone": "{{createdCustomerPhone}}"
+  }
+}
+
+assert {
+  res.status: eq 200
+  res.body.success: eq true
+  res.body.data.orderNumber: eq {{createdOrderNumber}}
+  res.body.data.orderStatus: isDefined
+}
+
+docs {
+  # 03. Public Guest Order Lookup (POST)
+  
+  ### 1. Objective:
+  Verify `POST /api/orders/lookup` allows guest visitors without a JWT token to check order status by providing both the order number and registered phone number.
+}

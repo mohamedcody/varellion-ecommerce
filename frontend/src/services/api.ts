@@ -1,8 +1,29 @@
 import { ApiResponse, Category, Product, ProductFilterParams, ShippingZone } from '@/types';
 import { mockCategories, mockProducts, mockShippingZones } from '@/data/mockProducts';
 
-const RAW_API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api';
-export const API_BASE_URL = RAW_API_URL.replace(/\/+$/, '');
+/**
+ * Resolves API base URL depending on execution environment (Node.js SSR vs Browser)
+ */
+export function resolveApiBaseUrl(): string {
+  if (typeof window === 'undefined') {
+    // Server-side (Node.js runtime / Docker container)
+    const internalUrl = process.env.INTERNAL_API_URL || process.env.BACKEND_URL;
+    if (internalUrl) return internalUrl.replace(/\/+$/, '');
+
+    const publicUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api';
+    if (publicUrl.startsWith('http://') || publicUrl.startsWith('https://')) {
+      return publicUrl.replace(/\/+$/, '');
+    }
+    // Fallback if publicUrl is relative (e.g. '/api')
+    return 'http://localhost:8080/api';
+  }
+
+  // Client-side (Browser runtime)
+  const clientUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api';
+  return clientUrl.replace(/\/+$/, '');
+}
+
+export const API_BASE_URL = resolveApiBaseUrl();
 const USE_MOCK = process.env.NEXT_PUBLIC_USE_MOCK_API === 'true'; // Default to false: Backend-Driven Architecture
 
 /**
@@ -26,11 +47,12 @@ export class ApiError extends Error {
  * Robust Endpoint URL builder preventing duplicate or missing '/api' segments
  */
 export function buildEndpointUrl(endpoint: string): string {
+  const baseUrl = resolveApiBaseUrl();
   const clean = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
-  if (API_BASE_URL.endsWith('/api') && clean.startsWith('/api/')) {
-    return `${API_BASE_URL}${clean.slice(4)}`;
+  if (baseUrl.endsWith('/api') && clean.startsWith('/api/')) {
+    return `${baseUrl}${clean.slice(4)}`;
   }
-  return `${API_BASE_URL}${clean}`;
+  return `${baseUrl}${clean}`;
 }
 
 let inMemoryAccessToken: string | null = null;
@@ -363,7 +385,15 @@ export const catalogService = {
    * Fetch single product by slug or SKU or UUID
    */
   async getProductBySlug(slug: string): Promise<Product | null> {
-    const cleanSlug = decodeURIComponent(slug || '').trim();
+    let cleanSlug = '';
+    try {
+      cleanSlug = decodeURIComponent(slug || '').trim();
+    } catch (error) {
+      if (error instanceof URIError) {
+        return null;
+      }
+      throw error;
+    }
     if (!cleanSlug) return null;
 
     if (USE_MOCK) {

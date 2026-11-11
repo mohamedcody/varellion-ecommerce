@@ -1,0 +1,49 @@
+meta {
+  name: 02. Missing Customer Name
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/orders
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "customerPhone": "01012345678",
+    "shippingGovernorate": "القاهرة",
+    "shippingCityArea": "المعادي",
+    "shippingDetailedAddress": "شارع النصر عمارة 15",
+    "paymentMethod": "CASH_ON_DELIVERY",
+    "items": [
+      {
+        "productId": "{{productIdWatch}}",
+        "quantity": 1
+      }
+    ]
+  }
+}
+
+assert {
+  res.status: eq 400
+  res.body.status: eq 400
+  res.body.validationErrors.customerName: isDefined
+  res.body.validationErrors.customerName: eq "اسم العميل مطلوب"
+}
+
+docs {
+  # 02. Missing Customer Name
+  
+  ### 1. Objective:
+  Verify `@NotBlank(message = "اسم العميل مطلوب")` on `CreateOrderRequest.customerName`.
+}

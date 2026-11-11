@@ -32,6 +32,27 @@
 * `11. Google Login - Verification` ➔ تسجيل الدخول بحساب Google.
 * `12. Security Test - Rate Limiter` ➔ فحص حماية الهجمات المتكررة (Rate Limiting).
 
+### `02-customer-profile/` — ملف العميل وعناوين التوصيل:
+* `01. Get Customer Profile & Address` ➔ استرجاع بيانات العميل الحالي والعنوان المسجل.
+* `02. Update Profile` ➔ تحديث الاسم ورقم الهاتف المصري.
+* `03. Save or Update Delivery Address (Upsert)` ➔ تسجيل أو تعديل عنوان التوصيل.
+* `04. Delete Delivery Address` ➔ حذف عنوان التوصيل.
+* `05. Security Test - Unauthorized Access` ➔ رفض الوصول بدون توكن (`401 Unauthorized`).
+
+### `03-orders/` — إدارة وإنشاء الطلبات وحجز المخزون والتتبع:
+* **`01-successful-creation/`** ➔ إنشاء الطلبات بنجاح (Single-Item COD، Multi-Item، الشحن المجاني فوق 2500 ج.م، وملاحظات التوصيل).
+* **`02-request-validation/`** ➔ فحص صحة المدخلات (الجسم الفارغ، غياب الاسم/الهاتف/المحافظة، الكميات الصفرية والسالبة، تكرار المنتج، والأخطاء النحوية للـ JSON).
+* **`03-authentication-authorization/`** ➔ حماية الـ Endpoints المحمية وفحص رفض التوكنات المزورة أو الناقصة.
+* **`04-inventory-stock/`** ➔ فحص المنتجات غير الموجودة (404) وطلب كميات تفوق المخزون (400) وعدم تسريب الحجز.
+* **`05-pricing-calculations/`** ➔ التدقيق في التسعير السيرفري المعتمد وحساب شرائح شحن المحافظات (القاهرة 50، الإسكندرية 60، الدلتا والقناة 65، الصعيد 75، والمحافظات الحدودية 85 ج.م).
+* **`06-idempotency/`** ➔ منع تكرار الطلبات عبر الـ `Idempotency-Key` وإرجاع الاستجابة المخبأة فورياً بدون خصم مخزون إضافي.
+* **`07-concurrency/`** ➔ حماية تضارب الطلبات المتزامنة (409 Conflict) وشرح الـ `PESSIMISTIC_WRITE` Lock.
+* **`08-transactions-rollback/`** ➔ فحص الـ Atomicity والتراجع الكامل عن الحجز عند فشل أحد بنود الطلب المتعدد.
+* **`09-status-and-tracking/`** ➔ تفاصيل الطلب، قائمة طلباتي (My Orders)، وتتبع الطلبات العام عبر POST و GET ورقم الهاتف.
+* **`10-customer-isolation/`** ➔ عزل بيانات العملاء وحماية الـ IDOR (رفض وصول العميل B لطلب العميل A).
+* **`11-boundary-edge-cases/`** ➔ اختبارات الحدود القصوى (اسم عميل 150 حرف، تطبيع الهاتف المصري +20، والـ Pagination).
+* **`12-regression-tests/`** ➔ اختبارات الانحدار وفحص حقن الـ SQL وفحص التدفق المتكامل (Smoke Test).
+
 ---
 
 ## 📘 3. التوثيق والمراجع الهندسية
@@ -39,4 +60,5 @@
 * **فهرس وتفاصيل جميع الـ Endpoints:** [`docs/testing/BACKEND_TEST_INVENTORY.md`](../docs/testing/BACKEND_TEST_INVENTORY.md)
 * **خريطة طريق الاختبارات:** [`docs/testing/BACKEND_TEST_ROADMAP.md`](../docs/testing/BACKEND_TEST_ROADMAP.md)
 * **الدليل التفصيلي لميزة المصادقة:** [`docs/testing/features/authentication.md`](../docs/testing/features/authentication.md)
+* **الدليل التفصيلي لميزة الطلبات والمخزون:** [`docs/testing/features/orders.md`](../docs/testing/features/orders.md)
 * **تقرير التنفيذ والنتائج:** [`docs/testing/TEST_EXECUTION_REPORT.md`](../docs/testing/TEST_EXECUTION_REPORT.md)
