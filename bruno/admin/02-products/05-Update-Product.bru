@@ -1,0 +1,64 @@
+meta {
+  name: 05. Update Product Details
+  type: http
+  seq: 5
+}
+
+put {
+  url: {{baseUrl}}/api/admin/products/{{createdAdminProductId}}
+  body: json
+  auth: bearer
+}
+
+headers {
+  Content-Type: application/json
+}
+
+auth:bearer {
+  token: {{adminAccessToken}}
+}
+
+body:json {
+  {
+    
+    "categoryId": "{{categoryWatchId}}",
+    "nameAr": "ساعة فارليون الكلاسيكية الفضية - إصدار برونو المحدث",
+    "nameEn": "VARELLION Classic Silver Timepiece - Updated Bruno Edition",
+    "descriptionAr": "تم تعديل السعر والكمية في المخزن بنجاح.",
+    "descriptionEn": "Price and stock quantities successfully updated.",
+    "price": 3100.00,
+    "costPrice": 1350.00,
+    "stockQuantity": 50,
+    "sku": "VAR-BRU-WATCH-01",
+    "isActive": true,
+    "imageUrls": [
+      "https://images.unsplash.com/photo-1523275335684-37898b6baf30"
+    ]
+  }
+  
+}
+
+vars:pre-request {
+  adminAccessToken: eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1c2VyXzE3OTQ4MzE3MDI5ODFAdmFyZWxsaW9uLmNvbSIsInRva2VuX3R5cGUiOiJBQ0NFU1MiLCJpYXQiOjE3OTQ4Mzc4NTksImV4cCI6MTc5NDgzODc1OX0.-Qdul3jtQ_Z9_OPyNVibhL_Fbp_x3CeYSdEngJvsXY0
+  createdAdminProductId: 98788848-fcf3-492f-9dd1-e8c0f01bad1a
+  categoryWatchId: 11111111-1111-1111-1111-111111111111
+}
+
+assert {
+  res.status: eq 200
+  res.body.productId: eq {{createdAdminProductId}}
+  res.body.price: eq 3100.00
+  res.body.stockQuantity: eq 50
+  res.body.nameAr: contains إصدار برونو المحدث
+}
+
+docs {
+  # 05. Update Product Details
+  
+  ### 1. الهدف:
+  تحديث بيانات منتج قائم (الاسم، الوصف، الأسعار، المخزون، والصور).
+  
+  ### 2. التغييرات في قاعدة البيانات:
+  - تحديث صفوف `products` بواسطة `productId`.
+  - تحديث أو استبدال الصور في جدول `product_images`.
+}

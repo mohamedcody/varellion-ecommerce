@@ -15,17 +15,13 @@ import lombok.NoArgsConstructor;
 public class AuthResponse {
 
     private String accessToken;
-
-    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
-    private String refreshToken;
     private String email;
     private String username;
     private String role;
     private String message;
 
-    public AuthResponse(String accessToken, String refreshToken, String email, String role, String message) {
+    public AuthResponse(String accessToken, String email, String role, String message) {
         this.accessToken = accessToken;
-        this.refreshToken = refreshToken;
         this.email = email;
         this.role = role;
         this.message = message;

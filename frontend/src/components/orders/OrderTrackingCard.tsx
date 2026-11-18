@@ -7,7 +7,7 @@ import { Order } from '@/types';
 import { cn } from '@/lib/utils';
 import { OrderTrackingTimeline } from './OrderTrackingTimeline';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
+import { Button, buttonVariants } from '@/components/ui/Button';
 import {
   Package,
   MapPin,
@@ -134,7 +134,7 @@ export function OrderTrackingCard({ order }: OrderTrackingCardProps) {
                 <div className="pt-2 border-t border-border/50 flex justify-between">
                   <span className="text-muted-foreground">ملاحظات للمندوب:</span>
                   <span className="text-foreground italic max-w-[65%] text-end">
-                    "{order.customerNotes}"
+                    “{order.customerNotes}”
                   </span>
                 </div>
               )}
@@ -146,7 +146,7 @@ export function OrderTrackingCard({ order }: OrderTrackingCardProps) {
             <CardContent className="pt-4 space-y-3 text-xs">
               <div className="flex items-center gap-2 text-foreground font-bold">
                 <ShieldCheck className="h-4 w-4 text-primary" aria-hidden="true" />
-                <span>ضمان VARELLION الملكي وخدمة العملاء</span>
+                <span>ضمان <span translate="no">VARELLION</span> الملكي وخدمة العملاء</span>
               </div>
               <p className="text-muted-foreground leading-relaxed text-[11px]">
                 يحق لك فحص ومعاينة الشحنة بالكامل مع مندوب الشحن قبل سداد أي مبالغ نقدية. إذا كان لديك أي استفسار حول موعد وصول المندوب، تواصل معنا مباشرة.
@@ -157,16 +157,13 @@ export function OrderTrackingCard({ order }: OrderTrackingCardProps) {
                   href={`https://wa.me/201012345678?text=${whatsappMessage}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex-1 min-w-[140px]"
+                  className={cn(
+                    buttonVariants({ variant: 'outline', size: 'sm' }),
+                    'flex-1 min-w-[140px] gap-1.5 text-xs font-bold text-emerald-700 dark:text-emerald-400 hover:bg-emerald-500/10 min-h-[40px] cursor-pointer'
+                  )}
                 >
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="w-full gap-1.5 text-xs font-bold text-emerald-700 dark:text-emerald-400 hover:bg-emerald-500/10 cursor-pointer min-h-[40px]"
-                  >
-                    <MessageCircle className="h-4 w-4" aria-hidden="true" />
-                    <span>تواصل عبر واتساب</span>
-                  </Button>
+                  <MessageCircle className="h-4 w-4" aria-hidden="true" />
+                  <span>تواصل عبر واتساب</span>
                 </a>
 
                 <Button

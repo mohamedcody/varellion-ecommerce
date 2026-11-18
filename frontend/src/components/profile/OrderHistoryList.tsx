@@ -6,33 +6,39 @@ import { ordersService } from '@/services/orders';
 import { Order, OrderStatus } from '@/types';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
-import { Button } from '@/components/ui/Button';
+import { Button, buttonVariants } from '@/components/ui/Button';
+import { cn } from '@/lib/utils';
 import { Package, Clock, ArrowLeft, ShoppingBag, Truck, CheckCircle2 } from 'lucide-react';
 
 export function OrderHistoryList() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
-    let isMounted = true;
+    setIsMounted(true);
+  }, []);
+
+  useEffect(() => {
+    let active = true;
     async function loadOrders() {
       try {
         setIsLoading(true);
         const data = await ordersService.getMyOrders(0, 10);
-        if (isMounted) {
+        if (active) {
           setOrders(data);
         }
       } catch (err) {
         console.error('Failed to load customer orders:', err);
       } finally {
-        if (isMounted) {
+        if (active) {
           setIsLoading(false);
         }
       }
     }
     loadOrders();
     return () => {
-      isMounted = false;
+      active = false;
     };
   }, []);
 
@@ -96,16 +102,20 @@ export function OrderHistoryList() {
             <ShoppingBag className="w-6 h-6" aria-hidden="true" />
           </div>
           <div className="space-y-1">
-            <h4 className="text-sm font-bold text-foreground">لا توجد طلبات سابقة مسجلة</h4>
+            <h3 className="text-sm font-bold text-foreground">لا توجد طلبات سابقة مسجلة</h3>
             <p className="text-xs text-muted-foreground max-w-sm mx-auto leading-relaxed">
               لم تقم بتسجيل أي طلبات بعد. تصفح تشكيلتنا الفاخرة من الساعات والمصنوعات الجلدية الطبيعية 100%.
             </p>
           </div>
-          <Link href="/products">
-            <Button variant="luxury" size="sm" className="gap-2 font-bold min-h-[40px]">
-              <span>تصفح المنتجات الفاخرة</span>
-              <ArrowLeft className="w-3.5 h-3.5" aria-hidden="true" />
-            </Button>
+          <Link
+            href="/products"
+            className={cn(
+              buttonVariants({ variant: 'luxury', size: 'sm' }),
+              'gap-2 font-bold min-h-[40px]'
+            )}
+          >
+            <span>تصفح المنتجات الفاخرة</span>
+            <ArrowLeft className="w-3.5 h-3.5" aria-hidden="true" />
           </Link>
         </CardContent>
       </Card>
@@ -137,13 +147,15 @@ export function OrderHistoryList() {
                   {getStatusBadge(ord.orderStatus, ord.statusDisplayAr)}
                 </div>
                 <div className="text-xs text-muted-foreground flex flex-wrap items-center gap-3">
-                  <span>
+                  <span suppressHydrationWarning>
                     التاريخ:{' '}
-                    {new Date(ord.createdAt).toLocaleDateString('ar-EG', {
-                      year: 'numeric',
-                      month: 'short',
-                      day: 'numeric',
-                    })}
+                    {isMounted
+                      ? new Date(ord.createdAt).toLocaleDateString('ar-EG', {
+                          year: 'numeric',
+                          month: 'short',
+                          day: 'numeric',
+                        })
+                      : ''}
                   </span>
                   <span>•</span>
                   <span>{ord.items?.length || 1} منتجات</span>
@@ -154,11 +166,15 @@ export function OrderHistoryList() {
                 </div>
               </div>
 
-              <Link href={trackUrl}>
-                <Button variant="outline" size="sm" className="gap-1.5 text-xs font-bold w-full sm:w-auto min-h-[38px]">
-                  <span>تتبع مسار الشحنة</span>
-                  <ArrowLeft className="w-3.5 h-3.5" aria-hidden="true" />
-                </Button>
+              <Link
+                href={trackUrl}
+                className={cn(
+                  buttonVariants({ variant: 'outline', size: 'sm' }),
+                  'gap-1.5 text-xs font-bold w-full sm:w-auto min-h-[38px]'
+                )}
+              >
+                <span>تتبع مسار الشحنة</span>
+                <ArrowLeft className="w-3.5 h-3.5" aria-hidden="true" />
               </Link>
             </div>
           );

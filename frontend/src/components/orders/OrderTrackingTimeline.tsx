@@ -16,7 +16,7 @@ interface OrderTrackingTimelineProps {
 interface StepInfo {
   id: string;
   label: string;
-  description: string;
+  description: React.ReactNode;
   icon: React.ElementType;
 }
 
@@ -30,7 +30,11 @@ const TRACKING_STEPS: StepInfo[] = [
   {
     id: 'preparing',
     label: 'التجهيز الملكي والفحص',
-    description: 'فحص جودة القطع وتغليفها في صندوق VARELLION الفاخر',
+    description: (
+      <>
+        فحص جودة القطع وتغليفها في صندوق <span translate="no">VARELLION</span> الفاخر
+      </>
+    ),
     icon: Package,
   },
   {
@@ -128,7 +132,10 @@ export function OrderTrackingTimeline({ status, createdAt, updatedAt, governorat
           className="p-4 rounded-xl bg-destructive/10 border border-destructive/20 text-destructive text-xs font-semibold flex items-center gap-2"
         >
           <AlertCircle className="h-4 w-4 shrink-0" aria-hidden="true" />
-          <span>هذا الطلب تم إلغاؤه. للتواصل وإعادة التفعيل، يرجى محادثة خدمة عملاء VARELLION.</span>
+          <span>
+            هذا الطلب تم إلغاؤه. للتواصل وإعادة التفعيل، يرجى محادثة خدمة عملاء{' '}
+            <span translate="no">VARELLION</span>.
+          </span>
         </div>
       )}
 
@@ -199,7 +206,7 @@ export function OrderTrackingTimeline({ status, createdAt, updatedAt, governorat
                       {step.label}
                     </span>
                     {isCurrent && (
-                      <span className="text-[10px] bg-primary/10 text-primary font-black px-1.5 py-0.2 rounded-full shrink-0 animate-pulse">
+                      <span className="text-[10px] bg-primary/10 text-primary font-black px-1.5 py-0.2 rounded-full shrink-0 animate-pulse motion-reduce:animate-none">
                         الآن
                       </span>
                     )}

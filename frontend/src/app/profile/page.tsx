@@ -93,7 +93,7 @@ export default function ProfilePage() {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/50 pb-6">
             <div className="text-start space-y-1">
               <span className="text-xs uppercase tracking-widest text-primary font-bold">
-                حسابك في VARELLION
+                حسابك في <span translate="no">VARELLION</span>
               </span>
               <h1 className="text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight">
                 الملف الشخصي
@@ -107,16 +107,16 @@ export default function ProfilePage() {
             <div className="flex items-center gap-2.5">
               <Link
                 href="/track-order"
-                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-border/60 bg-card/60 hover:bg-card text-xs font-semibold text-foreground transition-colors shadow-sm"
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-border/60 bg-card/60 hover:bg-card text-xs font-semibold text-foreground transition-colors shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background"
               >
-                <Package className="h-4 w-4 text-primary" />
+                <Package className="h-4 w-4 text-primary" aria-hidden="true" />
                 تتبع طلباتك
               </Link>
               <Link
                 href="/products"
-                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 text-xs font-semibold transition-colors shadow-sm"
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 text-xs font-semibold transition-colors shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background"
               >
-                <ShoppingBag className="h-4 w-4" />
+                <ShoppingBag className="h-4 w-4" aria-hidden="true" />
                 تسوق الآن
               </Link>
             </div>
@@ -124,8 +124,12 @@ export default function ProfilePage() {
 
           {/* Error Banner */}
           {errorMessage && (
-            <div className="flex items-center gap-2.5 rounded-xl border border-destructive/20 bg-destructive/10 p-4 text-xs text-destructive">
-              <AlertCircle className="h-4 w-4 shrink-0" />
+            <div
+              role="alert"
+              aria-live="polite"
+              className="flex items-center gap-2.5 rounded-xl border border-destructive/20 bg-destructive/10 p-4 text-xs text-destructive"
+            >
+              <AlertCircle className="h-4 w-4 shrink-0" aria-hidden="true" />
               <span>{errorMessage}</span>
             </div>
           )}
@@ -173,7 +177,7 @@ export default function ProfilePage() {
 
           {/* Privacy & Security Note */}
           <div className="flex items-center gap-3 rounded-2xl border border-border/40 bg-muted/20 p-4 text-muted-foreground text-xs text-start">
-            <ShieldCheck className="h-5 w-5 text-primary shrink-0" />
+            <ShieldCheck className="h-5 w-5 text-primary shrink-0" aria-hidden="true" />
             <p>
               بياناتك مشفرة ومحمية بأعلى معايير الأمان المصرفي. نستخدم بيانات التوصيل فقط لإصدار بوليصة الشحن وتوصيل طلباتك بأمان.
             </p>

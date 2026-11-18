@@ -2,6 +2,7 @@ package com.varellion.store.security;
 
 import com.varellion.store.customer.service.CustomerService;
 import com.varellion.store.security.dto.AuthResponse;
+import com.varellion.store.security.dto.AuthResult;
 import com.varellion.store.security.dto.LoginRequest;
 import com.varellion.store.security.dto.RegisterRequest;
 import com.varellion.store.security.entity.User;
@@ -95,11 +96,11 @@ class AuthServiceTest {
         when(jwtService.generateRefreshToken(userDetails)).thenReturn("mock-refresh-token");
 
         LoginRequest request = new LoginRequest("test@varellion.com", "correctPassword");
-        AuthResponse response = authService.login(request);
+        AuthResult result = authService.login(request);
 
-        assertThat(response.getAccessToken()).isEqualTo("mock-access-token");
-        assertThat(response.getRefreshToken()).isEqualTo("mock-refresh-token");
-        assertThat(response.getEmail()).isEqualTo("test@varellion.com");
+        assertThat(result.response().getAccessToken()).isEqualTo("mock-access-token");
+        assertThat(result.refreshToken()).isEqualTo("mock-refresh-token");
+        assertThat(result.response().getEmail()).isEqualTo("test@varellion.com");
         assertThat(testUser.getFailedAttempts()).isEqualTo(0);
         verify(userRepository).save(testUser);
         verify(customerService).getOrCreateCustomerForUser(testUser.getUsername());
@@ -187,10 +188,11 @@ class AuthServiceTest {
         when(jwtService.generateToken(userDetails)).thenReturn("mock-access");
         when(jwtService.generateRefreshToken(userDetails)).thenReturn("mock-refresh");
 
-        AuthResponse response = authService.register(request);
+        AuthResult result = authService.register(request);
 
-        assertThat(response.getAccessToken()).isEqualTo("mock-access");
-        assertThat(response.getEmail()).isEqualTo("new@varellion.com");
+        assertThat(result.response().getAccessToken()).isEqualTo("mock-access");
+        assertThat(result.refreshToken()).isEqualTo("mock-refresh");
+        assertThat(result.response().getEmail()).isEqualTo("new@varellion.com");
         verify(customerService).getOrCreateCustomerForUser("newuser");
     }
 
@@ -208,12 +210,12 @@ class AuthServiceTest {
 
         com.varellion.store.security.dto.GoogleLoginRequest request =
                 new com.varellion.store.security.dto.GoogleLoginRequest("valid-token");
-        AuthResponse response = authService.googleLogin(request);
+        AuthResult result = authService.googleLogin(request);
 
-        assertThat(response.getAccessToken()).isEqualTo("google-access-token");
-        assertThat(response.getRefreshToken()).isEqualTo("google-refresh-token");
-        assertThat(response.getEmail()).isEqualTo("test@varellion.com");
-        assertThat(response.getMessage()).isEqualTo("Google login successful");
+        assertThat(result.response().getAccessToken()).isEqualTo("google-access-token");
+        assertThat(result.refreshToken()).isEqualTo("google-refresh-token");
+        assertThat(result.response().getEmail()).isEqualTo("test@varellion.com");
+        assertThat(result.response().getMessage()).isEqualTo("Google login successful");
         verify(userRepository, never()).save(any(User.class));
         verify(customerService).getOrCreateCustomerForUser(testUser.getUsername(), "Test User");
     }
@@ -240,10 +242,11 @@ class AuthServiceTest {
 
         com.varellion.store.security.dto.GoogleLoginRequest request =
                 new com.varellion.store.security.dto.GoogleLoginRequest("valid-new-token");
-        AuthResponse response = authService.googleLogin(request);
+        AuthResult result = authService.googleLogin(request);
 
-        assertThat(response.getAccessToken()).isEqualTo("new-access-token");
-        assertThat(response.getEmail()).isEqualTo("newgoogle@varellion.com");
+        assertThat(result.response().getAccessToken()).isEqualTo("new-access-token");
+        assertThat(result.refreshToken()).isEqualTo("new-refresh-token");
+        assertThat(result.response().getEmail()).isEqualTo("newgoogle@varellion.com");
         verify(userRepository).save(any(User.class));
         verify(customerService).getOrCreateCustomerForUser(anyString(), eq("Google Guy"));
     }
@@ -280,5 +283,102 @@ class AuthServiceTest {
         assertThatThrownBy(() -> authService.googleLogin(request))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("Google identity does not contain an email address");
+    }
+
+    @Test
+    @DisplayName("Should successfully refresh tokens when valid refresh token is provided")
+    void testRefreshTokenSuccess() {
+        when(jwtService.extractUsername("valid-refresh-token")).thenReturn("test@varellion.com");
+        when(customUserDetailsService.loadUserByUsername("test@varellion.com")).thenReturn(userDetails);
+        when(jwtService.isRefreshTokenValid("valid-refresh-token", userDetails)).thenReturn(true);
+        when(jwtService.generateToken(userDetails)).thenReturn("new-access-token");
+        when(jwtService.generateRefreshToken(userDetails)).thenReturn("new-refresh-token");
+        when(userRepository.findByUsername("test@varellion.com")).thenReturn(Optional.empty());
+        when(userRepository.findByEmail("test@varellion.com")).thenReturn(Optional.of(testUser));
+
+        AuthResult result = authService.refreshToken("valid-refresh-token");
+
+        assertThat(result.response().getAccessToken()).isEqualTo("new-access-token");
+        assertThat(result.refreshToken()).isEqualTo("new-refresh-token");
+        assertThat(result.response().getEmail()).isEqualTo("test@varellion.com");
+        assertThat(result.response().getUsername()).isEqualTo("testuser");
+        assertThat(result.response().getRole()).isEqualTo("USER");
+        assertThat(result.response().getMessage()).isEqualTo("Token refreshed successfully");
+    }
+
+    @Test
+    @DisplayName("Should throw IllegalArgumentException when refresh token is null or blank")
+    void testRefreshTokenNullOrBlank() {
+        assertThatThrownBy(() -> authService.refreshToken(null))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Refresh token is required");
+
+        assertThatThrownBy(() -> authService.refreshToken("   "))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Refresh token is required");
+    }
+
+    @Test
+    @DisplayName("Should throw BadCredentialsException when username cannot be extracted from refresh token")
+    void testRefreshTokenInvalidUsername() {
+        when(jwtService.extractUsername("malformed-token")).thenReturn(null);
+
+        assertThatThrownBy(() -> authService.refreshToken("malformed-token"))
+                .isInstanceOf(BadCredentialsException.class)
+                .hasMessageContaining("Invalid refresh token");
+    }
+
+    @Test
+    @DisplayName("Should throw BadCredentialsException when refresh token is expired or invalid")
+    void testRefreshTokenInvalidOrExpired() {
+        when(jwtService.extractUsername("expired-token")).thenReturn("test@varellion.com");
+        when(customUserDetailsService.loadUserByUsername("test@varellion.com")).thenReturn(userDetails);
+        when(jwtService.isRefreshTokenValid("expired-token", userDetails)).thenReturn(false);
+
+        assertThatThrownBy(() -> authService.refreshToken("expired-token"))
+                .isInstanceOf(BadCredentialsException.class)
+                .hasMessageContaining("Expired or invalid refresh token");
+    }
+
+    @Test
+    @DisplayName("P0 Fix: refreshToken MUST reject disabled users with BadCredentialsException")
+    void testRefreshTokenFailsWhenUserDisabled() {
+        UserDetails disabledDetails = new org.springframework.security.core.userdetails.User(
+                "test@varellion.com",
+                "$2a$10$hashedpassword",
+                false, true, true, true,
+                List.of(new SimpleGrantedAuthority("ROLE_USER"))
+        );
+
+        when(jwtService.extractUsername("valid-refresh-token")).thenReturn("test@varellion.com");
+        when(customUserDetailsService.loadUserByUsername("test@varellion.com")).thenReturn(disabledDetails);
+
+        assertThatThrownBy(() -> authService.refreshToken("valid-refresh-token"))
+                .isInstanceOf(BadCredentialsException.class)
+                .hasMessageContaining("Account is disabled");
+
+        verify(jwtService, never()).generateToken(any());
+        verify(jwtService, never()).generateRefreshToken(any());
+    }
+
+    @Test
+    @DisplayName("P0 Fix: refreshToken MUST reject locked users with LockedException")
+    void testRefreshTokenFailsWhenUserLocked() {
+        UserDetails lockedDetails = new org.springframework.security.core.userdetails.User(
+                "test@varellion.com",
+                "$2a$10$hashedpassword",
+                true, true, true, false,
+                List.of(new SimpleGrantedAuthority("ROLE_USER"))
+        );
+
+        when(jwtService.extractUsername("valid-refresh-token")).thenReturn("test@varellion.com");
+        when(customUserDetailsService.loadUserByUsername("test@varellion.com")).thenReturn(lockedDetails);
+
+        assertThatThrownBy(() -> authService.refreshToken("valid-refresh-token"))
+                .isInstanceOf(LockedException.class)
+                .hasMessageContaining("Account is locked");
+
+        verify(jwtService, never()).generateToken(any());
+        verify(jwtService, never()).generateRefreshToken(any());
     }
 }

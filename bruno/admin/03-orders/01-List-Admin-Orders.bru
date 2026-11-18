@@ -1,0 +1,45 @@
+meta {
+  name: 01. List Admin Orders (Paged & Filtered)
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/admin/orders?page=0&size=10
+  body: none
+  auth: bearer
+}
+
+params:query {
+  page: 0
+  size: 10
+  ~status: PENDING
+  ~governorate: Cairo
+  ~search: 
+}
+
+headers {
+  Content-Type: application/json
+}
+
+auth:bearer {
+  token: {{adminAccessToken}}
+}
+
+vars:pre-request {
+  adminAccessToken: eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1c2VyXzE3OTQ4MzE3MDI5ODFAdmFyZWxsaW9uLmNvbSIsInRva2VuX3R5cGUiOiJBQ0NFU1MiLCJpYXQiOjE3OTQ4Mzc4NTksImV4cCI6MTc5NDgzODc1OX0.-Qdul3jtQ_Z9_OPyNVibhL_Fbp_x3CeYSdEngJvsXY0
+}
+
+assert {
+  res.status: eq 200
+  res.body.content: isDefined
+  res.body.pageNumber: eq 0
+  res.body.pageSize: eq 10
+}
+
+docs {
+  # 01. List Admin Orders
+  
+  ### 1. الهدف:
+  استعراض جميع طلبات العملاء في النظام مع الفلترة حسب الحالة والمحافظة.
+}

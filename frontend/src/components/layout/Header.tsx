@@ -23,6 +23,7 @@ import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
 import { cn } from '@/lib/utils';
 
+
 interface HeaderProps {
   cartItemCount?: number;
   onOpenCart?: () => void;

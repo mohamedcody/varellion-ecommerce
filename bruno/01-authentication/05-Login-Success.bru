@@ -24,7 +24,7 @@ body:json {
 assert {
   res.status: eq 200
   res.body.accessToken: isDefined
-  res.body.refreshToken: isDefined
+  res.body.refreshToken: isUndefined
   res.body.email: eq {{testEmail}}
   res.body.role: eq USER
   res.body.message: eq Login successful
@@ -34,9 +34,6 @@ script:post-response {
   if (res.status === 200) {
     if (res.body.accessToken) {
       bru.setEnvVar("accessToken", res.body.accessToken);
-    }
-    if (res.body.refreshToken) {
-      bru.setEnvVar("refreshToken", res.body.refreshToken);
     }
   }
 }

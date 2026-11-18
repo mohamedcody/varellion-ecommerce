@@ -77,6 +77,7 @@ public class CartController {
         return ResponseEntity.ok(ApiResponse.success("تم تفريغ السلة بنجاح", null));
     }
 
+
     /**
      * Batch-merges guest cart items with the customer's database cart upon sign-in.
      */

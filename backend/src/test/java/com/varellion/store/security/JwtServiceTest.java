@@ -55,4 +55,44 @@ class JwtServiceTest {
         // Refresh token must NOT be valid as an access token
         assertThat(jwtService.isTokenValid(refreshToken, userDetails)).isFalse();
     }
+
+    @Test
+    @DisplayName("P0 Fix: isTokenValid MUST return false when user is disabled")
+    void testTokenInvalidWhenUserDisabled() {
+        String token = jwtService.generateToken(userDetails);
+        UserDetails disabledUser = new User("admin@varellion.com", "password", false, true, true, true,
+                List.of(new SimpleGrantedAuthority("ROLE_ADMIN")));
+
+        assertThat(jwtService.isTokenValid(token, disabledUser)).isFalse();
+    }
+
+    @Test
+    @DisplayName("P0 Fix: isTokenValid MUST return false when user account is locked")
+    void testTokenInvalidWhenUserLocked() {
+        String token = jwtService.generateToken(userDetails);
+        UserDetails lockedUser = new User("admin@varellion.com", "password", true, true, true, false,
+                List.of(new SimpleGrantedAuthority("ROLE_ADMIN")));
+
+        assertThat(jwtService.isTokenValid(token, lockedUser)).isFalse();
+    }
+
+    @Test
+    @DisplayName("P0 Fix: isRefreshTokenValid MUST return false when user is disabled")
+    void testRefreshTokenInvalidWhenUserDisabled() {
+        String refreshToken = jwtService.generateRefreshToken(userDetails);
+        UserDetails disabledUser = new User("admin@varellion.com", "password", false, true, true, true,
+                List.of(new SimpleGrantedAuthority("ROLE_ADMIN")));
+
+        assertThat(jwtService.isRefreshTokenValid(refreshToken, disabledUser)).isFalse();
+    }
+
+    @Test
+    @DisplayName("P0 Fix: isRefreshTokenValid MUST return false when user account is locked")
+    void testRefreshTokenInvalidWhenUserLocked() {
+        String refreshToken = jwtService.generateRefreshToken(userDetails);
+        UserDetails lockedUser = new User("admin@varellion.com", "password", true, true, true, false,
+                List.of(new SimpleGrantedAuthority("ROLE_ADMIN")));
+
+        assertThat(jwtService.isRefreshTokenValid(refreshToken, lockedUser)).isFalse();
+    }
 }

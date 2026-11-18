@@ -2,6 +2,7 @@ package com.varellion.store.security.service;
 
 import com.varellion.store.customer.service.CustomerService;
 import com.varellion.store.security.dto.AuthResponse;
+import com.varellion.store.security.dto.AuthResult;
 import com.varellion.store.security.dto.GoogleIdentity;
 import com.varellion.store.security.dto.GoogleLoginRequest;
 import com.varellion.store.security.dto.LoginRequest;
@@ -42,7 +43,7 @@ public class AuthService {
     private String adminEmails;
 
     @Transactional
-    public AuthResponse login(LoginRequest request) {
+    public AuthResult login(LoginRequest request) {
         String identifier = request.getIdentifier().trim();
         User user = userRepository.findByUsername(identifier)
                 .or(() -> userRepository.findByEmail(identifier))
@@ -96,18 +97,19 @@ public class AuthService {
         String accessToken = jwtService.generateToken(userDetails);
         String refreshToken = jwtService.generateRefreshToken(userDetails);
 
-        return AuthResponse.builder()
+        AuthResponse response = AuthResponse.builder()
                 .accessToken(accessToken)
-                .refreshToken(refreshToken)
                 .email(user.getEmail())
                 .username(user.getUsername())
                 .role(user.getRole())
                 .message("Login successful")
                 .build();
+
+        return new AuthResult(response, refreshToken);
     }
 
     @Transactional
-    public AuthResponse register(RegisterRequest request) {
+    public AuthResult register(RegisterRequest request) {
         String email = request.getEmail().trim().toLowerCase();
         String username = request.getUsername().trim();
 
@@ -142,18 +144,19 @@ public class AuthService {
         String accessToken = jwtService.generateToken(userDetails);
         String refreshToken = jwtService.generateRefreshToken(userDetails);
 
-        return AuthResponse.builder()
+        AuthResponse response = AuthResponse.builder()
                 .accessToken(accessToken)
-                .refreshToken(refreshToken)
                 .email(savedUser.getEmail())
                 .username(savedUser.getUsername())
                 .role(savedUser.getRole())
                 .message("Registration successful")
                 .build();
+
+        return new AuthResult(response, refreshToken);
     }
 
     @Transactional
-    public AuthResponse googleLogin(GoogleLoginRequest request) {
+    public AuthResult googleLogin(GoogleLoginRequest request) {
         GoogleIdentity identity = googleTokenVerifier.verify(request.getIdToken());
 
         if (identity.email() == null || identity.email().isBlank()) {
@@ -195,17 +198,18 @@ public class AuthService {
         String accessToken = jwtService.generateToken(details);
         String refreshToken = jwtService.generateRefreshToken(details);
 
-        return AuthResponse.builder()
+        AuthResponse response = AuthResponse.builder()
                 .accessToken(accessToken)
-                .refreshToken(refreshToken)
                 .email(user.getEmail())
                 .username(user.getUsername())
                 .role(user.getRole())
                 .message("Google login successful")
                 .build();
+
+        return new AuthResult(response, refreshToken);
     }
 
-    public AuthResponse refreshToken(String refreshToken) {
+    public AuthResult refreshToken(String refreshToken) {
         if (refreshToken == null || refreshToken.isBlank()) {
             throw new IllegalArgumentException("Refresh token is required");
         }
@@ -217,6 +221,14 @@ public class AuthService {
 
         UserDetails userDetails = customUserDetailsService.loadUserByUsername(username);
 
+        if (!userDetails.isEnabled()) {
+            throw new BadCredentialsException("Account is disabled. Please contact support.");
+        }
+
+        if (!userDetails.isAccountNonLocked()) {
+            throw new LockedException("Account is locked. Please contact support.");
+        }
+
         if (!jwtService.isRefreshTokenValid(refreshToken, userDetails)) {
             throw new BadCredentialsException("Expired or invalid refresh token");
         }
@@ -224,12 +236,23 @@ public class AuthService {
         String newAccessToken = jwtService.generateToken(userDetails);
         String newRefreshToken = jwtService.generateRefreshToken(userDetails);
 
-        return AuthResponse.builder()
+        User user = userRepository.findByUsername(username)
+                .or(() -> userRepository.findByEmail(username))
+                .orElse(null);
+
+        String email = user != null ? user.getEmail() : userDetails.getUsername();
+        String uname = user != null ? user.getUsername() : username;
+        String role = user != null ? user.getRole() : "USER";
+
+        AuthResponse authResponse = AuthResponse.builder()
                 .accessToken(newAccessToken)
-                .refreshToken(newRefreshToken)
-                .email(userDetails.getUsername())
+                .email(email)
+                .username(uname)
+                .role(role)
                 .message("Token refreshed successfully")
                 .build();
+
+        return new AuthResult(authResponse, newRefreshToken);
     }
 
     private boolean isAdminEmail(String email) {

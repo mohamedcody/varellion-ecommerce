@@ -1,11 +1,11 @@
 package com.varellion.store.security.controller;
 
 import com.varellion.store.security.dto.AuthResponse;
+import com.varellion.store.security.dto.AuthResult;
 import com.varellion.store.security.dto.GoogleLoginRequest;
 import com.varellion.store.security.dto.LoginRequest;
 import com.varellion.store.security.dto.RegisterRequest;
 import com.varellion.store.security.service.AuthService;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -26,34 +26,37 @@ public class AuthController {
     @Value("${app.security.cookie.secure:true}")
     private boolean cookieSecure;
 
+    @Value("${jwt.refresh-expiration:604800000}")
+    private long refreshExpirationMs;
+
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
-        AuthResponse response = authService.login(request);
-        ResponseCookie cookie = buildRefreshTokenCookie(response.getRefreshToken(), 7 * 24 * 60 * 60);
+        AuthResult result = authService.login(request);
+        ResponseCookie cookie = buildRefreshTokenCookie(result.refreshToken(), refreshExpirationMs / 1000);
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, cookie.toString())
-                .body(response);
+                .body(result.response());
     }
 
     @PostMapping("/register")
     public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request) {
-        AuthResponse response = authService.register(request);
-        ResponseCookie cookie = buildRefreshTokenCookie(response.getRefreshToken(), 7 * 24 * 60 * 60);
+        AuthResult result = authService.register(request);
+        ResponseCookie cookie = buildRefreshTokenCookie(result.refreshToken(), refreshExpirationMs / 1000);
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, cookie.toString())
-                .body(response);
+                .body(result.response());
     }
 
     @PostMapping("/google")
     public ResponseEntity<AuthResponse> googleLogin(@Valid @RequestBody GoogleLoginRequest request) {
-        AuthResponse response = authService.googleLogin(request);
-        ResponseCookie cookie = buildRefreshTokenCookie(response.getRefreshToken(), 7 * 24 * 60 * 60);
+        AuthResult result = authService.googleLogin(request);
+        ResponseCookie cookie = buildRefreshTokenCookie(result.refreshToken(), refreshExpirationMs / 1000);
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, cookie.toString())
-                .body(response);
+                .body(result.response());
     }
 
     @PostMapping("/refresh")
@@ -66,12 +69,12 @@ public class AuthController {
             token = body.get("refreshToken");
         }
 
-        AuthResponse response = authService.refreshToken(token);
-        ResponseCookie cookie = buildRefreshTokenCookie(response.getRefreshToken(), 7 * 24 * 60 * 60);
+        AuthResult result = authService.refreshToken(token);
+        ResponseCookie cookie = buildRefreshTokenCookie(result.refreshToken(), refreshExpirationMs / 1000);
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, cookie.toString())
-                .body(response);
+                .body(result.response());
     }
 
     @PostMapping("/logout")

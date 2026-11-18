@@ -54,7 +54,7 @@ export function PersonalInfoCard({ customer, onUpdate, isSaving }: PersonalInfoC
       <div className="flex items-center justify-between border-b border-border/40 pb-4">
         <div className="flex items-center gap-2.5">
           <div className="h-9 w-9 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
-            <User className="h-5 w-5" />
+            <User className="h-5 w-5" aria-hidden="true" />
           </div>
           <div>
             <h2 className="text-base font-bold text-foreground">البيانات الشخصية</h2>
@@ -62,8 +62,12 @@ export function PersonalInfoCard({ customer, onUpdate, isSaving }: PersonalInfoC
           </div>
         </div>
         {isSaved && (
-          <span className="flex items-center gap-1.5 text-xs text-emerald-500 font-medium animate-fade-in">
-            <CheckCircle2 className="h-4 w-4" />
+          <span
+            role="status"
+            aria-live="polite"
+            className="flex items-center gap-1.5 text-xs text-emerald-500 font-medium animate-fade-in"
+          >
+            <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
             تم الحفظ بنجاح
           </span>
         )}
@@ -73,11 +77,11 @@ export function PersonalInfoCard({ customer, onUpdate, isSaving }: PersonalInfoC
         {/* Email - Read-only */}
         {customer.email && (
           <div className="space-y-1.5 text-start">
-            <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            <span className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               البريد الإلكتروني الحساب
-            </label>
+            </span>
             <div className="flex items-center gap-2 h-10 w-full rounded-md border border-input/40 bg-muted/30 px-3 py-2 text-sm text-muted-foreground">
-              <Mail className="h-4 w-4 text-muted-foreground/70" />
+              <Mail className="h-4 w-4 text-muted-foreground/70" aria-hidden="true" />
               <span>{customer.email}</span>
             </div>
           </div>
@@ -85,6 +89,9 @@ export function PersonalInfoCard({ customer, onUpdate, isSaving }: PersonalInfoC
 
         {/* Full Name */}
         <Input
+          id="fullName"
+          name="fullName"
+          autoComplete="name"
           label="الاسم بالكامل *"
           placeholder="محمد أحمد علي"
           value={fullName}
@@ -98,6 +105,10 @@ export function PersonalInfoCard({ customer, onUpdate, isSaving }: PersonalInfoC
         {/* Egyptian Phone Number */}
         <div className="space-y-1.5 text-start">
           <Input
+            id="phoneNumber"
+            name="phoneNumber"
+            type="tel"
+            autoComplete="tel"
             label="رقم الهاتف المحمول (مصر)"
             placeholder="01012345678"
             value={phoneNumber}

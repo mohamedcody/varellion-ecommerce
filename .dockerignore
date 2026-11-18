@@ -7,6 +7,10 @@ docs
 .env
 .env.local
 .env.*.local
+*.env
+*.env.local
+client_secret*.json
+client_secret_*.json
 
 # Backend
 backend/target

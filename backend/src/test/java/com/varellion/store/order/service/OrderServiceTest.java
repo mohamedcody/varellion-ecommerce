@@ -1,5 +1,7 @@
 package com.varellion.store.order.service;
 
+import com.varellion.store.admin.order.dto.OrderStatusCountDto;
+import com.varellion.store.admin.order.dto.UpdateDeliveryAddressRequest;
 import com.varellion.store.cart.service.CartService;
 import com.varellion.store.catalog.entity.Product;
 import com.varellion.store.catalog.entity.ProductImage;
@@ -20,6 +22,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -39,9 +42,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class OrderServiceTest {
@@ -344,6 +345,92 @@ class OrderServiceTest {
     }
 
     @Test
+    @DisplayName("updateOrderStatus: Releases reserved stock when transitioning to CANCELLED")
+    void updateOrderStatus_ReleasesReservedStock_WhenTransitioningToCancelled() {
+        sampleOrder.setOrderStatus(OrderStatus.CONFIRMED);
+        Product product = sampleOrder.getItems().get(0).getProduct();
+        product.setStockQuantity(10);
+        product.setReservedQuantity(2);
+        sampleOrder.getItems().get(0).setQuantity(2);
+
+        when(orderRepository.findByOrderNumberWithDetails("VAR-20261028-0001"))
+                .thenReturn(Optional.of(sampleOrder));
+        when(productRepository.findByIdForUpdate(product.getProductId()))
+                .thenReturn(Optional.of(product));
+        when(orderRepository.save(any(Order.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        orderService.updateOrderStatus("VAR-20261028-0001", OrderStatus.CANCELLED, "Customer requested cancellation");
+
+        assertThat(product.getReservedQuantity()).isEqualTo(0);
+        verify(productRepository).save(product);
+    }
+
+    @Test
+    @DisplayName("updateOrderStatus: Releases reserved stock when transitioning to EXPIRED")
+    void updateOrderStatus_ReleasesReservedStock_WhenTransitioningToExpired() {
+        sampleOrder.setOrderStatus(OrderStatus.PENDING_CUSTOMER_CONFIRMATION);
+        Product product = sampleOrder.getItems().get(0).getProduct();
+        product.setStockQuantity(10);
+        product.setReservedQuantity(3);
+        sampleOrder.getItems().get(0).setQuantity(3);
+
+        when(orderRepository.findByOrderNumberWithDetails("VAR-20261028-0001"))
+                .thenReturn(Optional.of(sampleOrder));
+        when(productRepository.findByIdForUpdate(product.getProductId()))
+                .thenReturn(Optional.of(product));
+        when(orderRepository.save(any(Order.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        orderService.updateOrderStatus("VAR-20261028-0001", OrderStatus.EXPIRED, "Confirmation deadline passed");
+
+        assertThat(product.getReservedQuantity()).isEqualTo(0);
+        verify(productRepository).save(product);
+    }
+
+    @Test
+    @DisplayName("updateOrderStatus: Deducts physical and reserved stock when transitioning to SHIPPED")
+    void updateOrderStatus_DeductsPhysicalAndReservedStock_WhenTransitioningToShipped() {
+        sampleOrder.setOrderStatus(OrderStatus.CONFIRMED);
+        Product product = sampleOrder.getItems().get(0).getProduct();
+        product.setStockQuantity(10);
+        product.setReservedQuantity(2);
+        sampleOrder.getItems().get(0).setQuantity(2);
+
+        when(orderRepository.findByOrderNumberWithDetails("VAR-20261028-0001"))
+                .thenReturn(Optional.of(sampleOrder));
+        when(productRepository.findByIdForUpdate(product.getProductId()))
+                .thenReturn(Optional.of(product));
+        when(orderRepository.save(any(Order.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        orderService.updateOrderStatus("VAR-20261028-0001", OrderStatus.SHIPPED, "Order dispatched with courier");
+
+        assertThat(product.getStockQuantity()).isEqualTo(8);
+        assertThat(product.getReservedQuantity()).isEqualTo(0);
+        verify(productRepository).save(product);
+    }
+
+    @Test
+    @DisplayName("updateOrderStatus: Does not double deduct physical stock when transitioning from SHIPPED to DELIVERED")
+    void updateOrderStatus_DoesNotDoubleDeduct_WhenTransitioningFromShippedToDelivered() {
+        sampleOrder.setOrderStatus(OrderStatus.SHIPPED);
+        Product product = sampleOrder.getItems().get(0).getProduct();
+        product.setStockQuantity(8);
+        product.setReservedQuantity(0);
+
+        when(orderRepository.findByOrderNumberWithDetails("VAR-20261028-0001"))
+                .thenReturn(Optional.of(sampleOrder));
+        when(orderRepository.save(any(Order.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        orderService.updateOrderStatus("VAR-20261028-0001", OrderStatus.DELIVERED, "Order delivered");
+
+        assertThat(product.getStockQuantity()).isEqualTo(8);
+        verify(productRepository, never()).save(any(Product.class));
+    }
+
+    @Test
     @DisplayName("updateOrderStatus: Returns immediately without saving duplicate history when status is unchanged")
     void updateOrderStatus_Idempotent_WhenSameStatus() {
         // sampleOrder is currently in SHIPPED status
@@ -399,6 +486,142 @@ class OrderServiceTest {
                 .hasMessageContaining("لا يمكن تحويل حالة الطلب");
 
         verify(orderRepository, never()).save(any(Order.class));
+    }
+
+    @Test
+    @DisplayName("updateOrderStatus: Acquires pessimistic locks in strict ascending order of productId regardless of item order")
+    void updateOrderStatus_AcquiresPessimisticLocksInAscendingProductIdOrder() {
+        List<UUID> uuids = new ArrayList<>(List.of(UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID()));
+        uuids.sort(UUID::compareTo);
+        UUID u1 = uuids.get(0);
+        UUID u2 = uuids.get(1);
+        UUID u3 = uuids.get(2);
+
+        Product p1 = Product.builder().productId(u1).nameAr("P1").stockQuantity(10).reservedQuantity(2).build();
+        Product p2 = Product.builder().productId(u2).nameAr("P2").stockQuantity(10).reservedQuantity(2).build();
+        Product p3 = Product.builder().productId(u3).nameAr("P3").stockQuantity(10).reservedQuantity(2).build();
+
+        // Place items in reverse / scrambled order: p3, p1, p2
+        OrderItem item3 = OrderItem.builder().orderItemId(UUID.randomUUID()).product(p3).quantity(1).build();
+        OrderItem item1 = OrderItem.builder().orderItemId(UUID.randomUUID()).product(p1).quantity(1).build();
+        OrderItem item2 = OrderItem.builder().orderItemId(UUID.randomUUID()).product(p2).quantity(1).build();
+
+        sampleOrder.setItems(new ArrayList<>(List.of(item3, item1, item2)));
+        sampleOrder.setOrderStatus(OrderStatus.CONFIRMED);
+
+        when(orderRepository.findByOrderNumberWithDetails("VAR-20261028-0001"))
+                .thenReturn(Optional.of(sampleOrder));
+        when(productRepository.findByIdForUpdate(u1)).thenReturn(Optional.of(p1));
+        when(productRepository.findByIdForUpdate(u2)).thenReturn(Optional.of(p2));
+        when(productRepository.findByIdForUpdate(u3)).thenReturn(Optional.of(p3));
+        when(orderRepository.save(any(Order.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        orderService.updateOrderStatus("VAR-20261028-0001", OrderStatus.SHIPPED, "Order dispatched", 100L);
+
+        // Verify that locks were acquired in strictly ascending order: u1, u2, u3
+        InOrder inOrder = inOrder(productRepository);
+        inOrder.verify(productRepository).findByIdForUpdate(u1);
+        inOrder.verify(productRepository).findByIdForUpdate(u2);
+        inOrder.verify(productRepository).findByIdForUpdate(u3);
+
+        assertThat(p1.getStockQuantity()).isEqualTo(9);
+        assertThat(p1.getReservedQuantity()).isEqualTo(1);
+        assertThat(p2.getStockQuantity()).isEqualTo(9);
+        assertThat(p2.getReservedQuantity()).isEqualTo(1);
+        assertThat(p3.getStockQuantity()).isEqualTo(9);
+        assertThat(p3.getReservedQuantity()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("updateOrderStatus: Deduplicates locks and aggregates quantities when order items contain duplicate products")
+    void updateOrderStatus_DeduplicatesLocksAndAggregatesQuantities_WhenDuplicateProductsInOrder() {
+        UUID prodId = UUID.randomUUID();
+        Product product = Product.builder().productId(prodId).nameAr("P1").stockQuantity(20).reservedQuantity(10).build();
+
+        // Two order items referencing the same product: qty 2 and qty 3
+        OrderItem itemA = OrderItem.builder().orderItemId(UUID.randomUUID()).product(product).quantity(2).build();
+        OrderItem itemB = OrderItem.builder().orderItemId(UUID.randomUUID()).product(product).quantity(3).build();
+
+        sampleOrder.setItems(new ArrayList<>(List.of(itemA, itemB)));
+        sampleOrder.setOrderStatus(OrderStatus.CONFIRMED);
+
+        when(orderRepository.findByOrderNumberWithDetails("VAR-20261028-0001"))
+                .thenReturn(Optional.of(sampleOrder));
+        when(productRepository.findByIdForUpdate(prodId)).thenReturn(Optional.of(product));
+        when(orderRepository.save(any(Order.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        orderService.updateOrderStatus("VAR-20261028-0001", OrderStatus.SHIPPED, "Dispatched");
+
+        // Lock must be requested exactly once for prodId
+        verify(productRepository, times(1)).findByIdForUpdate(prodId);
+        verify(productRepository, times(1)).save(product);
+
+        // Total quantity 5 (2 + 3) deducted from stock (20 - 5 = 15) and reserved (10 - 5 = 5)
+        assertThat(product.getStockQuantity()).isEqualTo(15);
+        assertThat(product.getReservedQuantity()).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("updateOrderStatus: Releases reserved stock with sorted locks when transitioning to CANCELLED")
+    void updateOrderStatus_ReleasesReservedStock_WithSortedLocks_WhenCancelled() {
+        List<UUID> uuids = new ArrayList<>(List.of(UUID.randomUUID(), UUID.randomUUID()));
+        uuids.sort(UUID::compareTo);
+        UUID u1 = uuids.get(0);
+        UUID u2 = uuids.get(1);
+
+        Product p1 = Product.builder().productId(u1).nameAr("P1").stockQuantity(10).reservedQuantity(4).build();
+        Product p2 = Product.builder().productId(u2).nameAr("P2").stockQuantity(10).reservedQuantity(6).build();
+
+        // Scrambled: p2 before p1
+        OrderItem item2 = OrderItem.builder().orderItemId(UUID.randomUUID()).product(p2).quantity(2).build();
+        OrderItem item1 = OrderItem.builder().orderItemId(UUID.randomUUID()).product(p1).quantity(3).build();
+
+        sampleOrder.setItems(new ArrayList<>(List.of(item2, item1)));
+        sampleOrder.setOrderStatus(OrderStatus.CONFIRMED);
+
+        when(orderRepository.findByOrderNumberWithDetails("VAR-20261028-0001"))
+                .thenReturn(Optional.of(sampleOrder));
+        when(productRepository.findByIdForUpdate(u1)).thenReturn(Optional.of(p1));
+        when(productRepository.findByIdForUpdate(u2)).thenReturn(Optional.of(p2));
+        when(orderRepository.save(any(Order.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        orderService.updateOrderStatus("VAR-20261028-0001", OrderStatus.CANCELLED, "Customer cancellation");
+
+        InOrder inOrder = inOrder(productRepository);
+        inOrder.verify(productRepository).findByIdForUpdate(u1);
+        inOrder.verify(productRepository).findByIdForUpdate(u2);
+
+        // Physical stock untouched
+        assertThat(p1.getStockQuantity()).isEqualTo(10);
+        assertThat(p1.getReservedQuantity()).isEqualTo(1); // 4 - 3 = 1
+        assertThat(p2.getStockQuantity()).isEqualTo(10);
+        assertThat(p2.getReservedQuantity()).isEqualTo(4); // 6 - 2 = 4
+    }
+
+    @Test
+    @DisplayName("updateOrderStatus: Handles non-existent product gracefully using item product fallback")
+    void updateOrderStatus_HandlesNonExistentProductGracefully() {
+        UUID prodId = UUID.randomUUID();
+        Product product = Product.builder().productId(prodId).nameAr("Ghost Product").stockQuantity(5).reservedQuantity(2).build();
+        OrderItem item = OrderItem.builder().orderItemId(UUID.randomUUID()).product(product).quantity(2).build();
+
+        sampleOrder.setItems(new ArrayList<>(List.of(item)));
+        sampleOrder.setOrderStatus(OrderStatus.CONFIRMED);
+
+        when(orderRepository.findByOrderNumberWithDetails("VAR-20261028-0001"))
+                .thenReturn(Optional.of(sampleOrder));
+        when(productRepository.findByIdForUpdate(prodId)).thenReturn(Optional.empty());
+        when(orderRepository.save(any(Order.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        OrderResponseDto dto = orderService.updateOrderStatus("VAR-20261028-0001", OrderStatus.CANCELLED, "Cancelled ghost product order");
+
+        assertThat(dto).isNotNull();
+        assertThat(product.getReservedQuantity()).isEqualTo(0);
+        verify(productRepository).save(product);
     }
 
     @Test
@@ -638,5 +861,300 @@ class OrderServiceTest {
         // Free shipping for >= 2500 EGP
         assertThat(orderService.calculateAuthoritativeShippingFee("أسوان", BigDecimal.valueOf(2500)))
                 .isEqualByComparingTo(BigDecimal.ZERO);
+    }
+
+    @Test
+    @DisplayName("updateAdminNotes: Updates notes on order and returns updated DTO")
+    void updateAdminNotes_Success() {
+        when(orderRepository.findByOrderNumberWithDetails("VAR-20261109-0001"))
+                .thenReturn(Optional.of(sampleOrder));
+        when(orderRepository.save(any(Order.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        OrderResponseDto updated = orderService.updateAdminNotes("VAR-20261109-0001", "تم التأكيد هاتفياً مع العميل");
+
+        assertThat(sampleOrder.getAdminNotes()).isEqualTo("تم التأكيد هاتفياً مع العميل");
+    }
+
+    @Test
+    @DisplayName("updateOrderDeliveryAddress: Successfully updates address and recalculates shipping fee when governorate changes")
+    void updateOrderDeliveryAddress_Success() {
+        sampleOrder.setOrderStatus(OrderStatus.CONFIRMED);
+        sampleOrder.setShippingGovernorate("القاهرة");
+        sampleOrder.setSubtotal(new BigDecimal("1000.00"));
+        sampleOrder.setDiscountTotal(BigDecimal.ZERO);
+        sampleOrder.setShippingFee(new BigDecimal("50.00"));
+        sampleOrder.setTotalAmount(new BigDecimal("1050.00"));
+
+        UpdateDeliveryAddressRequest req = UpdateDeliveryAddressRequest.builder()
+                .shippingGovernorate("أسوان")
+                .shippingCityArea("مدينة أسوان")
+                .shippingDetailedAddress("شارع الكورنيش")
+                .customerPhone("01011112222")
+                .customerName("محمد الأسواني")
+                .build();
+
+        when(orderRepository.findByOrderNumberWithDetails("VAR-20261109-0001"))
+                .thenReturn(Optional.of(sampleOrder));
+        when(orderRepository.save(any(Order.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        OrderResponseDto updated = orderService.updateOrderDeliveryAddress("VAR-20261109-0001", req);
+
+        assertThat(updated.getShippingGovernorate()).isEqualTo("أسوان");
+        assertThat(updated.getShippingFee()).isEqualByComparingTo("85.00"); // Aswan rate
+        assertThat(updated.getTotalAmount()).isEqualByComparingTo("1085.00");
+    }
+
+    @Test
+    @DisplayName("updateOrderDeliveryAddress: Throws BusinessException when order is already SHIPPED")
+    void updateOrderDeliveryAddress_RejectsWhenShipped() {
+        sampleOrder.setOrderStatus(OrderStatus.SHIPPED);
+
+        UpdateDeliveryAddressRequest req = UpdateDeliveryAddressRequest.builder()
+                .shippingGovernorate("الإسكندرية")
+                .shippingCityArea("سموحة")
+                .shippingDetailedAddress("شارع فوزي معاذ")
+                .build();
+
+        when(orderRepository.findByOrderNumberWithDetails("VAR-20261109-0001"))
+                .thenReturn(Optional.of(sampleOrder));
+
+        assertThatThrownBy(() -> orderService.updateOrderDeliveryAddress("VAR-20261109-0001", req))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining("لا يمكن تعديل عنوان الشحن لطلب في حالة");
+    }
+
+    @Test
+    @DisplayName("getOrderStatusStatistics: Returns aggregated order counts breakdown")
+    void getOrderStatusStatistics_Success() {
+        List<Object[]> rows = List.<Object[]>of(
+                new Object[]{OrderStatus.CONFIRMED, 5L},
+                new Object[]{OrderStatus.DELIVERED, 10L}
+        );
+        when(orderRepository.countOrdersGroupByStatus()).thenReturn(rows);
+
+        OrderStatusCountDto stats = orderService.getOrderStatusStatistics();
+
+        assertThat(stats).isNotNull();
+        assertThat(stats.getAllOrders()).isEqualTo(15L);
+        assertThat(stats.getConfirmed()).isEqualTo(5L);
+        assertThat(stats.getDelivered()).isEqualTo(10L);
+    }
+
+    @Test
+    @DisplayName("SEC-INV-01: Pre-shipment cancellation from PREPARING releases reserved stock only without changing physical stock")
+    void updateOrderStatus_PreShipmentCancelFromPreparing_ReleasesReservedOnly() {
+        sampleOrder.setOrderStatus(OrderStatus.PREPARING);
+        Product product = sampleOrder.getItems().get(0).getProduct();
+        product.setStockQuantity(10);
+        product.setReservedQuantity(2);
+        sampleOrder.getItems().get(0).setQuantity(2);
+
+        when(orderRepository.findByOrderNumberWithDetails("VAR-20261028-0001"))
+                .thenReturn(Optional.of(sampleOrder));
+        when(productRepository.findByIdForUpdate(product.getProductId()))
+                .thenReturn(Optional.of(product));
+        when(orderRepository.save(any(Order.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        OrderResponseDto dto = orderService.updateOrderStatus(
+                "VAR-20261028-0001", OrderStatus.CANCELLED, "Cancelled before dispatch", 10L);
+
+        assertThat(dto.getOrderStatus()).isEqualTo(OrderStatus.CANCELLED);
+        assertThat(product.getStockQuantity()).isEqualTo(10);
+        assertThat(product.getReservedQuantity()).isEqualTo(0);
+        verify(productRepository).save(product);
+    }
+
+    @Test
+    @DisplayName("SEC-INV-01: SHIPPED -> DELIVERY_FAILED does not restore physical or reserved stock")
+    void updateOrderStatus_ShippedToDeliveryFailed_DoesNotMutateInventory() {
+        sampleOrder.setOrderStatus(OrderStatus.SHIPPED);
+        Product product = sampleOrder.getItems().get(0).getProduct();
+        product.setStockQuantity(8);
+        product.setReservedQuantity(0);
+        sampleOrder.getItems().get(0).setQuantity(2);
+
+        when(orderRepository.findByOrderNumberWithDetails("VAR-20261028-0001"))
+                .thenReturn(Optional.of(sampleOrder));
+        when(orderRepository.save(any(Order.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        OrderResponseDto dto = orderService.updateOrderStatus(
+                "VAR-20261028-0001", OrderStatus.DELIVERY_FAILED, "Customer unreachable", 10L);
+
+        assertThat(dto.getOrderStatus()).isEqualTo(OrderStatus.DELIVERY_FAILED);
+        assertThat(product.getStockQuantity()).isEqualTo(8);
+        assertThat(product.getReservedQuantity()).isEqualTo(0);
+        verify(productRepository, never()).findByIdForUpdate(any());
+        verify(productRepository, never()).save(any(Product.class));
+    }
+
+    @Test
+    @DisplayName("SEC-INV-01: SHIPPED -> RETURNED does not automatically add stock without physical warehouse receipt")
+    void updateOrderStatus_ShippedToReturned_DoesNotAutoRestoreStock() {
+        sampleOrder.setOrderStatus(OrderStatus.SHIPPED);
+        Product product = sampleOrder.getItems().get(0).getProduct();
+        product.setStockQuantity(8);
+        product.setReservedQuantity(0);
+        sampleOrder.getItems().get(0).setQuantity(2);
+
+        when(orderRepository.findByOrderNumberWithDetails("VAR-20261028-0001"))
+                .thenReturn(Optional.of(sampleOrder));
+        when(orderRepository.save(any(Order.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        OrderResponseDto dto = orderService.updateOrderStatus(
+                "VAR-20261028-0001", OrderStatus.RETURNED, "Courier marked parcel returned", 10L);
+
+        assertThat(dto.getOrderStatus()).isEqualTo(OrderStatus.RETURNED);
+        assertThat(product.getStockQuantity()).isEqualTo(8);
+        assertThat(product.getReservedQuantity()).isEqualTo(0);
+        verify(productRepository, never()).findByIdForUpdate(any());
+        verify(productRepository, never()).save(any(Product.class));
+    }
+
+    @Test
+    @DisplayName("SEC-INV-01: DELIVERY_FAILED -> RETURNED does not automatically add stock without physical warehouse receipt")
+    void updateOrderStatus_DeliveryFailedToReturned_DoesNotAutoRestoreStock() {
+        sampleOrder.setOrderStatus(OrderStatus.DELIVERY_FAILED);
+        Product product = sampleOrder.getItems().get(0).getProduct();
+        product.setStockQuantity(8);
+        product.setReservedQuantity(0);
+        sampleOrder.getItems().get(0).setQuantity(2);
+
+        when(orderRepository.findByOrderNumberWithDetails("VAR-20261028-0001"))
+                .thenReturn(Optional.of(sampleOrder));
+        when(orderRepository.save(any(Order.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        OrderResponseDto dto = orderService.updateOrderStatus(
+                "VAR-20261028-0001", OrderStatus.RETURNED, "Returned after failed delivery attempts", 10L);
+
+        assertThat(dto.getOrderStatus()).isEqualTo(OrderStatus.RETURNED);
+        assertThat(product.getStockQuantity()).isEqualTo(8);
+        assertThat(product.getReservedQuantity()).isEqualTo(0);
+        verify(productRepository, never()).findByIdForUpdate(any());
+        verify(productRepository, never()).save(any(Product.class));
+    }
+
+    @Test
+    @DisplayName("SEC-INV-01: SHIPPED -> CANCELLED does not restore physical stock or touch reserved stock")
+    void updateOrderStatus_ShippedToCancelled_DoesNotAutoRestoreStock() {
+        sampleOrder.setOrderStatus(OrderStatus.SHIPPED);
+        Product product = sampleOrder.getItems().get(0).getProduct();
+        product.setStockQuantity(8);
+        product.setReservedQuantity(1); // reservation belongs to another active order
+        sampleOrder.getItems().get(0).setQuantity(2);
+
+        when(orderRepository.findByOrderNumberWithDetails("VAR-20261028-0001"))
+                .thenReturn(Optional.of(sampleOrder));
+        when(orderRepository.save(any(Order.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        OrderResponseDto dto = orderService.updateOrderStatus(
+                "VAR-20261028-0001", OrderStatus.CANCELLED, "Cancelled while in transit", 10L);
+
+        assertThat(dto.getOrderStatus()).isEqualTo(OrderStatus.CANCELLED);
+        assertThat(product.getStockQuantity()).isEqualTo(8);
+        assertThat(product.getReservedQuantity()).isEqualTo(1);
+        verify(productRepository, never()).findByIdForUpdate(any());
+        verify(productRepository, never()).save(any(Product.class));
+    }
+
+    @Test
+    @DisplayName("SEC-INV-01: DELIVERY_FAILED -> CANCELLED does not restore physical stock or touch other reservations")
+    void updateOrderStatus_DeliveryFailedToCancelled_DoesNotAutoRestoreStock() {
+        sampleOrder.setOrderStatus(OrderStatus.DELIVERY_FAILED);
+        Product product = sampleOrder.getItems().get(0).getProduct();
+        product.setStockQuantity(8);
+        product.setReservedQuantity(1);
+        sampleOrder.getItems().get(0).setQuantity(2);
+
+        when(orderRepository.findByOrderNumberWithDetails("VAR-20261028-0001"))
+                .thenReturn(Optional.of(sampleOrder));
+        when(orderRepository.save(any(Order.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        OrderResponseDto dto = orderService.updateOrderStatus(
+                "VAR-20261028-0001", OrderStatus.CANCELLED, "Cancelled after delivery failure", 10L);
+
+        assertThat(dto.getOrderStatus()).isEqualTo(OrderStatus.CANCELLED);
+        assertThat(product.getStockQuantity()).isEqualTo(8);
+        assertThat(product.getReservedQuantity()).isEqualTo(1);
+        verify(productRepository, never()).findByIdForUpdate(any());
+        verify(productRepository, never()).save(any(Product.class));
+    }
+
+    @Test
+    @DisplayName("SEC-INV-01: DELIVERY_FAILED -> SHIPPED and DELIVERY_FAILED -> DELIVERED do not double-deduct stock")
+    void updateOrderStatus_DeliveryFailedRedeliveryAndDelivery_DoesNotDoubleDeductStock() {
+        sampleOrder.setOrderStatus(OrderStatus.DELIVERY_FAILED);
+        Product product = sampleOrder.getItems().get(0).getProduct();
+        product.setStockQuantity(8);
+        product.setReservedQuantity(1);
+        sampleOrder.getItems().get(0).setQuantity(2);
+
+        when(orderRepository.findByOrderNumberWithDetails("VAR-20261028-0001"))
+                .thenReturn(Optional.of(sampleOrder));
+        when(orderRepository.save(any(Order.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        OrderResponseDto redelivered = orderService.updateOrderStatus(
+                "VAR-20261028-0001", OrderStatus.SHIPPED, "Second delivery attempt", 10L);
+        assertThat(redelivered.getOrderStatus()).isEqualTo(OrderStatus.SHIPPED);
+        assertThat(product.getStockQuantity()).isEqualTo(8);
+        assertThat(product.getReservedQuantity()).isEqualTo(1);
+
+        sampleOrder.setOrderStatus(OrderStatus.DELIVERY_FAILED);
+        OrderResponseDto delivered = orderService.updateOrderStatus(
+                "VAR-20261028-0001", OrderStatus.DELIVERED, "Delivered on retry", 10L);
+        assertThat(delivered.getOrderStatus()).isEqualTo(OrderStatus.DELIVERED);
+        assertThat(product.getStockQuantity()).isEqualTo(8);
+        assertThat(product.getReservedQuantity()).isEqualTo(1);
+
+        verify(productRepository, never()).findByIdForUpdate(any());
+        verify(productRepository, never()).save(any(Product.class));
+    }
+
+    @Test
+    @DisplayName("SEC-INV-01: Repeated transition to RETURNED is idempotent and does not mutate inventory or history")
+    void updateOrderStatus_RepeatedReturned_IsIdempotent() {
+        sampleOrder.setOrderStatus(OrderStatus.RETURNED);
+        Product product = sampleOrder.getItems().get(0).getProduct();
+        product.setStockQuantity(8);
+        product.setReservedQuantity(0);
+        int initialHistorySize = sampleOrder.getStatusHistory().size();
+
+        when(orderRepository.findByOrderNumberWithDetails("VAR-20261028-0001"))
+                .thenReturn(Optional.of(sampleOrder));
+
+        OrderResponseDto dto = orderService.updateOrderStatus(
+                "VAR-20261028-0001", OrderStatus.RETURNED, "Duplicate return event", 10L);
+
+        assertThat(dto.getOrderStatus()).isEqualTo(OrderStatus.RETURNED);
+        assertThat(product.getStockQuantity()).isEqualTo(8);
+        assertThat(sampleOrder.getStatusHistory()).hasSize(initialHistorySize);
+        verify(productRepository, never()).save(any(Product.class));
+        verify(orderRepository, never()).save(any(Order.class));
+    }
+
+    @Test
+    @DisplayName("SEC-INV-01: Terminal states RETURNED and CANCELLED reject subsequent transitions")
+    void updateOrderStatus_TerminalReturnedAndCancelled_RejectTransitions() {
+        when(orderRepository.findByOrderNumberWithDetails("VAR-20261028-0001"))
+                .thenReturn(Optional.of(sampleOrder));
+
+        sampleOrder.setOrderStatus(OrderStatus.RETURNED);
+        assertThatThrownBy(() -> orderService.updateOrderStatus(
+                "VAR-20261028-0001", OrderStatus.SHIPPED, "Invalid retry", 10L))
+                .isInstanceOf(BusinessException.class);
+
+        sampleOrder.setOrderStatus(OrderStatus.CANCELLED);
+        assertThatThrownBy(() -> orderService.updateOrderStatus(
+                "VAR-20261028-0001", OrderStatus.CONFIRMED, "Invalid reopen", 10L))
+                .isInstanceOf(BusinessException.class);
+
+        verify(productRepository, never()).save(any(Product.class));
+        verify(orderRepository, never()).save(any(Order.class));
     }
 }

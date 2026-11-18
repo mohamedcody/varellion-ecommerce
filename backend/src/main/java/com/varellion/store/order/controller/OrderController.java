@@ -28,19 +28,6 @@ public class OrderController {
     /**
      * Authoritative order creation endpoint for authenticated customers with replay protection.
      */
-//     @PostMapping
-//     public ResponseEntity<ApiResponse<OrderResponseDto>> createOrder(
-//             @AuthenticationPrincipal UserDetails userDetails,
-//             @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey,
-//             @Valid @RequestBody CreateOrderRequest request
-//     ) {
-//         OrderResponseDto created = idempotencyService.execute(idempotencyKey,   () -> orderService.createOrder(userDetails.getUsername(), request));
-//         return ResponseEntity.status(HttpStatus.CREATED)
-//                 .body(ApiResponse.success("تم تأكيد وتسجيل طلبك بنجاح", created));
-//     }
-
-
-
      @PostMapping
      public ResponseEntity<ApiResponse<OrderResponseDto>> createOrder(
                    @AuthenticationPrincipal UserDetails userDetails,

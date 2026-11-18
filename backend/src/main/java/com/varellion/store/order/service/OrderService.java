@@ -1,6 +1,8 @@
 package com.varellion.store.order.service;
 
+import com.varellion.store.admin.order.dto.OrderStatusCountDto;
 import com.varellion.store.admin.order.dto.PagedOrdersResponse;
+import com.varellion.store.admin.order.dto.UpdateDeliveryAddressRequest;
 import com.varellion.store.cart.service.CartService;
 import com.varellion.store.catalog.entity.Product;
 import com.varellion.store.catalog.entity.ProductImage;
@@ -24,6 +26,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -35,7 +38,10 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -315,9 +321,26 @@ public class OrderService {
      */
     @Transactional(readOnly = true)
     public PagedOrdersResponse getAdminOrders(int page, int limit, OrderStatus status, String search) {
+        return getAdminOrders(page, limit, status, search, "createdAt", "DESC");
+    }
+
+    /**
+     * Retrieves paginated orders for administrative overview with optional status, search, and dynamic sorting.
+     */
+    @Transactional(readOnly = true)
+    public PagedOrdersResponse getAdminOrders(int page, int limit, OrderStatus status, String search, String sortBy, String sortDirection) {
         int sanitizedPage = Math.max(0, page);
         int sanitizedLimit = Math.max(1, Math.min(100, limit));
-        Pageable pageable = PageRequest.of(sanitizedPage, sanitizedLimit);
+
+        String sortProperty = switch (sortBy != null ? sortBy.trim() : "") {
+            case "totalAmount" -> "totalAmount";
+            case "orderStatus" -> "orderStatus";
+            default -> "createdAt";
+        };
+        Sort.Direction direction = "ASC".equalsIgnoreCase(sortDirection) ? Sort.Direction.ASC : Sort.Direction.DESC;
+        Sort sort = Sort.by(direction, sortProperty);
+
+        Pageable pageable = PageRequest.of(sanitizedPage, sanitizedLimit, sort);
 
         String cleanSearch = (search != null && !search.isBlank()) ? search.trim() : null;
         Page<Order> orderPage = orderRepository.findAdminOrders(status, cleanSearch, pageable);
@@ -469,7 +492,60 @@ public class OrderService {
             ));
         }
 
-        // 3. Apply state transition
+        // 3. Reconcile Inventory Stock & Reservations with Canonical Lock Ordering (Deadlock Prevention)
+        // Inventory Policy (SEC-INV-01):
+        // - Pre-shipment CANCELLED/EXPIRED releases reservedQuantity only.
+        // - Pre-shipment -> SHIPPED deducts both stockQuantity and reservedQuantity.
+        // - Post-shipment transitions (SHIPPED / DELIVERY_FAILED -> DELIVERY_FAILED / RETURNED / CANCELLED)
+        //   MUST NOT auto-increment stockQuantity because status change alone does not prove physical
+        //   warehouse receipt or sellable (non-damaged) condition.
+        if (order.getItems() != null && !order.getItems().isEmpty()) {
+            boolean isPreShipmentState = currentStatus == OrderStatus.PENDING_CUSTOMER_CONFIRMATION
+                    || currentStatus == OrderStatus.CONFIRMED
+                    || currentStatus == OrderStatus.PREPARING;
+            boolean isReleasingReserved = (newStatus == OrderStatus.CANCELLED || newStatus == OrderStatus.EXPIRED);
+            boolean isDeductingPhysical = (newStatus == OrderStatus.SHIPPED || newStatus == OrderStatus.DELIVERED);
+
+            if (isPreShipmentState && (isReleasingReserved || isDeductingPhysical)) {
+
+                // Aggregate quantities by productId and sort in natural ascending order (Deadlock Prevention)
+                Map<UUID, Integer> productQuantities = new TreeMap<>();
+                Map<UUID, Product> fallbackProducts = new HashMap<>();
+
+                for (OrderItem item : order.getItems()) {
+                    if (item.getProduct() != null && item.getProduct().getProductId() != null) {
+                        UUID prodId = item.getProduct().getProductId();
+                        int qty = item.getQuantity() != null ? item.getQuantity() : 0;
+                        if (qty > 0) {
+                            productQuantities.merge(prodId, qty, Integer::sum);
+                            fallbackProducts.putIfAbsent(prodId, item.getProduct());
+                        }
+                    }
+                }
+
+                for (Map.Entry<UUID, Integer> entry : productQuantities.entrySet()) {
+                    UUID prodId = entry.getKey();
+                    int totalQty = entry.getValue();
+
+                    Product product = productRepository.findByIdForUpdate(prodId)
+                            .orElse(fallbackProducts.get(prodId));
+
+                    if (product != null) {
+                        int reserved = product.getReservedQuantity() != null ? product.getReservedQuantity() : 0;
+                        product.setReservedQuantity(Math.max(0, reserved - totalQty));
+
+                        if (isDeductingPhysical) {
+                            int stock = product.getStockQuantity() != null ? product.getStockQuantity() : 0;
+                            product.setStockQuantity(Math.max(0, stock - totalQty));
+                        }
+
+                        productRepository.save(product);
+                    }
+                }
+            }
+        }
+
+        // 4. Apply state transition
         order.setOrderStatus(newStatus);
 
         OrderStatusHistory history = OrderStatusHistory.builder()
@@ -487,6 +563,91 @@ public class OrderService {
         order.getStatusHistory().add(history);
         Order savedOrder = orderRepository.save(order);
         return mapToDto(savedOrder);
+    }
+
+    /**
+     * Updates administrative operational notes on an order without affecting its lifecycle state.
+     */
+    @Transactional
+    public OrderResponseDto updateAdminNotes(String orderNumber, String notes) {
+        Order order = orderRepository.findByOrderNumberWithDetails(orderNumber.trim().toUpperCase())
+                .orElseThrow(() -> new ResourceNotFoundException("لم نتمكن من العثور على الطلب رقم " + orderNumber));
+
+        order.setAdminNotes(notes != null && !notes.isBlank() ? notes.trim() : null);
+        Order saved = orderRepository.save(order);
+        return mapToDto(saved);
+    }
+
+    /**
+     * Updates delivery address for an unfulfilled order, recalculating authoritative shipping fees if governorate changes.
+     */
+    @Transactional
+    public OrderResponseDto updateOrderDeliveryAddress(String orderNumber, UpdateDeliveryAddressRequest request) {
+        Order order = orderRepository.findByOrderNumberWithDetails(orderNumber.trim().toUpperCase())
+                .orElseThrow(() -> new ResourceNotFoundException("لم نتمكن من العثور على الطلب رقم " + orderNumber));
+
+        OrderStatus status = order.getOrderStatus();
+        if (status == OrderStatus.SHIPPED || status == OrderStatus.DELIVERED || status == OrderStatus.CANCELLED || status == OrderStatus.EXPIRED) {
+            throw new BusinessException("لا يمكن تعديل عنوان الشحن لطلب في حالة: " + getStatusDisplayAr(status));
+        }
+
+        String oldGov = order.getShippingGovernorate();
+        String newGov = request.getShippingGovernorate().trim();
+        if (!newGov.equalsIgnoreCase(oldGov)) {
+            BigDecimal newShippingFee = calculateAuthoritativeShippingFee(newGov, order.getSubtotal());
+            order.setShippingFee(newShippingFee);
+            order.setTotalAmount(order.getSubtotal().add(newShippingFee).subtract(order.getDiscountTotal()));
+        }
+
+        order.setShippingGovernorate(newGov);
+        order.setShippingCityArea(request.getShippingCityArea().trim());
+        order.setShippingDetailedAddress(request.getShippingDetailedAddress().trim());
+
+        if (request.getCustomerPhone() != null && !request.getCustomerPhone().isBlank()) {
+            order.setCustomerPhone(normalizeEgyptianPhone(request.getCustomerPhone()));
+        }
+        if (request.getCustomerName() != null && !request.getCustomerName().isBlank()) {
+            order.setCustomerName(request.getCustomerName().trim());
+        }
+
+        Order saved = orderRepository.save(order);
+        log.info("[OrderService] Updated delivery address for order {}", orderNumber);
+        return mapToDto(saved);
+    }
+
+    /**
+     * Retrieves aggregated count breakdown across order lifecycle statuses for administrative badges.
+     */
+    @Transactional(readOnly = true)
+    public OrderStatusCountDto getOrderStatusStatistics() {
+        Map<String, Long> breakdown = new java.util.HashMap<>();
+        for (OrderStatus st : OrderStatus.values()) {
+            breakdown.put(st.name(), 0L);
+        }
+
+        List<Object[]> rows = orderRepository.countOrdersGroupByStatus();
+        long total = 0;
+        if (rows != null) {
+            for (Object[] row : rows) {
+                if (row[0] instanceof OrderStatus st && row[1] instanceof Number cnt) {
+                    breakdown.put(st.name(), cnt.longValue());
+                    total += cnt.longValue();
+                }
+            }
+        }
+
+        return OrderStatusCountDto.builder()
+                .allOrders(total)
+                .pendingConfirmation(breakdown.getOrDefault(OrderStatus.PENDING_CUSTOMER_CONFIRMATION.name(), 0L))
+                .confirmed(breakdown.getOrDefault(OrderStatus.CONFIRMED.name(), 0L))
+                .preparing(breakdown.getOrDefault(OrderStatus.PREPARING.name(), 0L))
+                .shipped(breakdown.getOrDefault(OrderStatus.SHIPPED.name(), 0L))
+                .delivered(breakdown.getOrDefault(OrderStatus.DELIVERED.name(), 0L))
+                .deliveryFailed(breakdown.getOrDefault(OrderStatus.DELIVERY_FAILED.name(), 0L))
+                .cancelled(breakdown.getOrDefault(OrderStatus.CANCELLED.name(), 0L))
+                .expired(breakdown.getOrDefault(OrderStatus.EXPIRED.name(), 0L))
+                .statusBreakdown(breakdown)
+                .build();
     }
 
     private OrderItemDto mapItemToDto(OrderItem item) {

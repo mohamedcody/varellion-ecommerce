@@ -1,0 +1,52 @@
+meta {
+  name: 01. Admin Login - Get Admin Access Token
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/api/auth/login
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "identifier": "{{adminIdentifier}}",
+    "password": "{{adminPassword}}"
+  }
+}
+
+vars:pre-request {
+  adminIdentifier: user_1794831702981
+  adminPassword: 123456789
+}
+
+assert {
+  res.status: eq 200
+  res.body.accessToken: isDefined
+  res.body.role: eq ADMIN
+}
+
+script:post-response {
+  if (res.status === 200 && res.body.accessToken) {
+    bru.setEnvVar("adminAccessToken", res.body.accessToken);
+    console.log("Admin Access Token Saved Successfully!");
+  }
+}
+
+docs {
+  # 01. Admin Login
+  
+  ### 1. الهدف:
+  تسجيل الدخول كـ Administrator والحصول على `accessToken` بصلاحية `ROLE_ADMIN`.
+  
+  ### 2. ما يحدث تحت الغطاء:
+  - التحقق من بيانات الأدمن في جدول `users`.
+  - توليد JWT Token يحمل الـ Claim `role: ADMIN`.
+  - سكريبت برونو يحفظ التوكن تلقائياً في متغير البيئة `{{adminAccessToken}}`.
+}

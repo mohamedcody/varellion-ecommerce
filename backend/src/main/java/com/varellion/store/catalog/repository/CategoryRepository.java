@@ -25,4 +25,12 @@ public interface CategoryRepository extends JpaRepository<Category, UUID> {
 
     @Query("SELECT p.category.categoryId, COUNT(p) FROM Product p WHERE p.isActive = true GROUP BY p.category.categoryId")
     List<Object[]> countActiveProductsGroupedByCategory();
+
+    @Query("SELECT p.category.categoryId, COUNT(p) FROM Product p GROUP BY p.category.categoryId")
+    List<Object[]> countAllProductsGroupedByCategory();
+
+    @Query("SELECT COUNT(p) FROM Product p WHERE p.category.categoryId = :categoryId")
+    long countAllProductsByCategoryId(@Param("categoryId") UUID categoryId);
+
+    boolean existsBySlugIgnoreCase(String slug);
 }

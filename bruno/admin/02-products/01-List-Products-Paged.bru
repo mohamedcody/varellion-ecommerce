@@ -1,0 +1,52 @@
+meta {
+  name: 01. List Admin Products (Paged & Filtered)
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/admin/products?page=0&size=10&search=&categorySlug=&isActive=
+  body: none
+  auth: bearer
+}
+
+params:query {
+  page: 0
+  size: 10
+  ~search: ساعة
+  ~categorySlug: watches
+  ~isActive: true
+}
+
+headers {
+  Content-Type: application/json
+}
+
+auth:bearer {
+  token: {{adminAccessToken}}
+}
+
+vars:pre-request {
+  adminAccessToken: eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1c2VyXzE3OTQ4MzE3MDI5ODFAdmFyZWxsaW9uLmNvbSIsInRva2VuX3R5cGUiOiJBQ0NFU1MiLCJpYXQiOjE3OTQ4MzI5NzksImV4cCI6MTc5NDgzMzg3OX0.8tCDmP45JX9WkAkp1kns2IqbUBX9z4E66y57AXF-xD8
+}
+
+assert {
+  res.status: eq 200
+  res.body.content: isDefined
+  res.body.pageNumber: eq 0
+  res.body.pageSize: eq 10
+}
+
+docs {
+  # 01. List Admin Products
+  
+  ### 1. الهدف:
+  استعراض قائمة المنتجات في لوحة التحكم مع دعم كامل للـ Pagination والـ Filters.
+  
+  ### 2. الباراميترات المتاحة:
+  - `page`: رقم الصفحة يبدأ من 0.
+  - `size`: عدد العناصر بالصفحة (الافتراضي 20).
+  - `search`: بحث نصي حر بالاسم العربي أو الإنجليزي أو كود الـ SKU.
+  - `categorySlug`: فلترة بقسم محدد (مثل `watches`).
+  - `isActive`: فلترة بحالة المنتج (`true` أو `false`).
+}

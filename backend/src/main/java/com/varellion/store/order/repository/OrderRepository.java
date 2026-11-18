@@ -11,6 +11,9 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.math.BigDecimal;
+import java.time.OffsetDateTime;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -41,12 +44,29 @@ public interface OrderRepository extends JpaRepository<Order, UUID> {
                o.customerPhone LIKE CONCAT('%', CAST(:search AS string), '%') OR
                LOWER(o.customerName) LIKE CONCAT('%', LOWER(CAST(:search AS string)), '%')
           ))
-        ORDER BY o.createdAt DESC
     """)
     Page<Order> findAdminOrders(
             @Param("status") OrderStatus status,
             @Param("search") String search,
             Pageable pageable
     );
+
+    @Query("SELECT COALESCE(SUM(o.totalAmount), 0) FROM Order o WHERE o.orderStatus NOT IN (com.varellion.store.order.entity.OrderStatus.CANCELLED, com.varellion.store.order.entity.OrderStatus.EXPIRED)")
+    BigDecimal calculateTotalRevenue();
+
+    @Query("SELECT o.orderStatus, COUNT(o) FROM Order o GROUP BY o.orderStatus")
+    List<Object[]> countOrdersGroupByStatus();
+
+    @Query("SELECT o FROM Order o WHERE o.createdAt >= :startDate AND o.orderStatus NOT IN (com.varellion.store.order.entity.OrderStatus.CANCELLED, com.varellion.store.order.entity.OrderStatus.EXPIRED) ORDER BY o.createdAt ASC")
+    List<Order> findOrdersForAnalytics(@Param("startDate") OffsetDateTime startDate);
+
+    @Query("SELECT COUNT(o) FROM Order o WHERE o.customer.userId = :customerId AND o.orderStatus NOT IN (com.varellion.store.order.entity.OrderStatus.CANCELLED, com.varellion.store.order.entity.OrderStatus.EXPIRED)")
+    long countOrdersByCustomer(@Param("customerId") UUID customerId);
+
+    @Query("SELECT COALESCE(SUM(o.totalAmount), 0) FROM Order o WHERE o.customer.userId = :customerId AND o.orderStatus NOT IN (com.varellion.store.order.entity.OrderStatus.CANCELLED, com.varellion.store.order.entity.OrderStatus.EXPIRED)")
+    BigDecimal calculateTotalSpentByCustomer(@Param("customerId") UUID customerId);
+
+    @Query("SELECT o.customer.userId, COUNT(o), COALESCE(SUM(o.totalAmount), 0) FROM Order o WHERE o.orderStatus NOT IN (com.varellion.store.order.entity.OrderStatus.CANCELLED, com.varellion.store.order.entity.OrderStatus.EXPIRED) GROUP BY o.customer.userId")
+    List<Object[]> aggregateCustomerOrderStats();
 }
               

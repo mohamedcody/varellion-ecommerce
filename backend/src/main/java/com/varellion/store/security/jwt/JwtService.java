@@ -79,6 +79,9 @@ public class JwtService {
     }
 
     public boolean isTokenValid(String token, UserDetails userDetails) {
+        if (userDetails == null || !userDetails.isEnabled() || !userDetails.isAccountNonLocked()) {
+            return false;
+        }
         final String username = extractUsername(token);
         return isTokenType(token, ACCESS_TOKEN_TYPE)
                 && (username.equals(userDetails.getUsername()))
@@ -86,6 +89,9 @@ public class JwtService {
     }
 
     public boolean isRefreshTokenValid(String token, UserDetails userDetails) {
+        if (userDetails == null || !userDetails.isEnabled() || !userDetails.isAccountNonLocked()) {
+            return false;
+        }
         final String username = extractUsername(token);
         return isTokenType(token, REFRESH_TOKEN_TYPE)
                 && (username.equals(userDetails.getUsername()))

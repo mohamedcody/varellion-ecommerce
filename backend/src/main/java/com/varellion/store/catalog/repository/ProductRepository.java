@@ -69,4 +69,41 @@ public interface ProductRepository extends JpaRepository<Product, UUID> {
         ORDER BY p.reservedQuantity DESC, p.createdAt DESC
     """)
     List<Product> findBestSellers(Pageable pageable);
+
+    boolean existsBySkuIgnoreCase(String sku);
+
+    @Query("SELECT p FROM Product p LEFT JOIN FETCH p.category LEFT JOIN FETCH p.images WHERE p.productId = :productId")
+    Optional<Product> findByIdWithDetailsAdmin(@Param("productId") UUID productId);
+
+    @Query(value = """
+        SELECT p FROM Product p
+        JOIN FETCH p.category c
+        WHERE (CAST(:categorySlug AS string) IS NULL OR c.slug = :categorySlug)
+          AND (CAST(:isActive AS boolean) IS NULL OR p.isActive = :isActive)
+          AND (CAST(:search AS string) IS NULL OR (
+               LOWER(p.nameAr) LIKE CONCAT('%', LOWER(CAST(:search AS string)), '%') OR
+               LOWER(p.nameEn) LIKE CONCAT('%', LOWER(CAST(:search AS string)), '%') OR
+               LOWER(p.sku) LIKE CONCAT('%', LOWER(CAST(:search AS string)), '%')
+          ))
+    """,
+    countQuery = """
+        SELECT COUNT(p) FROM Product p
+        JOIN p.category c
+        WHERE (CAST(:categorySlug AS string) IS NULL OR c.slug = :categorySlug)
+          AND (CAST(:isActive AS boolean) IS NULL OR p.isActive = :isActive)
+          AND (CAST(:search AS string) IS NULL OR (
+               LOWER(p.nameAr) LIKE CONCAT('%', LOWER(CAST(:search AS string)), '%') OR
+               LOWER(p.nameEn) LIKE CONCAT('%', LOWER(CAST(:search AS string)), '%') OR
+               LOWER(p.sku) LIKE CONCAT('%', LOWER(CAST(:search AS string)), '%')
+          ))
+    """)
+    Page<Product> findAdminProducts(
+            @Param("categorySlug") String categorySlug,
+            @Param("search") String search,
+            @Param("isActive") Boolean isActive,
+            Pageable pageable
+    );
+
+    @Query("SELECT COUNT(p) FROM Product p WHERE (p.stockQuantity - p.reservedQuantity) <= :threshold AND p.isActive = true")
+    long countLowStockProducts(@Param("threshold") int threshold);
 }

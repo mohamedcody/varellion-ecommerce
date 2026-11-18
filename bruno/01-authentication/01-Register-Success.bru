@@ -14,12 +14,6 @@ headers {
   Content-Type: application/json
 }
 
-script:pre-request {
-  const ts = Date.now();
-  bru.setVar("dynUsername", "user_" + ts);
-  bru.setVar("dynEmail", "user_" + ts + "@varellion.com");
-}
-
 body:json {
   {
     "username": "{{dynUsername}}",
@@ -28,21 +22,30 @@ body:json {
   }
 }
 
+vars:pre-request {
+  dynUsername: user_admin
+  dynEmail: user_admin@gmail.com
+  testPassword: 123456789
+}
+
 assert {
   res.status: eq 200
   res.body.accessToken: isDefined
-  res.body.refreshToken: isDefined
+  res.body.refreshToken: isUndefined
   res.body.role: eq USER
   res.body.message: eq Registration successful
+}
+
+script:pre-request {
+  const ts = Date.now();
+  bru.setVar("dynUsername", "user_" + ts);
+  bru.setVar("dynEmail", "user_" + ts + "@varellion.com");
 }
 
 script:post-response {
   if (res.status === 200) {
     if (res.body.accessToken) {
       bru.setEnvVar("accessToken", res.body.accessToken);
-    }
-    if (res.body.refreshToken) {
-      bru.setEnvVar("refreshToken", res.body.refreshToken);
     }
   }
 }

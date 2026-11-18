@@ -1,0 +1,48 @@
+meta {
+  name: 03. Update Admin Order Status
+  type: http
+  seq: 3
+}
+
+put {
+  url: {{baseUrl}}/api/admin/orders/{{createdOrderNumber}}/status
+  body: json
+  auth: bearer
+}
+
+headers {
+  Content-Type: application/json
+}
+
+auth:bearer {
+  token: {{adminAccessToken}}
+}
+
+body:json {
+  {
+    "newStatus": "CONFIRMED",
+    "reason": "تم تأكيد الطلب والمراجعة مع العميل عبر لوحة التحكم برونو"
+  }
+}
+
+vars:pre-request {
+  createdOrderNumber: VAR-20261104-2578
+  adminAccessToken: eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1c2VyXzE3OTQ4MzE3MDI5ODFAdmFyZWxsaW9uLmNvbSIsInRva2VuX3R5cGUiOiJBQ0NFU1MiLCJpYXQiOjE3OTQ4Mzc4NTksImV4cCI6MTc5NDgzODc1OX0.-Qdul3jtQ_Z9_OPyNVibhL_Fbp_x3CeYSdEngJvsXY0
+}
+
+assert {
+  res.status: eq 200
+  res.body.orderStatus: eq CONFIRMED
+  res.body.statusDisplayAr: isDefined
+}
+
+docs {
+  # 03. Update Admin Order Status
+  
+  ### 1. الهدف:
+  تغيير حالة الطلب من قِبل الأدمن (مثل: CONFIRMED, PROCESSING, SHIPPED, DELIVERED, CANCELLED).
+  
+  ### 2. التغييرات في قاعدة البيانات:
+  - تحديث `public.orders.order_status`.
+  - تسجيل حركة انتقال جديدة في `public.order_status_history` مع تسجيل السبب ومعرّف الأدمن.
+}

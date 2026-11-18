@@ -30,6 +30,18 @@ public class RateLimitFilter extends OncePerRequestFilter {
 
     private final ConcurrentHashMap<String, RateLimitEntry> requestCounts = new ConcurrentHashMap<>();
     private final ObjectMapper objectMapper = new ObjectMapper();
+    private final ClientIpResolver clientIpResolver;
+
+    public RateLimitFilter(ClientIpResolver clientIpResolver) {
+        this.clientIpResolver = clientIpResolver;
+    }
+
+    /**
+     * Default constructor for testing or backwards compatibility.
+     */
+    public RateLimitFilter() {
+        this(new ClientIpResolver(""));
+    }
 
     @Override
     protected void doFilterInternal(@NonNull HttpServletRequest request,
@@ -100,13 +112,13 @@ public class RateLimitFilter extends OncePerRequestFilter {
     }
 
     /**
-     * SECURITY FIX (F4): Use only request.getRemoteAddr() to prevent IP spoofing
-     * via X-Forwarded-For header. If running behind a trusted reverse proxy (Nginx,
-     * Cloudflare), configure server.forward-headers-strategy=native in Spring Boot
-     * which will set remoteAddr correctly from the trusted proxy chain.
+     * SEC-04: Resolves client IP through centralized ClientIpResolver.
+     * When operating behind a trusted reverse proxy (Nginx, Docker bridge, loopback),
+     * securely inspects X-Forwarded-For (right-to-left traversal) and X-Real-IP
+     * while completely rejecting spoofed headers from untrusted direct connections.
      */
     private String getClientIp(HttpServletRequest request) {
-        return request.getRemoteAddr();
+        return clientIpResolver.resolveClientIp(request);
     }
 
     /**

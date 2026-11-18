@@ -1,0 +1,51 @@
+meta {
+  name: 03. Create Product - Conflict on Duplicate SKU (409)
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/api/admin/products
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminAccessToken}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "categoryId": "{{categoryWatchId}}",
+    "nameAr": "ساعة مكررة للتحقق من الكود",
+    "nameEn": "Duplicate Watch for SKU Conflict Check",
+    "descriptionAr": "محاولة إنشاء منتج بنفس كود SKU السابق للتأكد من رفض النظام للتكرار.",
+    "descriptionEn": "Attempting to create product with duplicate SKU to assert 409 rejection.",
+    "price": 3100.00,
+    "costPrice": 1400.00,
+    "stockQuantity": 10,
+    "sku": "VAR-BRU-WATCH-01",
+    "isActive": true,
+    "imageUrls": []
+  }
+}
+
+assert {
+  res.status: eq 409
+  res.body.message: contains VAR-BRU-WATCH-01
+}
+
+docs {
+  # 03. Create Product - Duplicate SKU Conflict
+  
+  ### 1. الهدف:
+  التحقق من أن النظام يرفض إنشاء منتج جديد إذا كان كود الـ SKU مستخدماً بالفعل.
+  
+  ### 2. السلوك المتوقع:
+  - استجابة HTTP 409 Conflict.
+  - رسالة خطأ واضحة تبين الكود المكرر دون إحداث أي تغييرات في قاعدة البيانات.
+}

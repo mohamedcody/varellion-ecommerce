@@ -90,7 +90,7 @@ export function DeliveryAddressCard({
       <div className="flex items-center justify-between border-b border-border/40 pb-4">
         <div className="flex items-center gap-2.5">
           <div className="h-9 w-9 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
-            <MapPin className="h-5 w-5" />
+            <MapPin className="h-5 w-5" aria-hidden="true" />
           </div>
           <div>
             <h2 className="text-base font-bold text-foreground">عنوان التوصيل الافتراضي</h2>
@@ -99,8 +99,12 @@ export function DeliveryAddressCard({
         </div>
 
         {isSaved && (
-          <span className="flex items-center gap-1.5 text-xs text-emerald-500 font-medium animate-fade-in">
-            <CheckCircle2 className="h-4 w-4" />
+          <span
+            role="status"
+            aria-live="polite"
+            className="flex items-center gap-1.5 text-xs text-emerald-500 font-medium animate-fade-in"
+          >
+            <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
             تم الحفظ بنجاح
           </span>
         )}
@@ -120,7 +124,7 @@ export function DeliveryAddressCard({
                 onClick={handleStartEdit}
                 className="h-8 px-2.5 text-xs gap-1 text-muted-foreground hover:text-foreground"
               >
-                <Edit2 className="h-3.5 w-3.5" />
+                <Edit2 className="h-3.5 w-3.5" aria-hidden="true" />
                 تعديل
               </Button>
               <Button
@@ -130,7 +134,7 @@ export function DeliveryAddressCard({
                 onClick={onDeleteRequest}
                 className="h-8 px-2.5 text-xs gap-1 text-destructive/80 hover:text-destructive hover:bg-destructive/10"
               >
-                <Trash2 className="h-3.5 w-3.5" />
+                <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
                 حذف
               </Button>
             </div>
@@ -153,6 +157,9 @@ export function DeliveryAddressCard({
           />
 
           <Input
+            id="cityArea"
+            name="cityArea"
+            autoComplete="address-level2"
             label="المنطقة أو الحي *"
             placeholder="مثال: سموحة / مدينة نصر / الدقي"
             value={cityArea}
@@ -164,10 +171,13 @@ export function DeliveryAddressCard({
           />
 
           <div className="space-y-1.5 text-start">
-            <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            <label htmlFor="detailedAddress" className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               العنوان بالتفصيل *
             </label>
             <textarea
+              id="detailedAddress"
+              name="detailedAddress"
+              autoComplete="street-address"
               rows={3}
               placeholder="اسم الشارع، رقم العمارة، رقم الشقة، علامة مميزة بجوارك"
               value={detailedAddress}
@@ -204,7 +214,7 @@ export function DeliveryAddressCard({
       ) : (
         <div className="rounded-xl border border-dashed border-border/70 p-8 text-center space-y-3">
           <div className="h-10 w-10 mx-auto rounded-full bg-muted/40 flex items-center justify-center text-muted-foreground">
-            <MapPin className="h-5 w-5" />
+            <MapPin className="h-5 w-5" aria-hidden="true" />
           </div>
           <div className="space-y-1">
             <p className="text-sm font-medium text-foreground">لم تقم بتسجيل أي عنوان شحن حتى الآن</p>
@@ -216,7 +226,7 @@ export function DeliveryAddressCard({
             variant="outline"
             className="text-xs gap-1.5 mt-2"
           >
-            <Plus className="h-4 w-4" />
+            <Plus className="h-4 w-4" aria-hidden="true" />
             إضافة عنوان شحن جديد
           </Button>
         </div>

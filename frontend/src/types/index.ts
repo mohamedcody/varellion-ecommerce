@@ -44,7 +44,6 @@ export interface GoogleLoginRequest {
 
 export interface AuthResponse {
   accessToken: string;
-  refreshToken?: string; // present in backend response; ignored by web frontend
   email: string;
   username: string;
   role: string; // "USER" | "ADMIN"

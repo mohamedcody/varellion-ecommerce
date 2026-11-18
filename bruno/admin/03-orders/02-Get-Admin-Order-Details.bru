@@ -1,0 +1,36 @@
+meta {
+  name: 02. Get Admin Order Details
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/admin/orders/{{createdOrderNumber}}
+  body: none
+  auth: bearer
+}
+
+headers {
+  Content-Type: application/json
+}
+
+auth:bearer {
+  token: {{adminAccessToken}}
+}
+
+vars:pre-request {
+  createdOrderNumber: VAR-20261028-0001
+  adminAccessToken: eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1c2VyXzE3OTQ4MzE3MDI5ODFAdmFyZWxsaW9uLmNvbSIsInRva2VuX3R5cGUiOiJBQ0NFU1MiLCJpYXQiOjE3OTQ4Mzc4NTksImV4cCI6MTc5NDgzODc1OX0.-Qdul3jtQ_Z9_OPyNVibhL_Fbp_x3CeYSdEngJvsXY0
+}
+
+assert {
+  res.status: eq 200
+  res.body.orderNumber: eq {{createdOrderNumber}}
+}
+
+docs {
+  # 02. Get Admin Order Details
+  
+  ### 1. الهدف:
+  جلب تفاصيل الطلب الكاملة برقم الأوردر (Order Number) شاملاً المنتجات، العنوان، وتاريخ تغير الحالات.
+}

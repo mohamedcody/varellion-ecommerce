@@ -1,0 +1,42 @@
+meta {
+  name: 06. Toggle Product Active Status
+  type: http
+  seq: 6
+}
+
+patch {
+  url: {{baseUrl}}/api/admin/products/{{createdAdminProductId}}/status
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminAccessToken}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "isActive": false
+  }
+}
+
+assert {
+  res.status: eq 200
+  res.body.productId: eq {{createdAdminProductId}}
+  res.body.isActive: eq false
+}
+
+docs {
+  # 06. Toggle Product Active Status
+  
+  ### 1. الهدف:
+  تغيير حالة ظهور المنتج (تفعيل أو إخفاء) بطلب PATCH خفيف بدون إرسال كل بيانات المنتج.
+  
+  ### 2. التغييرات في قاعدة البيانات:
+  - تحديث عمود `is_active = FALSE` في جدول `products`.
+  - بمجرد إخفائه، يختفي المنتج فوراً من متجر العملاء ولكن يظل ظاهراً للأدمن.
+}

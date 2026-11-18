@@ -1,48 +1,91 @@
-Implement AI-SEO, Technical SEO, and Structured Data for production deployment on the VARELLION e-commerce platform (Next.js 15 App Router, React 19, TypeScript, Tailwind CSS, Spring Boot 3, and PostgreSQL).
+Independently re-investigate the SEC-INV-01 inventory consistency defect across order status transitions in Varellion store to prove whether the reported defect is real, strictly without modifying any code. Treat SEC-INV-01 strictly as an unproven hypothesis; do not assume the previous report is correct, and independently attempt to both prove and disprove the defect.
 
 Working directory: /home/mohamed-saad/Desktop/BRAND
 Integrity mode: development
 
 ## Requirements
 
-### R1. AI Discovery & Crawlability Foundations
-- Create `frontend/src/app/robots.ts` configured for search and AI discovery crawlers (`OAI-SearchBot`, `PerplexityBot`, `Claude-SearchBot`, `Google-Extended`, `*`), disallow private paths (`/admin`, `/admin/*`, `/checkout`, `/checkout/*`, `/profile`, `/profile/*`), and point to dynamic sitemap at `${baseUrl}/sitemap.xml`.
-- Create `frontend/src/app/sitemap.ts` dynamically generating the XML sitemap for static pages (home `/`, products catalog `/products`, policies `/policies/shipping`, `/policies/returns`, `/policies/terms`, order tracking `/track-order`), product detail pages (`/products/[slug]`), and category filters.
-- Resolve the base site URL dynamically from environment variables (`NEXT_PUBLIC_SITE_URL` or `SITE_URL`) with fallback to `https://varellion.com`.
-- Create `frontend/public/llms.txt` following standard `llms.txt` format tailored for VARELLION: brand identity (luxury watches, 100% genuine leather goods, men accessories in Egypt), EGP pricing, key policies (nationwide delivery to 27 governorates in 24-72h, Cash on Delivery, full inspection before payment "معاينة وفحص قبل الاستلام"), and key markdown links.
+### R1. Independent Code Audit & Repository-Wide Inventory Mutation Search
+Inspect the complete implementation of:
+- `OrderService.updateOrderStatus()`
+- `ProductRepository.findByIdForUpdate()`
+- `Product` entity inventory fields
+- `OrderItem` entity
+- `OrderStatus.canTransitionTo()`
+- All inventory mutation methods, stock restoration methods, and delivery failure / return handling paths
+Investigate all code paths that modify product inventory across the entire repository (not just `OrderService`), verifying whether another mechanism or service already restores inventory. Follow a zero-assumption policy: do not invent class names, methods, endpoints, test results, or line numbers. Any unverified claim must be classified as UNVERIFIED.
 
-### R2. Server-Side Rendering (SSR) & Dynamic Metadata for Product Pages
-- Refactor `frontend/src/app/products/[slug]/page.tsx` from `'use client'` into a Server Component that fetches product data server-side so initial HTML contains full product content instead of loading skeletons.
-- Add `generateMetadata({ params })` generating dynamic title, description, openGraph, twitter, and canonical URL in initial HTML.
-- Extract interactive UI (gallery image switcher, quantity, add to cart, drawer toggle) into a dedicated Client Component (e.g., `ProductDetailClient.tsx`).
+### R2. Reconstruct Numerical Accounting & Discrepancy Analysis
+Clearly distinguish between the five stock concepts:
+- Physical Stock
+- Reserved Stock
+- Available Stock
+- Returned Stock
+- Sellable Stock
+Do not assume returned items can be directly added back to sellable stock without evidence of an inspection or restocking workflow. Reconstruct numerical inventory values before and after each operation for operations A through J, using a clearly labeled hypothetical example only when explaining the accounting formula, and highlighting any discrepancy between current code behavior and expected business rules:
+A. Order placement
+B. Order confirmation
+C. Order preparation
+D. Shipment
+E. Delivery
+F. Delivery failure
+G. Cancellation before shipment
+H. Cancellation after shipment
+I. Return after shipment
+J. Return after delivery
+Search repository-wide to confirm whether an inspection, quarantine, damaged-stock, or restocking workflow exists (reporting NOT FOUND only after repository-wide search).
 
-### R3. JSON-LD Structured Data
-- Add structured data JSON-LD scripts:
-  - `Product` and `Offer` schema on product pages (name, description, images, sku, price, priceCurrency: 'EGP', availability: InStock).
-  - `Organization` and `WebSite` schema on homepage / root layout.
-  - `BreadcrumbList` schema.
+### R3. Concurrency & Double Restoration Protection Audit
+Analyze double restoration potential during concurrent return or cancellation operations. Trace:
+- `@Version` optimistic locking checks
+- `PESSIMISTIC_WRITE` product locks
+- `@Transactional` transaction boundaries
+- Order status checks and validation guards
+- Actual idempotency mechanisms
+- Inventory update statements
+Explain what occurs when two concurrent requests attempt the same restoration.
 
-### R4. Compatibility and Quality Preservation
-- Maintain existing styling, Arabic RTL support, and design intact across all modified pages.
+### R4. Remediation Challenge & Active Red-Team Pass
+Evaluate the previously suggested remediation (`product.setStockQuantity(stock + totalQty);`) against:
+- Courier-rejected shipment
+- Customer return after delivery
+- Inspection requirements
+- Damaged goods
+- Potential double restoration
+- Preserving `reserved_quantity` invariants
+- Dedicated inventory movement records
+- Deterministic locking and transactional atomicity
+Execute an independent Red-Team review pass that actively attempts to disprove every finding, rejecting any finding not backed by direct code evidence.
+
+### R5. Final Deliverable & Strict Read-Only Boundaries
+Prove the true root cause rather than proposing a quick patch. Deliver a final verification report categorizing findings into:
+1. Confirmed Technical Defects
+2. Business Rule Decisions Required
+3. Architectural Improvements
+4. Unverified Assumptions
+Provide the minimal safe recommendation with no code modifications.
+
+Strict environmental constraints:
+- Strictly preserve all existing Git modifications and untracked files.
+- Absolutely no edits to source code, tests, configurations, database, or Git state.
+- Do not execute new tests or any operation that could touch production DB.
+- Distinguish explicitly between actually executed tests and past test execution results.
+
+## Verification Resources
+Rely on static code tracing, existing repository tests, and available test execution reports.
 
 ## Acceptance Criteria
 
-### Crawlability & AI Discovery
-- [ ] `frontend/src/app/robots.ts` exports a valid Next.js Robots configuration allowing designated AI bots and search crawlers while disallowing private routes, pointing to `sitemap.xml`.
-- [ ] `frontend/src/app/sitemap.ts` exports a valid Next.js Sitemap listing static pages, categories, and product detail URLs with base URL resolved from environment variable or `https://varellion.com` fallback.
-- [ ] `frontend/public/llms.txt` exists and contains VARELLION brand summary, policies, EGP pricing context, and reference links.
-
-### Product Page SSR & Metadata
-- [ ] Initial HTML response for `/products/[slug]` contains rendered product title, description, and details without relying on client-side skeleton resolution.
-- [ ] Product page `<head>` includes dynamic `<title>`, `<meta name="description">`, OpenGraph tags, Twitter tags, and canonical URL generated via `generateMetadata`.
-- [ ] Interactive UI components (gallery switcher, quantity selector, add to cart, drawer) remain functional in the client component.
-
-### Structured Data (JSON-LD)
-- [ ] Valid `Product` and `Offer` JSON-LD schema is present in product page HTML with EGP currency and required product properties.
-- [ ] Valid `Organization` and `WebSite` JSON-LD schemas are present on the homepage / root layout.
-- [ ] Valid `BreadcrumbList` JSON-LD schema is present on catalog and product pages.
-
-### Verification & Quality Gates
-- [ ] `npm --prefix frontend run build` completes with zero TypeScript or Next.js build errors.
-- [ ] `npm --prefix frontend test` passes with zero test failures or regressions.
-- [ ] RTL and Arabic text rendering and existing UI styles remain intact.
+### Investigation & Evidence Rigor
+- [ ] Every conclusion cites exact file path, actual class and method, exact code excerpt, verified line numbers, and call chain
+- [ ] Zero-assumption policy is enforced: no fabricated class names, methods, endpoints, test results, or line numbers
+- [ ] Any claim that cannot be fully verified against code is classified as UNVERIFIED
+- [ ] All 5 stock definitions (Physical, Reserved, Available, Returned, Sellable) are explicitly distinguished
+- [ ] Exact before-and-after numerical changes are traced for operations A through J, noting discrepancies between code behavior and business rules
+- [ ] Repository-wide search verifies whether restocking, quarantine, or inspection workflows exist
+- [ ] Double restoration behavior under concurrent requests, `@Version`, `PESSIMISTIC_WRITE`, `@Transactional`, and idempotency guards is fully traced
+- [ ] All 8 challenge points regarding `product.setStockQuantity(stock + totalQty);` are evaluated
+- [ ] The Red-Team review pass actively attempts to disprove every finding and rejects unbacked findings
+- [ ] Final report categorizes findings into Confirmed Technical Defects, Business Rule Decisions Required, Architectural Improvements, and Unverified Assumptions
+- [ ] Minimal safe remediation proposal is provided with zero code modifications
+- [ ] Existing Git modifications, untracked files, source code, tests, configs, and DB are completely untouched

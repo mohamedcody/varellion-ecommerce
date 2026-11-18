@@ -133,7 +133,10 @@ function TrackOrderContent() {
     <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-5xl py-8 md:py-14 text-start">
       {/* Navigation Breadcrumbs */}
       <nav aria-label="مسار التنقل" className="mb-6 flex items-center gap-2 text-xs text-muted-foreground">
-        <Link href="/" className="hover:text-foreground transition-colors">
+        <Link
+          href="/"
+          className="hover:text-foreground transition-colors rounded-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+        >
           الرئيسية
         </Link>
         <span>/</span>
@@ -216,7 +219,7 @@ function TrackOrderContent() {
                 >
                   {isSearching ? (
                     <>
-                      <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                      <Loader2 className="h-4 w-4 animate-spin motion-reduce:animate-none" aria-hidden="true" />
                       <span>بحث…</span>
                     </>
                   ) : (
@@ -235,7 +238,7 @@ function TrackOrderContent() {
               <button
                 type="button"
                 onClick={handleApplyDemoOrder}
-                className="text-primary hover:underline font-semibold flex items-center gap-1 cursor-pointer"
+                className="text-primary hover:underline font-semibold flex items-center gap-1 cursor-pointer rounded-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               >
                 <Sparkles className="h-3 w-3" aria-hidden="true" />
                 <span>تجربة أوردر افتراضي للاختبار</span>
@@ -262,7 +265,7 @@ function TrackOrderContent() {
 
       {/* Successful Tracking Result */}
       {trackedOrder && (
-        <div role="region" aria-label="بيانات تتبع الطلب" className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+        <div role="region" aria-label="بيانات تتبع الطلب" className="animate-in fade-in slide-in-from-bottom-2 duration-300 motion-reduce:animate-none">
           <OrderTrackingCard order={trackedOrder} />
         </div>
       )}

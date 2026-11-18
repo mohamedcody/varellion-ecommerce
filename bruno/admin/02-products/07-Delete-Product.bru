@@ -1,0 +1,37 @@
+meta {
+  name: 07. Delete or Archive Product
+  type: http
+  seq: 7
+}
+
+delete {
+  url: {{baseUrl}}/api/admin/products/{{createdAdminProductId}}
+  body: none
+  auth: bearer
+}
+
+headers {
+  Content-Type: application/json
+}
+
+auth:bearer {
+  token: {{adminAccessToken}}
+}
+
+vars:pre-request {
+  createdAdminProductId: a0000000-0000-0000-0000-000000000002
+  adminAccessToken: eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1c2VyXzE3OTQ4MzE3MDI5ODFAdmFyZWxsaW9uLmNvbSIsInRva2VuX3R5cGUiOiJBQ0NFU1MiLCJpYXQiOjE3OTQ4MzU5NDksImV4cCI6MTc5NDgzNjg0OX0.6g3p7F6TLsVaYQOt9ZOibmiiA5SO2JEkNMYSDz0f7-c
+}
+
+assert {
+  res.status: eq 204
+}
+
+docs {
+  # 07. Delete or Archive Product
+  
+  ### 1. الهدف:
+  حذف المنتج بأمان كامل:
+  - إذا لم يكن المنتج مستخدماً في أي طلبات سابقة (`order_items`): يُحذف نهائياً (Hard Delete) مع صوره التابعة.
+  - إذا كان المنتج مرتبطاً بطلبات عملاء سابقة: يتحول تلقائياً إلى مسودة غير نشطة (`is_active = false`) لحماية تكامل الفواتير وتاريخ الطلبات.
+}

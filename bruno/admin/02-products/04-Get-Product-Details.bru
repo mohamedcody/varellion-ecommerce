@@ -1,0 +1,42 @@
+meta {
+  name: 04. Get Product Details by ID
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/api/admin/products/{{createdAdminProductId}}
+  body: none
+  auth: bearer
+}
+
+headers {
+  Content-Type: application/json
+}
+
+auth:bearer {
+  token: {{adminAccessToken}}
+}
+
+vars:pre-request {
+  createdAdminProductId: 98788848-fcf3-492f-9dd1-e8c0f01bad1a
+  adminAccessToken: eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1c2VyXzE3OTQ4MzE3MDI5ODFAdmFyZWxsaW9uLmNvbSIsInRva2VuX3R5cGUiOiJBQ0NFU1MiLCJpYXQiOjE3OTQ4Mzc4NTksImV4cCI6MTc5NDgzODc1OX0.-Qdul3jtQ_Z9_OPyNVibhL_Fbp_x3CeYSdEngJvsXY0
+}
+
+assert {
+  res.status: eq 200
+  res.body.productId: eq {{createdAdminProductId}}
+  res.body.sku: eq VAR-BRU-WATCH-01
+  res.body.categoryNameAr: isDefined
+  res.body.imageUrls.length: gte 1
+}
+
+docs {
+  # 04. Get Product Details
+  
+  ### 1. الهدف:
+  جلب التفاصيل الكاملة للمنتج عبر الـ ID حتى وإن كان غير نشط (`isActive = false`).
+  
+  ### 2. ملاحظات:
+  - يسترجع بيانات الكاتيجوري والصور المربوطة بالكامل في استعلام واحد (`LEFT JOIN FETCH`).
+}

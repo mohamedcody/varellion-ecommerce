@@ -29,8 +29,5 @@ script:post-response {
     if (res.body.accessToken) {
       bru.setEnvVar("accessToken", res.body.accessToken);
     }
-    if (res.body.refreshToken) {
-      bru.setEnvVar("refreshToken", res.body.refreshToken);
-    }
   }
 }

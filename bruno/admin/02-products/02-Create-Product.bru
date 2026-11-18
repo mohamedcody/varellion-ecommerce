@@ -1,0 +1,71 @@
+meta {
+  name: 02. Create New Product
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/admin/products
+  body: json
+  auth: bearer
+}
+
+headers {
+  Content-Type: application/json
+}
+
+auth:bearer {
+  token: {{adminAccessToken}}
+}
+
+body:json {
+  {
+    "categoryId": "{{categoryWatchId}}",
+    "nameAr": "ديت جست ٣٦ روليكس",
+    "nameEn": "ديت جست ٣٦ rolex",
+    "descriptionAr": "ساعة فاخرة مصنوعة من الفولاذ المقاوم للصدأ وزجاج ياقوتي.",
+    "descriptionEn": "Luxury stainless steel timepiece with sapphire crystal glass.",
+    "price": 2850.00,
+    "costPrice": 1300.00,
+    "stockQuantity": 40,
+    "sku": "VAR-BRU-WATCH-01113",
+    "isActive": true,
+    "imageUrls": [
+      "https://media.rolex.com/image/upload/q_auto:eco/f_auto/t_v7-grid/c_limit,w_1920/v1/a677b2c664f6/catalogue/2026/upright-bba-with-shadow/m126300-0025",
+      "https://azzamwatches.com/cdn/shop/files/tr3j.jpg?v=1761769433&width=2000","https://timepiece360.com/cdn/shop/files/1_ff37122c-243c-44c4-a14c-f57f9efdd619_large.webp?v=1791624502"
+      
+    ]
+  }
+}
+
+vars:pre-request {
+  categoryWatchId: 11111111-1111-1111-1111-111111111111
+  adminAccessToken: eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1c2VyXzE3OTQ4MzE3MDI5ODFAdmFyZWxsaW9uLmNvbSIsInRva2VuX3R5cGUiOiJBQ0NFU1MiLCJpYXQiOjE3OTQ4Mzc4NTksImV4cCI6MTc5NDgzODc1OX0.-Qdul3jtQ_Z9_OPyNVibhL_Fbp_x3CeYSdEngJvsXY0
+}
+
+assert {
+  res.status: eq 201
+  res.body.productId: isDefined
+  res.body.sku: eq VAR-BRU-WATCH-01
+  res.body.stockQuantity: eq 40
+  res.body.isActive: eq true
+}
+
+script:post-response {
+  if (res.status === 201 && res.body.productId) {
+    bru.setEnvVar("createdAdminProductId", res.body.productId);
+    console.log("Created Admin Product ID:", res.body.productId);
+  }
+}
+
+docs {
+  # 02. Create New Product
+  
+  ### 1. الهدف:
+  إضافة منتج تجاري جديد إلى كتالوج المتجر (`public.products` و `public.product_images`).
+  
+  ### 2. التغييرات في قاعدة البيانات:
+  - يُنشئ ريكورد جديد في جدول `products` مع `cost_price` و `stock_quantity` و `sku`.
+  - يُنشئ ريكوردين في جدول `product_images` مربوطين بالمنتج.
+  - يحفظ `productId` الناتج في متغير البيئة `{{createdAdminProductId}}` للاستخدام في الخطوات التالية.
+}

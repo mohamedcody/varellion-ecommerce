@@ -42,6 +42,42 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
+    @DisplayName("Should return HTTP 400 Bad Request when MethodArgumentTypeMismatchException is thrown")
+    void shouldHandleMethodArgumentTypeMismatchException() {
+        org.springframework.web.method.annotation.MethodArgumentTypeMismatchException exception =
+                new org.springframework.web.method.annotation.MethodArgumentTypeMismatchException(
+                        "INVALID_STATUS",
+                        com.varellion.store.order.entity.OrderStatus.class,
+                        "status",
+                        null,
+                        null
+                );
+
+        ResponseEntity<ErrorResponse> response = exceptionHandler.handleTypeMismatch(exception, request);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().getStatus()).isEqualTo(400);
+        assertThat(response.getBody().getError()).isEqualTo("Bad Request");
+        assertThat(response.getBody().getMessage()).contains("status");
+    }
+
+    @Test
+    @DisplayName("Should return HTTP 400 Bad Request when DataIntegrityViolationException is thrown")
+    void shouldHandleDataIntegrityViolationException() {
+        org.springframework.dao.DataIntegrityViolationException exception =
+                new org.springframework.dao.DataIntegrityViolationException("chk_active_product_price constraint failed");
+
+        ResponseEntity<ErrorResponse> response = exceptionHandler.handleDataIntegrityViolation(exception, request);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().getStatus()).isEqualTo(400);
+        assertThat(response.getBody().getError()).isEqualTo("Bad Request");
+        assertThat(response.getBody().getMessage()).contains("لا يمكن تفعيل منتج بسعر صفر");
+    }
+
+    @Test
     @DisplayName("Should return HTTP 409 Conflict when OptimisticLockException is thrown")
     void shouldHandleOptimisticLockException() {
         OptimisticLockException exception =

@@ -4,7 +4,10 @@ import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.varellion.store.admin.order.dto.OrderStatusCountDto;
 import com.varellion.store.admin.order.dto.PagedOrdersResponse;
+import com.varellion.store.admin.order.dto.UpdateAdminNotesRequest;
+import com.varellion.store.admin.order.dto.UpdateDeliveryAddressRequest;
 import com.varellion.store.admin.order.dto.UpdateOrderStatusRequest;
 import com.varellion.store.common.exception.BusinessException;
 import com.varellion.store.common.exception.ResourceNotFoundException;
@@ -42,6 +45,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -280,7 +284,7 @@ class AdminOrderControllerTest {
                 10
         );
 
-        when(orderService.getAdminOrders(0, 10, null, null)).thenReturn(pagedResponse);
+        when(orderService.getAdminOrders(0, 10, null, null, "createdAt", "DESC")).thenReturn(pagedResponse);
 
         mockMvc.perform(get("/api/admin/orders")
                         .contentType(MediaType.APPLICATION_JSON))
@@ -289,6 +293,30 @@ class AdminOrderControllerTest {
                 .andExpect(jsonPath("$.data.orders[0].orderNumber").value("VAR-20261028-0001"))
                 .andExpect(jsonPath("$.data.totalElements").value(1))
                 .andExpect(jsonPath("$.data.totalPages").value(1));
+    }
+
+    @Test
+    @WithMockUser(username = "admin@varellion.com", roles = "ADMIN")
+    @DisplayName("getAdminOrders: Accepts sortBy and sortDirection query parameters and passes them to service")
+    void getAdminOrders_WithSorting_PassesParamsToService() throws Exception {
+        PagedOrdersResponse pagedResponse = new PagedOrdersResponse(
+                List.of(sampleResponse),
+                1L,
+                1,
+                0,
+                10
+        );
+
+        when(orderService.getAdminOrders(0, 10, null, null, "totalAmount", "ASC")).thenReturn(pagedResponse);
+
+        mockMvc.perform(get("/api/admin/orders")
+                        .param("sortBy", "totalAmount")
+                        .param("sortDirection", "ASC")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true));
+
+        verify(orderService).getAdminOrders(0, 10, null, null, "totalAmount", "ASC");
     }
 
     @Test
@@ -386,5 +414,69 @@ class AdminOrderControllerTest {
                 .andExpect(jsonPath("$.success").value(true));
 
         verify(orderService).updateOrderStatus("VAR-20261028-0001", OrderStatus.SHIPPED, "تم تسليم الشحنة لشركة الشحن", 888L);
+    }
+
+    @Test
+    @WithMockUser(username = "admin@varellion.com", roles = "ADMIN")
+    @DisplayName("GET /api/admin/orders/statistics: Returns 200 OK and status breakdown")
+    void getOrderStatusStatistics_AdminRole_Returns200() throws Exception {
+        OrderStatusCountDto stats = OrderStatusCountDto.builder()
+                .allOrders(25L)
+                .confirmed(5L)
+                .shipped(10L)
+                .delivered(10L)
+                .build();
+
+        when(orderService.getOrderStatusStatistics()).thenReturn(stats);
+
+        mockMvc.perform(get("/api/admin/orders/statistics")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.allOrders").value(25))
+                .andExpect(jsonPath("$.data.shipped").value(10));
+    }
+
+    @Test
+    @WithMockUser(username = "admin@varellion.com", roles = "ADMIN")
+    @DisplayName("PATCH /api/admin/orders/{orderNumber}/notes: Returns 200 OK and updated order")
+    void updateAdminNotes_AdminRole_Returns200() throws Exception {
+        UpdateAdminNotesRequest request = UpdateAdminNotesRequest.builder()
+                .adminNotes("ملاحظات تشغيلية جديدة")
+                .build();
+
+        sampleResponse.setCustomerNotes("ملاحظات تشغيلية جديدة");
+        when(orderService.updateAdminNotes(eq("VAR-20261028-0001"), eq("ملاحظات تشغيلية جديدة")))
+                .thenReturn(sampleResponse);
+
+        mockMvc.perform(patch("/api/admin/orders/VAR-20261028-0001/notes")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.message").value("تم تحديث ملاحظات الإدارة بنجاح"));
+    }
+
+    @Test
+    @WithMockUser(username = "admin@varellion.com", roles = "ADMIN")
+    @DisplayName("PATCH /api/admin/orders/{orderNumber}/delivery-address: Returns 200 OK and updated order")
+    void updateDeliveryAddress_AdminRole_Returns200() throws Exception {
+        UpdateDeliveryAddressRequest request = UpdateDeliveryAddressRequest.builder()
+                .shippingGovernorate("الإسكندرية")
+                .shippingCityArea("سموحة")
+                .shippingDetailedAddress("شارع فوزي معاذ، عمارة 10")
+                .customerPhone("01012345678")
+                .customerName("أحمد علي")
+                .build();
+
+        when(orderService.updateOrderDeliveryAddress(eq("VAR-20261028-0001"), any(UpdateDeliveryAddressRequest.class)))
+                .thenReturn(sampleResponse);
+
+        mockMvc.perform(patch("/api/admin/orders/VAR-20261028-0001/delivery-address")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.message").value("تم تحديث عنوان التوصيل بنجاح"));
     }
 }

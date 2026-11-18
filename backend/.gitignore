@@ -11,6 +11,8 @@
 .env.production.local
 *.env
 *.env.local
+client_secret*.json
+client_secret_*.json
 
 # Allow example file for documentation
 !.env.example

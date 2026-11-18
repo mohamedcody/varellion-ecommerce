@@ -26,6 +26,7 @@ public class JwtAccessDeniedHandler implements AccessDeniedHandler {
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
 
         Map<String, Object> errorBody = Map.of(
+                "timestamp", java.time.LocalDateTime.now().toString(),
                 "status", HttpStatus.FORBIDDEN.value(),
                 "error", "Forbidden",
                 "message", "Access denied: You do not have the required permissions to perform this action.",

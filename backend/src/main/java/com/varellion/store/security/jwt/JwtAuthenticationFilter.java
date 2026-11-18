@@ -63,8 +63,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 return;
             }
 
-            // Verify that the token is valid, not expired, and of ACCESS token type
-            if (jwtService.isTokenValid(jwt, userDetails)) {
+            // Verify that the token is valid, not expired, of ACCESS token type, and account is active
+            if (jwtService.isTokenValid(jwt, userDetails) && userDetails.isEnabled() && userDetails.isAccountNonLocked()) {
                 UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                         userDetails,
                         null,
@@ -73,6 +73,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
                 // Set authentication in security context
                 SecurityContextHolder.getContext().setAuthentication(authToken);
+            } else {
+                log.debug("JWT rejected or user account disabled/locked for email: {}", userEmail);
             }
         }
 

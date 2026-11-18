@@ -1,6 +1,9 @@
 package com.varellion.store.admin.order.controller;
 
+import com.varellion.store.admin.order.dto.OrderStatusCountDto;
 import com.varellion.store.admin.order.dto.PagedOrdersResponse;
+import com.varellion.store.admin.order.dto.UpdateAdminNotesRequest;
+import com.varellion.store.admin.order.dto.UpdateDeliveryAddressRequest;
 import com.varellion.store.admin.order.dto.UpdateOrderStatusRequest;
 import com.varellion.store.common.response.ApiResponse;
 import com.varellion.store.order.dto.OrderResponseDto;
@@ -36,17 +39,28 @@ public class AdminOrderController {
     private final UserRepository userRepository;
 
     /**
-     * Retrieves paginated orders for administrative dashboard with optional status and search filtering.
+     * Retrieves paginated orders for administrative dashboard with optional status, search, and sorting.
      */
     @GetMapping
     public ResponseEntity<ApiResponse<PagedOrdersResponse>> getAdminOrders(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int limit,
             @RequestParam(required = false) OrderStatus status,
-            @RequestParam(required = false) String search
+            @RequestParam(required = false) String search,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "DESC") String sortDirection
     ) {
-        PagedOrdersResponse response = orderService.getAdminOrders(page, limit, status, search);
+        PagedOrdersResponse response = orderService.getAdminOrders(page, limit, status, search, sortBy, sortDirection);
         return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
+    /**
+     * Retrieves aggregated status counts across all orders for administrative dashboard table badges.
+     */
+    @GetMapping("/statistics")
+    public ResponseEntity<ApiResponse<OrderStatusCountDto>> getOrderStatusStatistics() {
+        OrderStatusCountDto stats = orderService.getOrderStatusStatistics();
+        return ResponseEntity.ok(ApiResponse.success(stats));
     }
 
     /**
@@ -91,6 +105,34 @@ public class AdminOrderController {
                 actorId
         );
         return ResponseEntity.ok(ApiResponse.success("تم تحديث حالة الطلب بنجاح", updated));
+    }
+
+    /**
+     * Updates administrative notes on an order.
+     */
+    @PatchMapping("/{orderNumber}/notes")
+    public ResponseEntity<ApiResponse<OrderResponseDto>> updateAdminNotes(
+            @PathVariable
+            @Pattern(regexp = "^VAR-\\d{8}-\\d{4}$", message = "صيغة رقم الطلب غير صحيحة")
+            String orderNumber,
+            @Valid @RequestBody UpdateAdminNotesRequest request
+    ) {
+        OrderResponseDto updated = orderService.updateAdminNotes(orderNumber, request.getAdminNotes());
+        return ResponseEntity.ok(ApiResponse.success("تم تحديث ملاحظات الإدارة بنجاح", updated));
+    }
+
+    /**
+     * Updates delivery address and customer contact info on an order before dispatch.
+     */
+    @PatchMapping("/{orderNumber}/delivery-address")
+    public ResponseEntity<ApiResponse<OrderResponseDto>> updateDeliveryAddress(
+            @PathVariable
+            @Pattern(regexp = "^VAR-\\d{8}-\\d{4}$", message = "صيغة رقم الطلب غير صحيحة")
+            String orderNumber,
+            @Valid @RequestBody UpdateDeliveryAddressRequest request
+    ) {
+        OrderResponseDto updated = orderService.updateOrderDeliveryAddress(orderNumber, request);
+        return ResponseEntity.ok(ApiResponse.success("تم تحديث عنوان التوصيل بنجاح", updated));
     }
 
     private Long resolveAdminActorId(UserDetails adminUser) {
