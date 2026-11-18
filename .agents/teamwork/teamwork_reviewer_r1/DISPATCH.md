@@ -1,2 +1,0 @@
-# DISPATCH for teamwork_reviewer_r1
-Dispatched at 2026-11-03T17:50:00Z
