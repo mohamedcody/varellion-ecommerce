@@ -86,7 +86,10 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
                   key={img.imageId || idx}
                   src={img.imageUrl}
                   alt={img.altAr || product.nameAr}
-                  loading={idx === 0 ? 'lazy' : 'lazy'}
+                  width={600}
+                  height={600}
+                  decoding="async"
+                  loading="lazy"
                   onError={(e) => {
                     e.currentTarget.onerror = null;
                     e.currentTarget.src = FALLBACK_IMAGE;

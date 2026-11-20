@@ -1,17 +1,47 @@
 import React from 'react';
 import Link from 'next/link';
+import type { Metadata } from 'next';
 import { Truck, ShieldCheck, Clock, MapPin, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
+import { getBaseSiteUrl } from '@/lib/url';
+import { buildBreadcrumbSchema } from '@/lib/seo/schema';
+import { JsonLd } from '@/components/seo/JsonLd';
+import { FREE_SHIPPING_THRESHOLD } from '@/data/shippingZones';
 
-export const metadata = {
+const baseUrl = getBaseSiteUrl();
+const canonicalUrl = `${baseUrl}/policies/shipping`;
+
+export const metadata: Metadata = {
   title: 'سياسة الشحن والتوصيل لكافة المحافظات | VARELLION',
   description: 'تعرف على تفاصيل ومواعيد وأسعار الشحن لـ 27 محافظة في مصر مع متجر VARELLION الفاخر.',
+  alternates: { canonical: canonicalUrl },
+  openGraph: {
+    title: 'سياسة الشحن والتوصيل لكافة المحافظات | VARELLION',
+    description: 'تعرف على تفاصيل ومواعيد وأسعار الشحن لـ 27 محافظة في مصر مع متجر VARELLION الفاخر.',
+    url: canonicalUrl,
+    siteName: 'VARELLION',
+    locale: 'ar_EG',
+    type: 'website',
+    images: [{ url: `${baseUrl}/og-default.png`, width: 1200, height: 630, alt: 'سياسة الشحن والتوصيل — VARELLION' }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'سياسة الشحن والتوصيل لكافة المحافظات | VARELLION',
+    description: 'تعرف على تفاصيل ومواعيد وأسعار الشحن لـ 27 محافظة في مصر مع متجر VARELLION الفاخر.',
+    images: [`${baseUrl}/og-default.png`],
+  },
 };
 
 export default function ShippingPolicyPage() {
+  const breadcrumbSchema = buildBreadcrumbSchema([
+    { name: 'الرئيسية', item: baseUrl },
+    { name: 'سياسة الشحن والتوصيل', item: canonicalUrl },
+  ]);
+
   return (
-    <main className="min-h-screen bg-background py-10 md:py-16">
+    <div className="min-h-screen bg-background py-10 md:py-16">
+      <JsonLd data={breadcrumbSchema} id="shipping-policy-breadcrumbs-schema" />
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-4xl text-start">
         {/* Breadcrumb */}
         <nav aria-label="مسار التنقل" className="mb-6 flex items-center gap-2 text-xs text-muted-foreground">
@@ -40,7 +70,7 @@ export default function ShippingPolicyPage() {
         <div className="space-y-6">
           <Card className="border-border bg-card">
             <CardHeader className="pb-3 border-b border-border/40">
-              <CardTitle className="text-base font-bold flex items-center gap-2">
+              <CardTitle as="h2" className="text-base font-bold flex items-center gap-2">
                 <Clock className="h-4 w-4 text-[#C5A059]" aria-hidden="true" />
                 <span>مواعيد وفترات التوصيل</span>
               </CardTitle>
@@ -60,7 +90,7 @@ export default function ShippingPolicyPage() {
 
           <Card className="border-border bg-card">
             <CardHeader className="pb-3 border-b border-border/40">
-              <CardTitle className="text-base font-bold flex items-center gap-2">
+              <CardTitle as="h2" className="text-base font-bold flex items-center gap-2">
                 <MapPin className="h-4 w-4 text-[#C5A059]" aria-hidden="true" />
                 <span>جدول مصاريف الشحن الرسمية للمحافظات</span>
               </CardTitle>
@@ -93,14 +123,14 @@ export default function ShippingPolicyPage() {
                 </div>
               </div>
               <p className="text-xs text-muted-foreground mt-3 leading-relaxed">
-                ✨ <strong className="text-foreground">شحن مجاني:</strong> يحصل العميل تلقائياً على شحن مجاني لكافة محافظات مصر عند وصول إجمالي قيمة المشتريات إلى <span className="text-foreground font-bold tabular-nums">2,000 ج.م</span> أو أكثر.
+                ✨ <strong className="text-foreground">شحن مجاني:</strong> يحصل العميل تلقائياً على شحن مجاني لكافة محافظات مصر عند وصول إجمالي قيمة المشتريات إلى <span className="text-foreground font-bold tabular-nums">{FREE_SHIPPING_THRESHOLD.toLocaleString('en-US')} ج.م</span> أو أكثر.
               </p>
             </CardContent>
           </Card>
 
           <Card className="border-border bg-card">
             <CardHeader className="pb-3 border-b border-border/40">
-              <CardTitle className="text-base font-bold flex items-center gap-2">
+              <CardTitle as="h2" className="text-base font-bold flex items-center gap-2">
                 <ShieldCheck className="h-4 w-4 text-[#C5A059]" aria-hidden="true" />
                 <span>ميزة المعاينة قبل الاستلام والدفع (Inspection First)</span>
               </CardTitle>
@@ -123,6 +153,6 @@ export default function ShippingPolicyPage() {
           </Link>
         </div>
       </div>
-    </main>
+    </div>
   );
 }

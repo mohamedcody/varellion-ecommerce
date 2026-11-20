@@ -258,7 +258,7 @@ describe('Milestone 2 Empirical Stress-Test & Challenge Suite', () => {
       expect(metadata.openGraph?.locale).toBe('ar_EG');
 
       // Twitter card verification
-      expect(metadata.twitter?.card).toBe('summary_large_image');
+      expect((metadata.twitter as { card?: string } | undefined)?.card).toBe('summary_large_image');
       expect(metadata.twitter?.title).toBe(`${sampleProduct.nameAr} | VARELLION`);
     });
 
@@ -555,10 +555,10 @@ describe('Milestone 2 Empirical Stress-Test & Challenge Suite', () => {
       expect(offer.availability).toBe('https://schema.org/InStock');
       expect(offer.seller).toEqual({ '@type': 'Organization', name: 'VARELLION' });
 
-      // Egyptian Shipping Details
+      // Egyptian Shipping Details (aligned with Cairo/Giza 50 EGP baseline)
       expect(offer.shippingDetails.shippingDestination.addressCountry).toBe('EG');
       expect(offer.shippingDetails.shippingRate.currency).toBe('EGP');
-      expect(offer.shippingDetails.shippingRate.value).toBe(60);
+      expect(offer.shippingDetails.shippingRate.value).toBe(50);
     });
 
     it('produces valid Schema.org BreadcrumbList with 1-based index and valid URLs', () => {

@@ -1,5 +1,6 @@
 import { Product } from '@/types';
 import { getBaseSiteUrl } from '@/lib/url';
+import { FREE_SHIPPING_THRESHOLD } from '@/data/shippingZones';
 
 export interface BreadcrumbItem {
   name: string;
@@ -22,7 +23,7 @@ export function buildOrganizationSchema(baseUrl: string = getBaseSiteUrl()) {
     name: 'VARELLION',
     alternateName: 'فارليون',
     url: baseUrl,
-    logo: `${baseUrl}/favicon.ico`,
+    logo: `${baseUrl}/logo.png`,
     description:
       'متجر VARELLION الرائد في الساعات الفاخرة، المصنوعات الجلدية الطبيعية 100%، وحاملات البطاقات والإكسسوارات الرجالية الراقية في مصر مع معاينة كاملة قبل الاستلام.',
     contactPoint: {
@@ -130,7 +131,7 @@ export function buildProductSchema(product: Product, baseUrl: string = getBaseSi
         '@type': 'OfferShippingDetails',
         shippingRate: {
           '@type': 'MonetaryAmount',
-          value: 60,
+          value: product.price >= FREE_SHIPPING_THRESHOLD ? 0 : 50,
           currency: 'EGP',
         },
         shippingDestination: {
@@ -152,6 +153,14 @@ export function buildProductSchema(product: Product, baseUrl: string = getBaseSi
             unitCode: 'DAY',
           },
         },
+      },
+      hasMerchantReturnPolicy: {
+        '@type': 'MerchantReturnPolicy',
+        applicableCountry: 'EG',
+        returnPolicyCategory: 'https://schema.org/MerchantReturnFiniteReturnWindow',
+        merchantReturnDays: 14,
+        returnMethod: 'https://schema.org/ReturnByMail',
+        returnFees: 'https://schema.org/FreeReturn',
       },
     },
   };

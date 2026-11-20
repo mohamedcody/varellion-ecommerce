@@ -115,7 +115,7 @@ describe('Product Page Dynamic Metadata Specification (product-metadata.test.ts)
 
     // Assert Twitter Card
     expect(metadata.twitter).toBeDefined();
-    expect(metadata.twitter?.card).toBe('summary_large_image');
+    expect((metadata.twitter as { card?: string } | undefined)?.card).toBe('summary_large_image');
     expect(metadata.twitter?.title).toContain(testProduct.nameAr);
     expect(metadata.twitter?.description).toBe(testProduct.descriptionAr);
   });

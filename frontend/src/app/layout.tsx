@@ -11,13 +11,53 @@ import { getBaseSiteUrl } from '@/lib/url';
 import { JsonLd } from '@/components/seo/JsonLd';
 import { buildOrganizationSchema, buildWebSiteSchema } from '@/lib/seo/schema';
 
+const siteBaseUrl = getBaseSiteUrl();
+
 export const metadata: Metadata = {
-  metadataBase: new URL(getBaseSiteUrl()),
+  metadataBase: new URL(siteBaseUrl),
   title: 'VARELLION — الفخامة الرجالية اليومية | الساعات والمصنوعات الجلدية',
   description:
     'متجر VARELLION الرائد في الساعات الفاخرة، المصنوعات الجلدية الطبيعية 100%، وحاملات البطاقات والإكسسوارات الرجالية الراقية في مصر. شحن لـ 27 محافظة مع معاينة قبل الاستلام.',
   icons: {
-    icon: '/favicon.ico',
+    icon: [
+      { url: '/favicon.ico', sizes: 'any' },
+      { url: '/logo.png', type: 'image/png', sizes: '512x512' },
+    ],
+    apple: '/logo.png',
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
+  openGraph: {
+    type: 'website',
+    locale: 'ar_EG',
+    siteName: 'VARELLION',
+    title: 'VARELLION — الفخامة الرجالية اليومية | الساعات والمصنوعات الجلدية',
+    description:
+      'متجر VARELLION الرائد في الساعات الفاخرة، المصنوعات الجلدية الطبيعية 100%، وحاملات البطاقات والإكسسوارات الرجالية الراقية في مصر. شحن لـ 27 محافظة مع معاينة قبل الاستلام.',
+    url: siteBaseUrl,
+    images: [
+      {
+        url: `${siteBaseUrl}/og-default.png`,
+        width: 1200,
+        height: 630,
+        alt: 'VARELLION — الساعات الفاخرة والمصنوعات الجلدية الطبيعية في مصر',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'VARELLION — الفخامة الرجالية اليومية | الساعات والمصنوعات الجلدية',
+    description:
+      'متجر VARELLION الرائد في الساعات الفاخرة، المصنوعات الجلدية الطبيعية 100% في مصر. شحن لـ 27 محافظة مع معاينة قبل الاستلام.',
+    images: [`${siteBaseUrl}/og-default.png`],
   },
 };
 

@@ -60,6 +60,9 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
     product.nameEn?.toLowerCase().includes('watch') ||
     product.nameAr?.includes('ساعة');
 
+  const selectedImageObj = product.images?.find((img) => img.imageUrl === selectedImage);
+  const selectedImageAlt = selectedImageObj?.altAr || product.nameAr;
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-14 items-start">
       {/* Left / Gallery Column */}
@@ -69,7 +72,11 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
           {selectedImage ? (
             <img
               src={selectedImage}
-              alt={product.nameAr}
+              alt={selectedImageAlt}
+              width={800}
+              height={800}
+              fetchPriority="high"
+              decoding="async"
               className="h-full w-full object-cover object-center transition-all duration-300"
             />
           ) : (
@@ -104,7 +111,16 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
                 aria-label={`عرض صورة رقم ${idx + 1} من ${product.images.length}`}
                 aria-pressed={selectedImage === img.imageUrl}
               >
-                <img src={img.imageUrl} alt="" aria-hidden="true" className="h-full w-full object-cover" />
+                <img
+                  src={img.imageUrl}
+                  alt=""
+                  aria-hidden="true"
+                  width={80}
+                  height={80}
+                  loading="lazy"
+                  decoding="async"
+                  className="h-full w-full object-cover"
+                />
               </button>
             ))}
           </div>

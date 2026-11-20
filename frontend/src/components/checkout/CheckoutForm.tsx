@@ -400,13 +400,6 @@ export function CheckoutForm({
               <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />
               <span>جاري معالجة طلبك بأمان…</span>
             </>
-          ) : paymentMethod === 'CARD' ? (
-            <>
-              <ShieldCheck className="h-5 w-5" aria-hidden="true" />
-              <span>
-                المتابعة للدفع الآمن عبر Paymob ({total.toLocaleString('ar-EG')} ج.م)
-              </span>
-            </>
           ) : (
             <>
               <ShieldCheck className="h-5 w-5" aria-hidden="true" />
@@ -419,9 +412,7 @@ export function CheckoutForm({
         <p className="text-[11px] text-muted-foreground text-center mt-2 flex items-center justify-center gap-1">
           <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" aria-hidden="true" />
           <span>
-            {paymentMethod === 'CARD'
-              ? 'سيتم نقلك لصفحة البنك المشفرة 3D Secure لإتمام الدفع بفيزا أو ماستركارد أو ميزة أو المحافظ.'
-              : 'بالضغط على تأكيد الطلب، فإنك تؤكد رغبتك في الشراء والدفع نقداً عند استلام ومعاينة الشحنة.'}
+            بالضغط على تأكيد الطلب، فإنك تؤكد رغبتك في الشراء والدفع نقداً عند استلام ومعاينة الشحنة.
           </span>
         </p>
       </div>

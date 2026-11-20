@@ -16,6 +16,7 @@ export default function robots(): MetadataRoute.Robots {
           'OAI-SearchBot',
           'PerplexityBot',
           'Claude-SearchBot',
+          'Claude-User',
           'Google-Extended',
           '*',
         ],
@@ -23,6 +24,10 @@ export default function robots(): MetadataRoute.Robots {
         disallow: [
           '/admin',
           '/admin/*',
+          '/api',
+          '/api/*',
+          '/actuator',
+          '/actuator/*',
           '/checkout',
           '/checkout/*',
           '/profile',

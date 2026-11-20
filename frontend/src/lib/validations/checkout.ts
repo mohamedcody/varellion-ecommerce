@@ -93,9 +93,11 @@ export function validateCheckoutForm(values: CheckoutFormValues): ValidationResu
     errors.shippingDetailedAddress = 'العنوان التفصيلي قصير جداً، يرجى توضيح بيانات الشارع والعمارة';
   }
 
-  // 7. Payment Method (orders.payment_method VARCHAR(50) NOT NULL)
+  // 7. Payment Method (orders.payment_method VARCHAR(50) NOT NULL — COD-only in production)
   if (!values.paymentMethod) {
     errors.paymentMethod = 'يرجى اختيار طريقة الدفع';
+  } else if (values.paymentMethod !== 'CASH_ON_DELIVERY') {
+    errors.paymentMethod = 'طريقة الدفع المتاحة حالياً هي الدفع عند الاستلام (CASH_ON_DELIVERY) فقط';
   }
 
   // 8. Customer Notes (orders.customer_notes TEXT NULL)

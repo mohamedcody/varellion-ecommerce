@@ -27,10 +27,11 @@ function normalizeEgyptianPhone(raw: string): string {
   if (!raw) return '';
   let digits = raw.replace(/\D/g, '');
   if (digits.startsWith('0020')) {
-    digits = '0' + digits.substring(4);
-  } else if (digits.startsWith('20') && digits.length === 12) {
-    digits = '0' + digits.substring(2);
-  } else if (!digits.startsWith('0') && digits.length === 10 && ['10', '11', '12', '15'].some((p) => digits.startsWith(p))) {
+    digits = digits.substring(4);
+  } else if (digits.startsWith('20') && (digits.length === 12 || digits.length === 13)) {
+    digits = digits.substring(2);
+  }
+  if (!digits.startsWith('0') && digits.length === 10 && ['10', '11', '12', '15'].some((p) => digits.startsWith(p))) {
     digits = '0' + digits;
   }
   return digits;
@@ -275,7 +276,7 @@ function TrackOrderContent() {
 
 export default function TrackOrderPage() {
   return (
-    <main className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background">
       <Suspense
         fallback={
           <div className="min-h-[50vh] flex items-center justify-center text-xs text-muted-foreground">
@@ -285,6 +286,6 @@ export default function TrackOrderPage() {
       >
         <TrackOrderContent />
       </Suspense>
-    </main>
+    </div>
   );
 }

@@ -3,6 +3,16 @@ import { catalogService } from '@/services/api';
 import { mockCategories, mockProducts } from '@/data/mockProducts';
 import { getBaseSiteUrl } from '@/lib/url';
 
+export const dynamic = 'force-dynamic';
+
+const STATIC_POLICY_LAST_MODIFIED = new Date('2026-11-01T00:00:00Z');
+
+function parseValidDate(value?: string): Date | null {
+  if (!value) return null;
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
 /**
  * Next.js 15 Dynamic Sitemap Route
  * Generates an XML sitemap covering core static routes, category filter routes,
@@ -12,7 +22,6 @@ import { getBaseSiteUrl } from '@/lib/url';
  */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = getBaseSiteUrl();
-  const currentDate = new Date();
 
   let products = mockProducts;
   let categories = mockCategories;
@@ -33,41 +42,47 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // Graceful offline fallback during static build pre-rendering
   }
 
+  // Derive latest catalog update timestamp from real product records
+  const latestCatalogDate = products.reduce<Date>((latest, product) => {
+    const candidate = parseValidDate(product.updatedAt) || parseValidDate(product.createdAt);
+    return candidate && candidate > latest ? candidate : latest;
+  }, STATIC_POLICY_LAST_MODIFIED);
+
   // 1. Static Core Route Pages
   const staticRoutes: MetadataRoute.Sitemap = [
     {
       url: `${baseUrl}`,
-      lastModified: currentDate,
+      lastModified: latestCatalogDate,
       changeFrequency: 'daily',
       priority: 1.0,
     },
     {
       url: `${baseUrl}/products`,
-      lastModified: currentDate,
+      lastModified: latestCatalogDate,
       changeFrequency: 'daily',
       priority: 0.9,
     },
     {
       url: `${baseUrl}/policies/shipping`,
-      lastModified: currentDate,
+      lastModified: STATIC_POLICY_LAST_MODIFIED,
       changeFrequency: 'monthly',
       priority: 0.5,
     },
     {
       url: `${baseUrl}/policies/returns`,
-      lastModified: currentDate,
+      lastModified: STATIC_POLICY_LAST_MODIFIED,
       changeFrequency: 'monthly',
       priority: 0.5,
     },
     {
       url: `${baseUrl}/policies/terms`,
-      lastModified: currentDate,
+      lastModified: STATIC_POLICY_LAST_MODIFIED,
       changeFrequency: 'monthly',
       priority: 0.5,
     },
     {
       url: `${baseUrl}/track-order`,
-      lastModified: currentDate,
+      lastModified: STATIC_POLICY_LAST_MODIFIED,
       changeFrequency: 'monthly',
       priority: 0.6,
     },
@@ -78,7 +93,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     .filter((cat) => cat.isActive !== false)
     .map((cat) => ({
       url: `${baseUrl}/products?category=${encodeURIComponent(cat.slug)}`,
-      lastModified: currentDate,
+      lastModified: latestCatalogDate,
       changeFrequency: 'weekly',
       priority: 0.8,
     }));
@@ -90,10 +105,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       const imageUrls = product.images
         ? product.images.map((img) => img.imageUrl).filter(Boolean)
         : [];
+      const productLastMod =
+        parseValidDate(product.updatedAt) ||
+        parseValidDate(product.createdAt) ||
+        latestCatalogDate;
 
       return {
         url: `${baseUrl}/products/${encodeURIComponent(product.slug)}`,
-        lastModified: currentDate,
+        lastModified: productLastMod,
         changeFrequency: 'weekly',
         priority: 0.8,
         ...(imageUrls.length > 0 ? { images: imageUrls } : {}),

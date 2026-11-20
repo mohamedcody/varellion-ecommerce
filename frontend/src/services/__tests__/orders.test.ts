@@ -18,8 +18,10 @@ describe('ordersService - Track Order & DELIVERED status', () => {
       expect(normalizeEgyptianPhone('+20 10 1234 5678')).toBe('01012345678');
     });
 
-    it('normalizes 0020 prefix', () => {
+    it('normalizes 0020 and +200/00200 prefixes', () => {
       expect(normalizeEgyptianPhone('00201012345678')).toBe('01012345678');
+      expect(normalizeEgyptianPhone('002001012345678')).toBe('01012345678');
+      expect(normalizeEgyptianPhone('+2001012345678')).toBe('01012345678');
     });
 
     it('normalizes 10-digit number missing leading zero', () => {
@@ -32,12 +34,12 @@ describe('ordersService - Track Order & DELIVERED status', () => {
   });
 
   describe('trackOrder', () => {
-    it('normalizes phone number and queries backend API with canonical query params', async () => {
+    it('normalizes phone number and queries backend POST /orders/lookup with JSON body (no PII in URL)', async () => {
       const mockOrder = {
         orderId: 'ord-123',
         orderNumber: 'VAR-20261028-0001',
         orderStatus: 'DELIVERED',
-        customerPhone: '01012345678',
+        customerPhone: '010****5678',
       };
 
       const requestApiSpy = vi.spyOn(apiModule, 'requestApi').mockResolvedValue({
@@ -47,8 +49,11 @@ describe('ordersService - Track Order & DELIVERED status', () => {
       const result = await ordersService.trackOrder('VAR-20261028-0001', '+20 10 1234 5678');
 
       expect(requestApiSpy).toHaveBeenCalledWith(
-        expect.stringContaining('/orders/track?orderNumber=VAR-20261028-0001&phone=01012345678'),
-        expect.any(Object)
+        '/orders/lookup',
+        expect.objectContaining({
+          method: 'POST',
+          body: JSON.stringify({ orderNumber: 'VAR-20261028-0001', phone: '01012345678' }),
+        })
       );
       expect(result).toEqual(mockOrder);
     });

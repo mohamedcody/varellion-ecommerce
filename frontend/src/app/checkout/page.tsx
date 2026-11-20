@@ -10,7 +10,6 @@ import { CheckoutForm } from '@/components/checkout/CheckoutForm';
 import { OrderSummaryCard } from '@/components/checkout/OrderSummaryCard';
 import { calculateShippingFee } from '@/data/shippingZones';
 import { ordersService } from '@/services/orders';
-import { paymentService } from '@/services/payment';
 import { CheckoutFormValues } from '@/lib/validations/checkout';
 import { CreateOrderRequest, OrderItem } from '@/types';
 import { Button } from '@/components/ui/Button';
@@ -36,7 +35,7 @@ function CheckoutContent() {
   // Empty cart fallback
   if (items.length === 0 && !isSubmitting) {
     return (
-      <main className="min-h-[70vh] flex items-center justify-center py-16 px-4">
+      <div className="min-h-[70vh] flex items-center justify-center py-16 px-4">
         <div className="max-w-md w-full text-center space-y-6">
           <div className="mx-auto w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center text-primary">
             <ShoppingBag className="w-10 h-10" aria-hidden="true" />
@@ -56,7 +55,7 @@ function CheckoutContent() {
             </Button>
           </Link>
         </div>
-      </main>
+      </div>
     );
   }
 
@@ -103,19 +102,6 @@ function CheckoutContent() {
         orderItems,
       });
 
-      // Handle Online Payment (Paymob Hosted Checkout)
-      if (orderRequest.paymentMethod === 'CARD') {
-        const paymentSession = await paymentService.initiatePaymobPayment({
-          order: created,
-          customerEmail: user?.email,
-        });
-
-        if (paymentSession.paymentUrl) {
-          window.location.href = paymentSession.paymentUrl;
-          return;
-        }
-      }
-
       // Cash on Delivery (COD): Clear cart and navigate directly to success screen
       clearCart();
       router.push(`/checkout/success?orderNumber=${encodeURIComponent(created.orderNumber)}`);
@@ -129,7 +115,7 @@ function CheckoutContent() {
   };
 
   return (
-    <main className="min-h-screen bg-background py-8 md:py-12">
+    <div className="min-h-screen bg-background py-8 md:py-12">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
         {/* Navigation Breadcrumbs */}
         <nav aria-label="مسار التنقل" className="mb-6 flex items-center gap-2 text-xs text-muted-foreground">
@@ -245,7 +231,7 @@ function CheckoutContent() {
           </div>
         </div>
       </div>
-    </main>
+    </div>
   );
 }
 

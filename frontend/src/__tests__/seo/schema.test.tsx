@@ -15,8 +15,8 @@ describe('JSON-LD Schema Builders (frontend/src/lib/seo/schema.ts)', () => {
   const customBaseUrl = 'https://varellion.com';
 
   const sampleProduct: Product = {
-    id: 101,
     productId: 'prod-uuid-101',
+    categoryId: '1',
     sku: 'VAR-W-001',
     slug: 'imperial-gold-chronograph',
     nameAr: 'ساعة إمبريال جولد كرونوغراف',
@@ -26,25 +26,26 @@ describe('JSON-LD Schema Builders (frontend/src/lib/seo/schema.ts)', () => {
     price: 1850,
     costPrice: 900,
     stockQuantity: 12,
+    reservedQuantity: 0,
     availableStock: 12,
-    lowStockThreshold: 3,
     isActive: true,
     isFeatured: true,
     category: {
-      categoryId: 1,
+      categoryId: '1',
       nameAr: 'ساعات فاخرة',
       nameEn: 'Luxury Watches',
       slug: 'watches',
+      isActive: true,
     },
     images: [
       {
-        imageId: 1,
+        imageId: '1',
         imageUrl: 'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9',
         isMain: true,
         displayOrder: 1,
       },
       {
-        imageId: 2,
+        imageId: '2',
         imageUrl: 'https://images.unsplash.com/photo-1524805444758-089113d48a6d',
         isMain: false,
         displayOrder: 2,
@@ -64,7 +65,7 @@ describe('JSON-LD Schema Builders (frontend/src/lib/seo/schema.ts)', () => {
       expect(schema.name).toBe('VARELLION');
       expect(schema.alternateName).toBe('فارليون');
       expect(schema.url).toBe(customBaseUrl);
-      expect(schema.logo).toBe(`${customBaseUrl}/favicon.ico`);
+      expect(schema.logo).toBe(`${customBaseUrl}/logo.png`);
       expect(schema.description).toContain('VARELLION');
 
       // Contact point in Egypt

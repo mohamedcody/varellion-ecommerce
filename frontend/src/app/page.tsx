@@ -1,7 +1,9 @@
 import Link from 'next/link';
+import type { Metadata } from 'next';
 import { catalogService } from '@/services/api';
 import { Product, Category } from '@/types';
 import { cn } from '@/lib/utils';
+import { getBaseSiteUrl } from '@/lib/url';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/Card';
@@ -23,6 +25,16 @@ import {
 
 const FALLBACK_IMAGE =
   'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400"><rect width="400" height="400" fill="%231a1917"/><text x="50%" y="50%" fill="%23C5A059" font-family="sans-serif" font-size="20" text-anchor="middle" dominant-baseline="middle">VARELLION</text></svg>';
+
+const homeBaseUrl = getBaseSiteUrl();
+
+export const dynamic = 'force-dynamic';
+
+export const metadata: Metadata = {
+  alternates: {
+    canonical: homeBaseUrl,
+  },
+};
 
 function HeroVisualCard({
   product,
@@ -46,6 +58,10 @@ function HeroVisualCard({
       <img
         src={image || FALLBACK_IMAGE}
         alt={product?.nameAr || 'ساعة VARELLION الفاخرة'}
+        width={800}
+        height={1000}
+        fetchPriority="high"
+        decoding="async"
         className="h-full w-full object-cover object-center transition-transform duration-700 group-hover:scale-105"
         loading="eager"
       />
@@ -55,9 +71,9 @@ function HeroVisualCard({
         <Badge variant="luxury" className="self-start text-[10px] font-bold mb-1.5 sm:mb-2">
           {product?.isFeatured ? 'الإصدار الرائد المميز' : 'الأكثر طلباً ومبيعاً'}
         </Badge>
-        <h3 className="font-serif font-black text-base sm:text-xl text-white tracking-wide">
+        <h2 className="font-serif font-black text-base sm:text-xl text-white tracking-wide">
           {product?.nameAr || 'ساعة فارليون كرونوغراف'}
-        </h3>
+        </h2>
         <p className="text-xs text-white/80 mt-0.5 sm:mt-1 line-clamp-1">
           {product?.descriptionAr || 'دقة واحترافية لا تضاهى بتصميم يعكس هيبتك اليومية.'}
         </p>
@@ -127,15 +143,6 @@ export default async function HomePage() {
                 اختر قطعتك الاستثنائية من <strong className="text-foreground font-bold">VARELLION</strong>. دقة الماكينات الكوارتز اليابانية، الفولاذ المقاوم للصدأ 316L، وجلود العجل الطبيعية المدبوغة نباتياً، مع ميزة <span className="text-foreground font-bold">المعاينة والفحص قبل الاستلام</span> وشحن مباشر لكافة محافظات مصر.
               </p>
 
-              {/* Mobile-Only Showcase Card: Product visual renders immediately below headline before CTAs and trust pillars (UX-F02) */}
-              <div className="block lg:hidden my-2">
-                <HeroVisualCard
-                  product={flagshipProduct}
-                  image={flagshipImage}
-                  aspectRatio="aspect-4/3 sm:aspect-16/10"
-                />
-              </div>
-
               {/* Action CTAs */}
               <div className="flex flex-wrap items-center gap-4 pt-2">
                 <Link href="/products?category=watches">
@@ -171,12 +178,12 @@ export default async function HomePage() {
               </div>
             </div>
 
-            {/* Desktop Column: Hero Visual Showcase Card (hidden on mobile, rendered inside text flow for mobile above) */}
-            <div className="hidden lg:block lg:col-span-5 relative">
+            {/* Single Responsive Hero Visual Showcase Card (avoids duplicate eager image requests & duplicate DOM headings) */}
+            <div className="lg:col-span-5 relative">
               <HeroVisualCard
                 product={flagshipProduct}
                 image={flagshipImage}
-                aspectRatio="aspect-4/5"
+                aspectRatio="aspect-4/3 sm:aspect-16/10 lg:aspect-4/5"
               />
             </div>
 
@@ -319,6 +326,9 @@ export default async function HomePage() {
                   <img
                     src={categoryCover || FALLBACK_IMAGE}
                     alt={cat.nameAr}
+                    width={800}
+                    height={600}
+                    decoding="async"
                     className="absolute inset-0 h-full w-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-105 opacity-65 group-hover:opacity-75"
                     loading="lazy"
                   />
@@ -396,6 +406,9 @@ export default async function HomePage() {
               <img
                 src="https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?auto=format&fit=crop&w=1200&q=80"
                 alt="حرفية تصنيع ساعات VARELLION"
+                width={1200}
+                height={900}
+                decoding="async"
                 className="h-full w-full object-cover"
                 loading="lazy"
               />

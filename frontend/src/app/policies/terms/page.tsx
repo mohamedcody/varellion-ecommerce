@@ -1,17 +1,46 @@
 import React from 'react';
 import Link from 'next/link';
+import type { Metadata } from 'next';
 import { ShieldCheck, Award, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
+import { getBaseSiteUrl } from '@/lib/url';
+import { buildBreadcrumbSchema } from '@/lib/seo/schema';
+import { JsonLd } from '@/components/seo/JsonLd';
 
-export const metadata = {
+const baseUrl = getBaseSiteUrl();
+const canonicalUrl = `${baseUrl}/policies/terms`;
+
+export const metadata: Metadata = {
   title: 'الشروط والأحكام وضمان الأصالة | VARELLION',
   description: 'الشروط والأحكام الرسمية وضمان الأصالة والمواد الفاخرة لمتجر VARELLION.',
+  alternates: { canonical: canonicalUrl },
+  openGraph: {
+    title: 'الشروط والأحكام وضمان الأصالة | VARELLION',
+    description: 'الشروط والأحكام الرسمية وضمان الأصالة والمواد الفاخرة لمتجر VARELLION.',
+    url: canonicalUrl,
+    siteName: 'VARELLION',
+    locale: 'ar_EG',
+    type: 'website',
+    images: [{ url: `${baseUrl}/og-default.png`, width: 1200, height: 630, alt: 'الشروط والأحكام — VARELLION' }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'الشروط والأحكام وضمان الأصالة | VARELLION',
+    description: 'الشروط والأحكام الرسمية وضمان الأصالة والمواد الفاخرة لمتجر VARELLION.',
+    images: [`${baseUrl}/og-default.png`],
+  },
 };
 
 export default function TermsPage() {
+  const breadcrumbSchema = buildBreadcrumbSchema([
+    { name: 'الرئيسية', item: baseUrl },
+    { name: 'الشروط والأحكام', item: canonicalUrl },
+  ]);
+
   return (
-    <main className="min-h-screen bg-background py-10 md:py-16">
+    <div className="min-h-screen bg-background py-10 md:py-16">
+      <JsonLd data={breadcrumbSchema} id="terms-policy-breadcrumbs-schema" />
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-4xl text-start">
         {/* Breadcrumb */}
         <nav aria-label="مسار التنقل" className="mb-6 flex items-center gap-2 text-xs text-muted-foreground">
@@ -40,7 +69,7 @@ export default function TermsPage() {
         <div className="space-y-6">
           <Card className="border-border bg-card">
             <CardHeader className="pb-3 border-b border-border/40">
-              <CardTitle className="text-base font-bold flex items-center gap-2">
+              <CardTitle as="h2" className="text-base font-bold flex items-center gap-2">
                 <ShieldCheck className="h-4 w-4 text-[#C5A059]" aria-hidden="true" />
                 <span>ضمان المواد والخامات الطبيعية 100%</span>
               </CardTitle>
@@ -54,7 +83,7 @@ export default function TermsPage() {
 
           <Card className="border-border bg-card">
             <CardHeader className="pb-3 border-b border-border/40">
-              <CardTitle className="text-base font-bold flex items-center gap-2">
+              <CardTitle as="h2" className="text-base font-bold flex items-center gap-2">
                 <Award className="h-4 w-4 text-[#C5A059]" aria-hidden="true" />
                 <span>الأسعار والعملة</span>
               </CardTitle>
@@ -77,6 +106,6 @@ export default function TermsPage() {
           </Link>
         </div>
       </div>
-    </main>
+    </div>
   );
 }

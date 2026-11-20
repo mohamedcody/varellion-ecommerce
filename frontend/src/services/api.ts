@@ -283,8 +283,11 @@ export function mapProductDto(dto: any): Product {
       imageUrl: img.imageUrl,
       isMain: !!img.isMain,
       displayOrder: img.displayOrder ?? 0,
+      altAr: img.altAr,
+      altEn: img.altEn,
     })),
     createdAt: dto.createdAt,
+    updatedAt: dto.updatedAt,
   };
 }
 
@@ -362,6 +365,7 @@ export const catalogService = {
     const query = new URLSearchParams();
     if (params?.categorySlug && params.categorySlug !== 'all') query.append('category', params.categorySlug);
     if (params?.searchQuery) query.append('q', params.searchQuery.trim());
+    if (params?.isFeatured) query.append('featured', 'true');
     if (params?.sortBy) query.append('sort', params.sortBy);
     if (params?.page !== undefined) query.append('page', params.page.toString());
     if (params?.limit !== undefined) query.append('limit', params.limit.toString());

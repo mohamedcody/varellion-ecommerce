@@ -11,10 +11,8 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
 import {
   CheckCircle2,
   Package,
-  PhoneCall,
   Clock,
   MapPin,
-  ArrowRight,
   ShoppingBag,
   Copy,
   Check,
@@ -29,6 +27,7 @@ function OrderSuccessContent() {
   const urlOrderNumber = searchParams.get('orderNumber');
 
   const [order, setOrder] = useState<Order | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [copied, setCopied] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
   const [origin, setOrigin] = useState('');
@@ -38,15 +37,68 @@ function OrderSuccessContent() {
     if (cachedOrder) {
       setOrder(cachedOrder);
     }
+    setIsLoading(false);
     if (typeof window !== 'undefined') {
       setOrigin(window.location.origin);
     }
   }, []);
 
-  const displayOrderNumber = order?.orderNumber || urlOrderNumber || 'VAR-ORD-PENDING';
+  if (isLoading) {
+    return (
+      <div className="min-h-[50vh] flex items-center justify-center text-xs text-muted-foreground">
+        جاري تحميل تفاصيل الطلب…
+      </div>
+    );
+  }
 
+  // P1 Security & Validation: Do NOT trust URL query param alone.
+  // Require authentic order data cached from the natural checkout creation flow,
+  // and if an orderNumber query param is present, it must match the authentic order.
+  const isTrustedOrder = Boolean(
+    order && (!urlOrderNumber || order.orderNumber === urlOrderNumber)
+  );
+
+  if (!isTrustedOrder || !order) {
+    return (
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-lg py-16 text-center">
+        <Card className="border border-border/80 bg-card p-6 md:p-8 space-y-5 shadow-xs">
+          <div className="mx-auto w-16 h-16 rounded-full bg-muted flex items-center justify-center text-muted-foreground">
+            <Package className="w-8 h-8" aria-hidden="true" />
+          </div>
+          <div className="space-y-2">
+            <h1 className="text-xl font-bold text-foreground">
+              لا توجد بيانات طلب نشطة لعرضها
+            </h1>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              إذا كنت قد أتممت طلباً بالفعل، يمكنك متابعة حالته فوراً عبر صفحة تتبع الطلبات باستخدام رقم الطلب ورقم هاتفك المسجل.
+            </p>
+          </div>
+          <div className="flex flex-col gap-2.5 pt-2">
+            <Link
+              href={urlOrderNumber ? `/track-order?orderNumber=${encodeURIComponent(urlOrderNumber)}` : '/track-order'}
+              className="w-full"
+            >
+              <Button variant="luxury" size="default" className="w-full gap-2 font-bold cursor-pointer min-h-[44px]">
+                <Truck className="w-4 h-4" aria-hidden="true" />
+                <span>الانتقال لصفحة تتبع الطلب</span>
+              </Button>
+            </Link>
+            <Link href="/products" className="w-full">
+              <Button variant="outline" size="default" className="w-full text-xs font-semibold cursor-pointer min-h-[44px]">
+                <span>تصفح الكتالوج الفاخر</span>
+              </Button>
+            </Link>
+          </div>
+        </Card>
+      </div>
+    );
+  }
+
+  const displayOrderNumber = order.orderNumber;
+
+  // P1 Privacy Hardening: Never append phone number or PII to the public tracking URL.
   const directTrackUrl = origin
-    ? `${origin}/track-order?orderNumber=${encodeURIComponent(displayOrderNumber)}${order?.customerPhone ? `&phone=${encodeURIComponent(order.customerPhone)}` : ''}`
+    ? `${origin}/track-order?orderNumber=${encodeURIComponent(displayOrderNumber)}`
     : `/track-order?orderNumber=${encodeURIComponent(displayOrderNumber)}`;
 
   const handleCopyOrderNumber = () => {
@@ -77,10 +129,10 @@ function OrderSuccessContent() {
 
 مرحباً خدمة عملاء VARELLION، أود تأكيد وتتبع تفاصيل طلبي:
 🔖 *رقم الطلب:* ${displayOrderNumber}
-👤 *الاسم:* ${order?.customerName || ''}
-📱 *الهاتف:* ${order?.customerPhone || ''}
-📍 *المحافظة:* ${order?.shippingGovernorate || ''} — ${order?.shippingCityArea || ''}
-💰 *المبلغ المطلوب:* ${(order?.totalAmount || 0).toLocaleString('ar-EG')} ج.م
+👤 *الاسم:* ${order.customerName || ''}
+📱 *الهاتف:* ${order.customerPhone || ''}
+📍 *المحافظة:* ${order.shippingGovernorate || ''} — ${order.shippingCityArea || ''}
+💰 *المبلغ المطلوب عند الاستلام:* ${(order.totalAmount || 0).toLocaleString('ar-EG')} ج.م
 
 🔗 *رابط التتبع المباشر للشحنة:*
 ${directTrackUrl}
@@ -91,7 +143,7 @@ ${directTrackUrl}
 
   return (
     <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-4xl py-10 md:py-16 text-start">
-      {/* 1. Celebration Header */}
+      {/* 1. Header: Status reflects actual PENDING_CUSTOMER_CONFIRMATION state */}
       <div className="text-center space-y-4 mb-10">
         <div className="mx-auto w-20 h-20 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center ring-8 ring-emerald-500/5">
           <CheckCircle2 className="w-10 h-10" aria-hidden="true" />
@@ -99,13 +151,13 @@ ${directTrackUrl}
 
         <div className="space-y-1.5">
           <span className="text-xs font-bold tracking-widest text-primary uppercase">
-            طلبك مؤكد وجارٍ التجهيز
+            في انتظار التأكيد الهاتفي
           </span>
           <h1 className="text-2xl md:text-3xl font-black text-foreground">
-            شكراً لثقتك في VARELLION!
+            تم استلام طلبك بنجاح، وهو في انتظار التأكيد
           </h1>
           <p className="text-sm text-muted-foreground max-w-md mx-auto">
-            تم استلام تفاصيل طلبك بنجاح، وسيتم شحنه مباشرة إلى عنوانك مع ميزة المعاينة قبل الدفع.
+            تم تسجيل تفاصيل طلبك بنجاح، وسيتواصل معك فريق خدمة العملاء هاتفياً أو عبر واتساب لتأكيد الشحنة وموعد التسليم قبل خروج المندوب.
           </p>
         </div>
 
@@ -179,14 +231,10 @@ ${directTrackUrl}
                 </div>
                 <div>
                   <h4 className="font-bold text-foreground">
-                    {order?.paymentMethod === 'CARD'
-                      ? 'المعاينة والاستلام (مدفوع إلكترونياً)'
-                      : 'المعاينة والاستلام والدفع نقداً'}
+                    المعاينة والاستلام والدفع نقداً
                   </h4>
                   <p className="text-muted-foreground mt-0.5 leading-relaxed">
-                    {order?.paymentMethod === 'CARD'
-                      ? 'عند وصول المندوب، استلم شحنتك فوراً دون دفع أي مبالغ إضافية، مع كامل حقك في فحص ومعاينة المنتج.'
-                      : 'عند وصول المندوب، يحق لك فتح الشحنة ومعاينتها بالكامل، ثم سداد المبلغ نقداً عند الرضا التام.'}
+                    عند وصول المندوب، يحق لك فتح الشحنة ومعاينتها بالكامل، ثم سداد المبلغ نقداً عند الرضا التام.
                   </p>
                 </div>
               </div>
@@ -194,49 +242,45 @@ ${directTrackUrl}
           </Card>
 
           {/* Delivery & Customer Details Card */}
-          {order && (
-            <Card className="border border-border/80 bg-card shadow-xs">
-              <CardHeader className="border-b border-border/40 pb-3">
-                <CardTitle className="text-sm font-bold flex items-center gap-2">
-                  <MapPin className="h-4 w-4 text-primary" aria-hidden="true" />
-                  <span>بيانات الشحن والتوصيل</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2.5 pt-4 text-xs">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">اسم المستلم:</span>
-                  <span className="font-bold text-foreground">{order.customerName}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">رقم الهاتف:</span>
-                  <span className="font-mono font-bold text-foreground" dir="ltr">
-                    {order.customerPhone}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">المحافظة والمنطقة:</span>
-                  <span className="font-bold text-foreground">
-                    {order.shippingGovernorate} — {order.shippingCityArea}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">العنوان التفصيلي:</span>
-                  <span className="font-medium text-foreground max-w-[60%] text-end">
-                    {order.shippingDetailedAddress}
-                  </span>
-                </div>
-                <div className="flex justify-between pt-2 border-t border-border/50">
-                  <span className="text-muted-foreground">طريقة السداد:</span>
-                  <span className="font-bold text-primary flex items-center gap-1">
-                    <ShieldCheck className="h-3.5 w-3.5" aria-hidden="true" />
-                    {order.paymentMethod === 'CARD'
-                      ? 'بطاقة بنكية / محفظة إلكترونية (Paymob)'
-                      : 'الدفع عند الاستلام (COD)'}
-                  </span>
-                </div>
-              </CardContent>
-            </Card>
-          )}
+          <Card className="border border-border/80 bg-card shadow-xs">
+            <CardHeader className="border-b border-border/40 pb-3">
+              <CardTitle className="text-sm font-bold flex items-center gap-2">
+                <MapPin className="h-4 w-4 text-primary" aria-hidden="true" />
+                <span>بيانات الشحن والتوصيل</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2.5 pt-4 text-xs">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">اسم المستلم:</span>
+                <span className="font-bold text-foreground">{order.customerName}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">رقم الهاتف:</span>
+                <span className="font-mono font-bold text-foreground" dir="ltr">
+                  {order.customerPhone}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">المحافظة والمنطقة:</span>
+                <span className="font-bold text-foreground">
+                  {order.shippingGovernorate} — {order.shippingCityArea}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">العنوان التفصيلي:</span>
+                <span className="font-medium text-foreground max-w-[60%] text-end">
+                  {order.shippingDetailedAddress}
+                </span>
+              </div>
+              <div className="flex justify-between pt-2 border-t border-border/50">
+                <span className="text-muted-foreground">طريقة السداد:</span>
+                <span className="font-bold text-primary flex items-center gap-1">
+                  <ShieldCheck className="h-3.5 w-3.5" aria-hidden="true" />
+                  الدفع عند الاستلام (COD)
+                </span>
+              </div>
+            </CardContent>
+          </Card>
 
           {/* WhatsApp Tracking Concierge Card */}
           <Card className="border border-emerald-500/30 bg-emerald-500/5 shadow-xs">
@@ -344,7 +388,7 @@ ${directTrackUrl}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4 pt-4 text-xs">
-              {order?.items && order.items.length > 0 ? (
+              {order.items && order.items.length > 0 ? (
                 <div className="divide-y divide-border/40 max-h-[260px] overflow-y-auto pr-1">
                   {order.items.map((item, idx) => (
                     <div key={item.orderItemId || idx} className="py-2.5 first:pt-0 flex justify-between items-center">
@@ -367,31 +411,23 @@ ${directTrackUrl}
               )}
 
               <div className="space-y-2 pt-3 border-t border-border/50">
-                {order && (
-                  <>
-                    <div className="flex justify-between text-muted-foreground">
-                      <span>المجموع الفرعي:</span>
-                      <span className="font-bold text-foreground">
-                        {order.subtotal.toLocaleString('ar-EG')} ج.م
-                      </span>
-                    </div>
-                    <div className="flex justify-between text-muted-foreground">
-                      <span>مصاريف الشحن:</span>
-                      <span className="font-bold text-foreground">
-                        {order.shippingFee === 0 ? 'مجاني' : `${order.shippingFee.toLocaleString('ar-EG')} ج.م`}
-                      </span>
-                    </div>
-                  </>
-                )}
+                <div className="flex justify-between text-muted-foreground">
+                  <span>المجموع الفرعي:</span>
+                  <span className="font-bold text-foreground">
+                    {order.subtotal.toLocaleString('ar-EG')} ج.م
+                  </span>
+                </div>
+                <div className="flex justify-between text-muted-foreground">
+                  <span>مصاريف الشحن:</span>
+                  <span className="font-bold text-foreground">
+                    {order.shippingFee === 0 ? 'مجاني' : `${order.shippingFee.toLocaleString('ar-EG')} ج.م`}
+                  </span>
+                </div>
 
                 <div className="flex justify-between items-baseline pt-2 border-t border-border font-black text-sm text-foreground">
-                  <span>
-                    {order?.paymentMethod === 'CARD'
-                      ? 'إجمالي المبلغ المسدد بالكامل:'
-                      : 'المبلغ المطلوب عند الاستلام:'}
-                  </span>
+                  <span>المبلغ المطلوب عند الاستلام:</span>
                   <span className="text-lg text-primary font-black">
-                    {(order?.totalAmount || 0).toLocaleString('ar-EG')} ج.م
+                    {order.totalAmount.toLocaleString('ar-EG')} ج.م
                   </span>
                 </div>
               </div>
