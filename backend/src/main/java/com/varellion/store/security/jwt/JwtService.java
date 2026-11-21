@@ -10,15 +10,19 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
+import java.nio.charset.StandardCharsets;
+import java.time.Instant;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 import java.util.function.Function;
 
 @Service
 public class JwtService {
 
     public static final String TOKEN_TYPE_CLAIM = "token_type";
+    public static final String TOKEN_FAMILY_CLAIM = "token_family";
     public static final String ACCESS_TOKEN_TYPE = "ACCESS";
     public static final String REFRESH_TOKEN_TYPE = "REFRESH";
 
@@ -39,13 +43,26 @@ public class JwtService {
         try {
             keyBytes = Decoders.BASE64.decode(secret);
         } catch (Exception e) {
-            keyBytes = secret.getBytes();
+            keyBytes = secret.getBytes(StandardCharsets.UTF_8);
         }
         this.signingKey = Keys.hmacShaKeyFor(keyBytes);
     }
 
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
+    }
+
+    public String extractTokenId(String token) {
+        return extractClaim(token, Claims::getId);
+    }
+
+    public String extractTokenFamily(String token) {
+        return extractClaim(token, claims -> claims.get(TOKEN_FAMILY_CLAIM, String.class));
+    }
+
+    public Instant extractExpirationInstant(String token) {
+        Date exp = extractExpiration(token);
+        return exp != null ? exp.toInstant() : null;
     }
 
     public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
@@ -69,9 +86,18 @@ public class JwtService {
     }
 
     public String generateRefreshToken(UserDetails userDetails) {
+        return generateRefreshToken(userDetails, UUID.randomUUID().toString());
+    }
+
+    public String generateRefreshToken(UserDetails userDetails, String familyId) {
+        String effectiveFamily = (familyId != null && !familyId.isBlank())
+                ? familyId
+                : UUID.randomUUID().toString();
         return Jwts.builder()
+                .id(UUID.randomUUID().toString())
                 .subject(userDetails.getUsername())
                 .claim(TOKEN_TYPE_CLAIM, REFRESH_TOKEN_TYPE)
+                .claim(TOKEN_FAMILY_CLAIM, effectiveFamily)
                 .issuedAt(new Date(System.currentTimeMillis()))
                 .expiration(new Date(System.currentTimeMillis() + refreshExpiration))
                 .signWith(signingKey)

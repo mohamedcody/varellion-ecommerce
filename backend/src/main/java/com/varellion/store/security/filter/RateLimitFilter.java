@@ -6,6 +6,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.lang.NonNull;
@@ -32,6 +33,7 @@ public class RateLimitFilter extends OncePerRequestFilter {
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final ClientIpResolver clientIpResolver;
 
+    @Autowired
     public RateLimitFilter(ClientIpResolver clientIpResolver) {
         this.clientIpResolver = clientIpResolver;
     }

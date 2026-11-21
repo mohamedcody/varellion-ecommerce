@@ -89,4 +89,44 @@ class IdempotencyServiceTest {
         assertThat(result.getOrderNumber()).isEqualTo("VAR-RETRY-SUCCESS");
         assertThat(invocationCount.get()).isEqualTo(2);
     }
+
+    @Test
+    @DisplayName("AUD-001: Same Idempotency-Key across two different users is strictly isolated (no cross-user PII leak)")
+    void execute_SameKeyDifferentUsers_ShouldIsolateResponses() {
+        String sharedKey = "predictable-key-001";
+
+        OrderResponseDto orderA = idempotencyService.execute("alice@varellion.com", sharedKey, "payload-a",
+                () -> OrderResponseDto.builder().orderNumber("VAR-ALICE").customerName("Alice").build());
+
+        OrderResponseDto orderB = idempotencyService.execute("bob@varellion.com", sharedKey, "payload-b",
+                () -> OrderResponseDto.builder().orderNumber("VAR-BOB").customerName("Bob").build());
+
+        assertThat(orderA.getOrderNumber()).isEqualTo("VAR-ALICE");
+        assertThat(orderB.getOrderNumber()).isEqualTo("VAR-BOB");
+        assertThat(orderB.getCustomerName()).isEqualTo("Bob");
+    }
+
+    @Test
+    @DisplayName("AUD-001: Reusing same Idempotency-Key for same user with different payload throws 409 Conflict")
+    void execute_SameUserDifferentPayload_ShouldThrow409() {
+        String key = "order-key-mismatch";
+
+        idempotencyService.execute("alice@varellion.com", key, java.util.Map.of("qty", 1),
+                () -> OrderResponseDto.builder().orderNumber("VAR-1").build());
+
+        assertThatThrownBy(() -> idempotencyService.execute("alice@varellion.com", key, java.util.Map.of("qty", 2),
+                () -> OrderResponseDto.builder().orderNumber("VAR-2").build()))
+                .isInstanceOf(BusinessException.class)
+                .extracting(e -> ((BusinessException) e).getStatus())
+                .isEqualTo(HttpStatus.CONFLICT);
+    }
+
+    @Test
+    @DisplayName("AUD-001: Overlong Idempotency-Key (>128 chars) is rejected with IllegalArgumentException")
+    void execute_OverlongKey_ShouldThrowBadRequest() {
+        String hugeKey = "k".repeat(129);
+        assertThatThrownBy(() -> idempotencyService.execute("alice@varellion.com", hugeKey, null,
+                () -> OrderResponseDto.builder().build()))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
 }

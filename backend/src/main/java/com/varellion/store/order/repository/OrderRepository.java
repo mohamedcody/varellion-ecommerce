@@ -68,5 +68,8 @@ public interface OrderRepository extends JpaRepository<Order, UUID> {
 
     @Query("SELECT o.customer.userId, COUNT(o), COALESCE(SUM(o.totalAmount), 0) FROM Order o WHERE o.orderStatus NOT IN (com.varellion.store.order.entity.OrderStatus.CANCELLED, com.varellion.store.order.entity.OrderStatus.EXPIRED) GROUP BY o.customer.userId")
     List<Object[]> aggregateCustomerOrderStats();
+
+    @Query("SELECT o.orderNumber FROM Order o WHERE o.orderStatus = com.varellion.store.order.entity.OrderStatus.PENDING_CUSTOMER_CONFIRMATION AND o.confirmationDeadline IS NOT NULL AND o.confirmationDeadline < :now ORDER BY o.confirmationDeadline ASC")
+    List<String> findExpiredPendingConfirmationOrderNumbers(@Param("now") OffsetDateTime now, Pageable pageable);
 }
               

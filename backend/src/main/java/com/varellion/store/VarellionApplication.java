@@ -23,6 +23,13 @@ public class VarellionApplication {
      * while keeping application.properties strict and secrets out of git.
      */
     private static void loadDotEnv() {
+        String activeProfiles = System.getProperty("spring.profiles.active",
+                System.getenv("SPRING_PROFILES_ACTIVE") != null ? System.getenv("SPRING_PROFILES_ACTIVE") : "");
+        String lowerProfiles = activeProfiles.toLowerCase();
+        if (lowerProfiles.contains("prod")) {
+            return;
+        }
+
         Path[] possiblePaths = new Path[]{
                 Path.of(".env"),
                 Path.of("backend/.env"),
@@ -44,9 +51,10 @@ public class VarellionApplication {
                             String key = trimmed.substring(0, eqIdx).trim();
                             String value = trimmed.substring(eqIdx + 1).trim();
 
-                            // Strip surrounding quotes if present
-                            if ((value.startsWith("\"") && value.endsWith("\"")) ||
-                                (value.startsWith("'") && value.endsWith("'"))) {
+                            // Strip surrounding quotes safely (requires at least 2 characters)
+                            if (value.length() >= 2 &&
+                                    ((value.startsWith("\"") && value.endsWith("\"")) ||
+                                     (value.startsWith("'") && value.endsWith("'")))) {
                                 value = value.substring(1, value.length() - 1);
                             }
 

@@ -42,6 +42,9 @@ class OrderLifecycleInventoryIntegrationTest {
     private OrderService orderService;
 
     @Autowired
+    private OrderReservationService orderReservationService;
+
+    @Autowired
     private OrderRepository orderRepository;
 
     @Autowired
@@ -430,5 +433,61 @@ class OrderLifecycleInventoryIntegrationTest {
             assertThat(finalProduct.getStockQuantity()).isEqualTo(10);
         }
         assertThat(finalProduct.getReservedQuantity()).isLessThanOrEqualTo(finalProduct.getStockQuantity());
+    }
+
+    @Test
+    @DisplayName("AUD-007: OrderReservationService automatically expires overdue pending orders and releases reserved stock only")
+    void automaticReservationExpiration_ReleasesReservedStockOnly() {
+        User customerUser = createRegisteredUser("exp_cust", "USER");
+        preProvisionCustomer(customerUser, "كريم حسن", "01099887766");
+        Product product = createProduct(10, 0, new BigDecimal("1200.00"));
+
+        CreateOrderRequest req1 = CreateOrderRequest.builder()
+                .customerName("كريم حسن")
+                .customerPhone("01099887766")
+                .shippingGovernorate("القاهرة")
+                .shippingCityArea("مدينة نصر")
+                .shippingDetailedAddress("شارع عباس العقاد")
+                .paymentMethod("CASH_ON_DELIVERY")
+                .items(List.of(CreateOrderRequest.CreateOrderItemRequest.builder()
+                        .productId(product.getProductId())
+                        .quantity(3)
+                        .build()))
+                .build();
+        OrderResponseDto overdueOrder = orderService.createOrder(customerUser.getEmail(), req1);
+
+        CreateOrderRequest req2 = CreateOrderRequest.builder()
+                .customerName("كريم حسن")
+                .customerPhone("01099887766")
+                .shippingGovernorate("القاهرة")
+                .shippingCityArea("مدينة نصر")
+                .shippingDetailedAddress("شارع عباس العقاد")
+                .paymentMethod("CASH_ON_DELIVERY")
+                .items(List.of(CreateOrderRequest.CreateOrderItemRequest.builder()
+                        .productId(product.getProductId())
+                        .quantity(2)
+                        .build()))
+                .build();
+        OrderResponseDto freshOrder = orderService.createOrder(customerUser.getEmail(), req2);
+
+        // Backdate confirmationDeadline on overdueOrder only
+        transactionTemplate.executeWithoutResult(status -> {
+            Order o = orderRepository.findByOrderNumberIgnoreCase(overdueOrder.getOrderNumber()).orElseThrow();
+            o.setConfirmationDeadline(java.time.OffsetDateTime.now().minusHours(2));
+            orderRepository.save(o);
+        });
+
+        int expired = orderReservationService.expireOverdueReservations();
+        assertThat(expired).isGreaterThanOrEqualTo(1);
+
+        Order updatedOverdue = orderRepository.findByOrderNumberIgnoreCase(overdueOrder.getOrderNumber()).orElseThrow();
+        Order updatedFresh = orderRepository.findByOrderNumberIgnoreCase(freshOrder.getOrderNumber()).orElseThrow();
+        Product updatedProduct = productRepository.findById(product.getProductId()).orElseThrow();
+
+        assertThat(updatedOverdue.getOrderStatus()).isEqualTo(OrderStatus.EXPIRED);
+        assertThat(updatedFresh.getOrderStatus()).isEqualTo(OrderStatus.PENDING_CUSTOMER_CONFIRMATION);
+        // Physical stock stays 10; reserved drops from 5 -> 2 (3 released)
+        assertThat(updatedProduct.getStockQuantity()).isEqualTo(10);
+        assertThat(updatedProduct.getReservedQuantity()).isEqualTo(2);
     }
 }

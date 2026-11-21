@@ -93,4 +93,30 @@ class GlobalExceptionHandlerTest {
                 .isEqualTo("تم تعديل الطلب بواسطة جلسة أخرى، يرجى تحديث الصفحة والمحاولة مرة أخرى");
         assertThat(response.getBody().getPath()).isEqualTo("/api/orders/VAR-20261109-0001/status");
     }
+
+    @Test
+    @DisplayName("AUD-005: Should return HTTP 403 Forbidden for AccessDeniedException instead of 500")
+    void shouldHandleAccessDeniedException() {
+        org.springframework.security.access.AccessDeniedException exception =
+                new org.springframework.security.access.AccessDeniedException("Forbidden");
+
+        ResponseEntity<ErrorResponse> response = exceptionHandler.handleAccessDenied(exception, request);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().getStatus()).isEqualTo(403);
+    }
+
+    @Test
+    @DisplayName("AUD-005: Should return HTTP 401 Unauthorized for JwtException and UsernameNotFoundException")
+    void shouldHandleJwtAndAuthExceptions() {
+        io.jsonwebtoken.MalformedJwtException jwtEx = new io.jsonwebtoken.MalformedJwtException("bad jwt");
+        ResponseEntity<ErrorResponse> jwtRes = exceptionHandler.handleAuthenticationOrJwtFailure(jwtEx, request);
+        assertThat(jwtRes.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+
+        org.springframework.security.core.userdetails.UsernameNotFoundException userEx =
+                new org.springframework.security.core.userdetails.UsernameNotFoundException("missing");
+        ResponseEntity<ErrorResponse> userRes = exceptionHandler.handleAuthenticationOrJwtFailure(userEx, request);
+        assertThat(userRes.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+    }
 }

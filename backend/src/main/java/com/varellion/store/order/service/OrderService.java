@@ -23,11 +23,13 @@ import com.varellion.store.order.entity.ShippingFeeStatus;
 import com.varellion.store.order.repository.OrderRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
@@ -58,18 +60,23 @@ public class OrderService {
     private final ProductRepository productRepository;
     private final CartService cartService;
 
+    @Value("${varellion.store.reservation-hours:24}")
+    private int reservationHours = 24;
+
     /**
      * Normalizes Egyptian phone numbers into an 11-digit standard string (01XXXXXXXXX).
-     * Handles +20, 0020, 20 prefixes, spaces, and hyphens.
+     * Handles +20, +200, 0020, 00200, 20 prefixes, spaces, and hyphens.
      */
     public static String normalizeEgyptianPhone(String raw) {
         if (raw == null) return "";
         String digits = raw.replaceAll("\\D", "");
         if (digits.startsWith("0020")) {
-            digits = "0" + digits.substring(4);
-        } else if (digits.startsWith("20") && digits.length() == 12) {
-            digits = "0" + digits.substring(2);
-        } else if (!digits.startsWith("0") && digits.length() == 10 && (digits.startsWith("10") || digits.startsWith("11") || digits.startsWith("12") || digits.startsWith("15"))) {
+            digits = digits.substring(4);
+        } else if (digits.startsWith("20") && (digits.length() == 12 || digits.length() == 13)) {
+            digits = digits.substring(2);
+        }
+        if (!digits.startsWith("0") && digits.length() == 10
+                && (digits.startsWith("10") || digits.startsWith("11") || digits.startsWith("12") || digits.startsWith("15"))) {
             digits = "0" + digits;
         }
         return digits;
@@ -148,6 +155,16 @@ public class OrderService {
             throw new IllegalArgumentException("يجب أن يحتوي الطلب على منتج واحد على الأقل");
         }
 
+        // Fail fast on unsupported payment methods before locking inventory rows (AUD-009)
+        if (request.getPaymentMethod() != null
+                && !request.getPaymentMethod().isBlank()
+                && !"CASH_ON_DELIVERY".equalsIgnoreCase(request.getPaymentMethod().trim())) {
+            throw new BusinessException(
+                    "الدفع الإلكتروني غير متاح حالياً — الدفع عند الاستلام (CASH_ON_DELIVERY) هو الوسيلة المتاحة فقط",
+                    org.springframework.http.HttpStatus.BAD_REQUEST
+            );
+        }
+
         // 1. Validate against duplicate product IDs in the order request
         long uniqueProductCount = request.getItems().stream()
                 .map(CreateOrderRequest.CreateOrderItemRequest::getProductId)
@@ -212,18 +229,13 @@ public class OrderService {
         // 4. Generate Unique Order Number
         String orderNumber = generateUniqueOrderNumber();
 
-        // 5. Notes and Payment Method handling
+        // 5. Customer Notes
         String combinedNotes = request.getCustomerNotes();
         if (request.getAlternativePhone() != null && !request.getAlternativePhone().isBlank()) {
             String altNote = "هاتف بديل: " + request.getAlternativePhone().trim();
             combinedNotes = (combinedNotes != null && !combinedNotes.isBlank())
                     ? combinedNotes + " | " + altNote
                     : altNote;
-        }
-
-        String adminNotes = null;
-        if (request.getPaymentMethod() != null && !request.getPaymentMethod().isBlank()) {
-            adminNotes = "طريقة الدفع المطلوبة: " + request.getPaymentMethod().trim();
         }
 
         // 6. Instantiate and Persist Order
@@ -242,9 +254,9 @@ public class OrderService {
                 .totalAmount(totalAmount)
                 .orderStatus(OrderStatus.PENDING_CUSTOMER_CONFIRMATION)
                 .shippingFeeStatus(ShippingFeeStatus.PENDING)
-                .confirmationDeadline(OffsetDateTime.now().plusHours(24))
+                .confirmationDeadline(OffsetDateTime.now().plusHours(reservationHours > 0 ? reservationHours : 24))
                 .customerNotes(combinedNotes)
-                .adminNotes(adminNotes)
+                .adminNotes(null)
                 .items(new ArrayList<>())
                 .statusHistory(new ArrayList<>())
                 .build();
@@ -272,9 +284,7 @@ public class OrderService {
 
         log.info("[OrderService] Successfully placed order {} for user {}", orderNumber, userEmail);
         OrderResponseDto dto = mapToDto(savedOrder);
-        if (request.getPaymentMethod() != null && !request.getPaymentMethod().isBlank()) {
-            dto.setPaymentMethod(request.getPaymentMethod().trim());
-        }
+        dto.setPaymentMethod("CASH_ON_DELIVERY");
         return dto;
     }
 
@@ -313,7 +323,35 @@ public class OrderService {
             throw new ResourceNotFoundException("لم نتمكن من العثور على طلب مطابق لرقم الطلب ورقم الهاتف المدخلين.");
         }
 
-        return mapToDto(order);
+        // AUD-014: Redact sensitive customer PII on unauthenticated public lookup responses
+        return redactPublicOrderPii(mapToDto(order));
+    }
+
+    private OrderResponseDto redactPublicOrderPii(OrderResponseDto dto) {
+        if (dto == null) {
+            return null;
+        }
+        dto.setCustomerName(maskCustomerName(dto.getCustomerName()));
+        dto.setCustomerPhone(maskPhoneNumber(dto.getCustomerPhone()));
+        dto.setShippingDetailedAddress("محمي لحماية الخصوصية");
+        dto.setCustomerNotes(null);
+        return dto;
+    }
+
+    private static String maskCustomerName(String name) {
+        if (name == null || name.isBlank()) {
+            return "***";
+        }
+        String[] parts = name.trim().split("\\s+");
+        return parts[0] + " ***";
+    }
+
+    private static String maskPhoneNumber(String phone) {
+        String normalized = normalizeEgyptianPhone(phone);
+        if (normalized.length() >= 7) {
+            return normalized.substring(0, 3) + "****" + normalized.substring(normalized.length() - 4);
+        }
+        return "***********";
     }
 
     /**
@@ -563,6 +601,33 @@ public class OrderService {
         order.getStatusHistory().add(history);
         Order savedOrder = orderRepository.save(order);
         return mapToDto(savedOrder);
+    }
+
+    /**
+     * AUD-007: Expires a single overdue PENDING_CUSTOMER_CONFIRMATION order in an isolated transaction,
+     * releasing reserved stock only while enforcing canonical ascending product lock ordering.
+     */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public boolean expireUnconfirmedOrder(String orderNumber) {
+        if (orderNumber == null || orderNumber.isBlank()) {
+            return false;
+        }
+        Order order = orderRepository.findByOrderNumberWithDetails(orderNumber.trim().toUpperCase())
+                .orElse(null);
+        if (order == null
+                || order.getOrderStatus() != OrderStatus.PENDING_CUSTOMER_CONFIRMATION
+                || order.getConfirmationDeadline() == null
+                || !order.getConfirmationDeadline().isBefore(OffsetDateTime.now())) {
+            return false;
+        }
+
+        updateOrderStatus(
+                order.getOrderNumber(),
+                OrderStatus.EXPIRED,
+                "انتهاء مهلة تأكيد الطلب تلقائياً وتحرير المخزون المحجوز",
+                null
+        );
+        return true;
     }
 
     /**

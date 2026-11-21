@@ -262,4 +262,32 @@ class OrderControllerTest {
         org.mockito.Mockito.verify(orderService, org.mockito.Mockito.times(1))
                 .createOrder(eq("customer@varellion.com"), any());
     }
+
+    @Test
+    @DisplayName("AUD-009: POST /api/orders rejects non-COD paymentMethod (e.g., CARD) with 400 Bad Request")
+    void createOrder_NonCodPaymentMethod_Returns400() throws Exception {
+        UUID prodId = UUID.randomUUID();
+        String cardPayload = """
+            {
+              "customerName": "أحمد محمود",
+              "customerPhone": "01012345678",
+              "shippingGovernorate": "القاهرة",
+              "shippingCityArea": "المعادي",
+              "shippingDetailedAddress": "شارع 9، برج الصفا",
+              "paymentMethod": "CARD",
+              "items": [
+                {
+                  "productId": "%s",
+                  "quantity": 1
+                }
+              ]
+            }
+        """.formatted(prodId);
+
+        mockMvc.perform(post("/api/orders")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(cardPayload))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.validationErrors.paymentMethod").exists());
+    }
 }

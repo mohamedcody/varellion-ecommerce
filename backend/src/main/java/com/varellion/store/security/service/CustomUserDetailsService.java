@@ -20,9 +20,13 @@ public class CustomUserDetailsService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String identifier) throws UsernameNotFoundException {
-        User user = userRepository.findByUsername(identifier)
-                .or(() -> userRepository.findByEmail(identifier))
-                .orElseThrow(() -> new UsernameNotFoundException("User not found: " + identifier));
+        User user = (identifier != null && identifier.contains("@"))
+                ? userRepository.findByEmail(identifier.toLowerCase())
+                        .or(() -> userRepository.findByUsername(identifier))
+                        .orElseThrow(() -> new UsernameNotFoundException("User not found: " + identifier))
+                : userRepository.findByUsername(identifier)
+                        .or(() -> userRepository.findByEmail(identifier))
+                        .orElseThrow(() -> new UsernameNotFoundException("User not found: " + identifier));
 
         // التحقق مما إذا كان الحساب مقفولاً بسبب محاولات دخول خاطئة
         boolean isNotLocked = user.getLockoutTime() == null ||

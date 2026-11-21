@@ -5,8 +5,11 @@ import com.varellion.store.order.dto.OrderLookupRequest;
 import com.varellion.store.order.dto.OrderResponseDto;
 import com.varellion.store.order.service.OrderService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 /**
@@ -16,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/orders")
 @RequiredArgsConstructor
+@Validated
 public class GuestOrderLookupController {
 
     private final OrderService orderService;
@@ -30,12 +34,17 @@ public class GuestOrderLookupController {
     }
 
     /**
-     * GET endpoint for tracking lookup using query parameters (for direct URLs from SMS/WhatsApp/Email).
+     * GET endpoint for tracking lookup using query parameters (validated; prefer POST /lookup to avoid PII in URLs).
      */
     @GetMapping("/track")
     public ResponseEntity<ApiResponse<OrderResponseDto>> trackOrder(
-            @RequestParam String orderNumber,
-            @RequestParam String phone
+            @RequestParam @NotBlank(message = "رقم الطلب مطلوب") String orderNumber,
+            @RequestParam
+            @NotBlank(message = "رقم الهاتف مطلوب")
+            @Pattern(
+                    regexp = "^(\\+?20|0020)?0?1[0125][0-9]{8}$",
+                    message = "يرجى إدخال رقم موبايل مصري صحيح (مثال: 010xxxxxxxx)"
+            ) String phone
     ) {
         OrderResponseDto order = orderService.trackOrder(orderNumber, phone);
         return ResponseEntity.ok(ApiResponse.success("تم العثور على بيانات الطلب بنجاح", order));

@@ -10,6 +10,7 @@ import com.varellion.store.security.dto.RegisterRequest;
 import com.varellion.store.security.entity.User;
 import com.varellion.store.security.jwt.JwtService;
 import com.varellion.store.security.repository.UserRepository;
+import io.jsonwebtoken.JwtException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -20,8 +21,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.Arrays;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -38,15 +41,15 @@ public class AuthService {
     private final CustomUserDetailsService customUserDetailsService;
     private final GoogleTokenVerifier googleTokenVerifier;
     private final CustomerService customerService;
+    private final RefreshTokenRegistry refreshTokenRegistry;
 
-    @Value("${ADMIN_EMAILS:admin@varellion.com}")
+    @Value("${ADMIN_EMAILS:}")
     private String adminEmails;
 
-    @Transactional
+    @Transactional(noRollbackFor = {BadCredentialsException.class, LockedException.class})
     public AuthResult login(LoginRequest request) {
         String identifier = request.getIdentifier().trim();
-        User user = userRepository.findByUsername(identifier)
-                .or(() -> userRepository.findByEmail(identifier))
+        User user = resolveUserByIdentifier(identifier)
                 .orElseThrow(() -> new BadCredentialsException("Invalid username or password"));
 
         // Check if account is currently locked
@@ -95,7 +98,7 @@ public class AuthService {
 
         UserDetails userDetails = customUserDetailsService.loadUserByUsername(user.getEmail());
         String accessToken = jwtService.generateToken(userDetails);
-        String refreshToken = jwtService.generateRefreshToken(userDetails);
+        String refreshToken = issueAndRegisterRefreshToken(userDetails, null);
 
         AuthResponse response = AuthResponse.builder()
                 .accessToken(accessToken)
@@ -113,6 +116,9 @@ public class AuthService {
         String email = request.getEmail().trim().toLowerCase();
         String username = request.getUsername().trim();
 
+        if (username.contains("@")) {
+            throw new IllegalArgumentException("Username cannot contain '@' character");
+        }
         if (userRepository.existsByEmail(email)) {
             throw new IllegalArgumentException("Email is already registered: " + email);
         }
@@ -122,7 +128,6 @@ public class AuthService {
 
         // SECURITY: Public registration always assigns USER role only.
         // Admin accounts must be created through a protected channel (seed migration or Google OAuth).
-        // See 00_VARELLION_MASTER_BUILD_PROMPT.md — "Public administrator registration" is explicitly excluded.
         String role = "USER";
 
         User newUser = User.builder()
@@ -142,7 +147,7 @@ public class AuthService {
 
         UserDetails userDetails = customUserDetailsService.loadUserByUsername(savedUser.getEmail());
         String accessToken = jwtService.generateToken(userDetails);
-        String refreshToken = jwtService.generateRefreshToken(userDetails);
+        String refreshToken = issueAndRegisterRefreshToken(userDetails, null);
 
         AuthResponse response = AuthResponse.builder()
                 .accessToken(accessToken)
@@ -165,28 +170,43 @@ public class AuthService {
 
         String email = identity.email().trim().toLowerCase();
 
-        User user = userRepository.findByEmail(email)
-                .orElseGet(() -> {
-                    String role = isAdminEmail(email) ? "ADMIN" : "USER";
-                    String baseUsername = (identity.name() != null && !identity.name().isBlank())
-                            ? identity.name().replaceAll("[^a-zA-Z0-9_]", "_").toLowerCase()
-                            : email.split("@")[0];
-                    String username = baseUsername + "_" + (int) (Math.random() * 10000);
+        Optional<User> existingOpt = userRepository.findByEmail(email);
+        User user;
+        if (existingOpt.isPresent()) {
+            user = existingOpt.get();
+            if (!user.isEnabled()) {
+                throw new BadCredentialsException("Account is disabled. Please contact support.");
+            }
+            // AUD-004: Prevent pre-registration account takeover.
+            // If an unverified local account existed for this email, invalidate its local password,
+            // mark email as Google-verified, clear any lockout, and apply ADMIN_EMAILS allowlist.
+            if (!user.isEmailVerified()) {
+                user.setPassword(passwordEncoder.encode(UUID.randomUUID().toString()));
+                user.setEmailVerified(true);
+                user.setFailedAttempts(0);
+                user.setLockoutTime(null);
+                if (isAdminEmail(email)) {
+                    user.setRole("ADMIN");
+                }
+                user = userRepository.save(user);
+            }
+        } else {
+            String role = isAdminEmail(email) ? "ADMIN" : "USER";
+            String baseUsername = (identity.name() != null && !identity.name().isBlank())
+                    ? identity.name().replaceAll("[^a-zA-Z0-9_]", "_").toLowerCase()
+                    : email.split("@")[0].replaceAll("[^a-zA-Z0-9_]", "_");
+            String username = baseUsername + "_" + (int) (Math.random() * 10000);
 
-                    User newUser = User.builder()
-                            .username(username)
-                            .email(email)
-                            .password(passwordEncoder.encode(UUID.randomUUID().toString()))
-                            .role(role)
-                            .enabled(true)
-                            .emailVerified(true)
-                            .failedAttempts(0)
-                            .build();
-                    return userRepository.save(newUser);
-                });
-
-        if (!user.isEnabled()) {
-            throw new BadCredentialsException("Account is disabled. Please contact support.");
+            User newUser = User.builder()
+                    .username(username)
+                    .email(email)
+                    .password(passwordEncoder.encode(UUID.randomUUID().toString()))
+                    .role(role)
+                    .enabled(true)
+                    .emailVerified(true)
+                    .failedAttempts(0)
+                    .build();
+            user = userRepository.save(newUser);
         }
 
         // Auto-provision Customer profile upon Google Login for customer accounts
@@ -196,7 +216,7 @@ public class AuthService {
 
         UserDetails details = customUserDetailsService.loadUserByUsername(user.getEmail());
         String accessToken = jwtService.generateToken(details);
-        String refreshToken = jwtService.generateRefreshToken(details);
+        String refreshToken = issueAndRegisterRefreshToken(details, null);
 
         AuthResponse response = AuthResponse.builder()
                 .accessToken(accessToken)
@@ -214,7 +234,13 @@ public class AuthService {
             throw new IllegalArgumentException("Refresh token is required");
         }
 
-        String username = jwtService.extractUsername(refreshToken);
+        final String username;
+        try {
+            username = jwtService.extractUsername(refreshToken);
+        } catch (JwtException ex) {
+            throw new BadCredentialsException("Expired or invalid refresh token");
+        }
+
         if (username == null) {
             throw new BadCredentialsException("Invalid refresh token");
         }
@@ -229,16 +255,29 @@ public class AuthService {
             throw new LockedException("Account is locked. Please contact support.");
         }
 
-        if (!jwtService.isRefreshTokenValid(refreshToken, userDetails)) {
+        final boolean valid;
+        try {
+            valid = jwtService.isRefreshTokenValid(refreshToken, userDetails);
+        } catch (JwtException ex) {
             throw new BadCredentialsException("Expired or invalid refresh token");
         }
 
-        String newAccessToken = jwtService.generateToken(userDetails);
-        String newRefreshToken = jwtService.generateRefreshToken(userDetails);
+        if (!valid) {
+            throw new BadCredentialsException("Expired or invalid refresh token");
+        }
 
-        User user = userRepository.findByUsername(username)
-                .or(() -> userRepository.findByEmail(username))
-                .orElse(null);
+        // AUD-011: Enforce server-side revocation & single-use rotation with reuse detection
+        String tokenId = safeExtractTokenId(refreshToken);
+        String familyId = safeExtractTokenFamily(refreshToken, tokenId);
+        Instant expiresAt = safeExtractExpiration(refreshToken);
+        if (refreshTokenRegistry != null) {
+            refreshTokenRegistry.consumeForRotation(tokenId, familyId, expiresAt);
+        }
+
+        String newAccessToken = jwtService.generateToken(userDetails);
+        String newRefreshToken = issueAndRegisterRefreshToken(userDetails, familyId);
+
+        User user = resolveUserByIdentifier(username).orElse(null);
 
         String email = user != null ? user.getEmail() : userDetails.getUsername();
         String uname = user != null ? user.getUsername() : username;
@@ -255,12 +294,85 @@ public class AuthService {
         return new AuthResult(authResponse, newRefreshToken);
     }
 
+    /**
+     * AUD-011: Server-side logout revokes the presented refresh token and its session family.
+     */
+    public void logout(String refreshToken) {
+        if (refreshToken == null || refreshToken.isBlank() || refreshTokenRegistry == null) {
+            return;
+        }
+        String tokenId = safeExtractTokenId(refreshToken);
+        String familyId = safeExtractTokenFamily(refreshToken, tokenId);
+        Instant expiresAt = safeExtractExpiration(refreshToken);
+        refreshTokenRegistry.revoke(tokenId, familyId, expiresAt);
+    }
+
+    private String issueAndRegisterRefreshToken(UserDetails userDetails, String familyId) {
+        String token = (familyId != null)
+                ? jwtService.generateRefreshToken(userDetails, familyId)
+                : jwtService.generateRefreshToken(userDetails);
+        if (refreshTokenRegistry != null && token != null && !token.isBlank()) {
+            String tokenId = safeExtractTokenId(token);
+            String resolvedFamily = safeExtractTokenFamily(token, tokenId);
+            Instant expiresAt = safeExtractExpiration(token);
+            refreshTokenRegistry.register(tokenId, resolvedFamily, expiresAt);
+        }
+        return token;
+    }
+
+    private String safeExtractTokenId(String token) {
+        try {
+            String jti = jwtService.extractTokenId(token);
+            if (jti != null && !jti.isBlank()) {
+                return jti;
+            }
+        } catch (Exception ignored) {
+            // Fall back to SHA-256 fingerprint for malformed/legacy/mocked tokens
+        }
+        return RefreshTokenRegistry.fingerprint(token);
+    }
+
+    private String safeExtractTokenFamily(String token, String fallbackId) {
+        try {
+            String family = jwtService.extractTokenFamily(token);
+            if (family != null && !family.isBlank()) {
+                return family;
+            }
+        } catch (Exception ignored) {
+            // Fall back to tokenId
+        }
+        return fallbackId;
+    }
+
+    private Instant safeExtractExpiration(String token) {
+        try {
+            return jwtService.extractExpirationInstant(token);
+        } catch (Exception ignored) {
+            return null;
+        }
+    }
+
+    /**
+     * AUD-004: Resolve email-shaped identifiers by email first to prevent username/email
+     * namespace collisions.
+     */
+    private Optional<User> resolveUserByIdentifier(String identifier) {
+        if (identifier.contains("@")) {
+            String normalizedEmail = identifier.toLowerCase();
+            return userRepository.findByEmail(normalizedEmail)
+                    .or(() -> userRepository.findByUsername(identifier));
+        }
+        return userRepository.findByUsername(identifier)
+                .or(() -> userRepository.findByEmail(identifier));
+    }
+
     private boolean isAdminEmail(String email) {
         if (adminEmails == null || adminEmails.isBlank()) {
             return false;
         }
         return Arrays.stream(adminEmails.split(","))
                 .map(String::trim)
+                .filter(s -> !s.isEmpty())
                 .anyMatch(admin -> admin.equalsIgnoreCase(email));
     }
 }

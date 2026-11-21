@@ -1,5 +1,6 @@
 package com.varellion.store.cart.dto;
 
+import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -19,5 +20,6 @@ public class UpdateCartItemRequest {
 
     @NotNull(message = "Quantity is required")
     @Min(value = 0, message = "Quantity cannot be negative")
+    @Max(value = 99, message = "Quantity cannot exceed 99")
     private Integer quantity;
 }

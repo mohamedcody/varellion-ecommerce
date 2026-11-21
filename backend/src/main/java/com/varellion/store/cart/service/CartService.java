@@ -71,7 +71,7 @@ public class CartService {
 
         if (existingItemOpt.isPresent()) {
             CartItem existingItem = existingItemOpt.get();
-            int newQuantity = Math.min(existingItem.getQuantity() + request.getQuantity(), availableStock);
+            int newQuantity = (int) Math.min((long) existingItem.getQuantity() + request.getQuantity(), availableStock);
             existingItem.setQuantity(newQuantity);
         } else {
             int initialQuantity = Math.min(request.getQuantity(), availableStock);
@@ -104,7 +104,14 @@ public class CartService {
         if (newQuantity <= 0) {
             cart.getItems().remove(item);
         } else {
-            int availableStock = calculateAvailableStock(item.getProduct());
+            Product product = item.getProduct();
+            if (Boolean.FALSE.equals(product.getIsActive())) {
+                throw new IllegalArgumentException("المنتج غير متاح حالياً");
+            }
+            int availableStock = calculateAvailableStock(product);
+            if (availableStock <= 0) {
+                throw new IllegalArgumentException("المنتج غير متوفر حالياً بالمخزون");
+            }
             item.setQuantity(Math.min(newQuantity, availableStock));
         }
 
@@ -170,7 +177,7 @@ public class CartService {
 
                 if (existingItemOpt.isPresent()) {
                     CartItem existingItem = existingItemOpt.get();
-                    int combined = Math.min(existingItem.getQuantity() + guestItem.getQuantity(), availableStock);
+                    int combined = (int) Math.min((long) existingItem.getQuantity() + guestItem.getQuantity(), availableStock);
                     existingItem.setQuantity(combined);
                 } else {
                     int initial = Math.min(guestItem.getQuantity(), availableStock);

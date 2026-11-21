@@ -232,7 +232,7 @@ class AdminProductServiceTest {
                 .images(null) // null should preserve existing images
                 .build();
 
-        when(productRepository.findByIdWithDetailsAdmin(productId)).thenReturn(Optional.of(sampleProduct));
+        when(productRepository.findByIdForUpdate(productId)).thenReturn(Optional.of(sampleProduct));
         when(productRepository.save(any(Product.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         AdminProductDto updated = adminProductService.updateProduct(productId, request);
@@ -240,6 +240,7 @@ class AdminProductServiceTest {
         assertThat(updated).isNotNull();
         assertThat(updated.getPrice()).isEqualByComparingTo("5500.00");
         assertThat(updated.getImages()).hasSize(1);
+        verify(productRepository).findByIdForUpdate(productId);
     }
 
     @Test
@@ -255,7 +256,7 @@ class AdminProductServiceTest {
                 .nameEn("Watch")
                 .build();
 
-        when(productRepository.findByIdWithDetailsAdmin(productId)).thenReturn(Optional.of(sampleProduct));
+        when(productRepository.findByIdForUpdate(productId)).thenReturn(Optional.of(sampleProduct));
 
         assertThatThrownBy(() -> adminProductService.updateProduct(productId, request))
                 .isInstanceOf(BusinessException.class)
@@ -271,7 +272,7 @@ class AdminProductServiceTest {
                 .sku("VAR-WAT-EXISTING")
                 .build();
 
-        when(productRepository.findByIdWithDetailsAdmin(productId)).thenReturn(Optional.of(sampleProduct));
+        when(productRepository.findByIdForUpdate(productId)).thenReturn(Optional.of(sampleProduct));
         when(productRepository.existsBySkuIgnoreCase("VAR-WAT-EXISTING")).thenReturn(true);
 
         assertThatThrownBy(() -> adminProductService.updateProduct(productId, request))
@@ -283,7 +284,7 @@ class AdminProductServiceTest {
     @Test
     @DisplayName("toggleProductStatus: Successfully toggles status to false and true")
     void toggleProductStatus_Success() {
-        when(productRepository.findById(productId)).thenReturn(Optional.of(sampleProduct));
+        when(productRepository.findByIdForUpdate(productId)).thenReturn(Optional.of(sampleProduct));
         when(productRepository.save(any(Product.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         AdminProductDto deactivated = adminProductService.toggleProductStatus(productId, false);
@@ -291,13 +292,14 @@ class AdminProductServiceTest {
 
         AdminProductDto reactivated = adminProductService.toggleProductStatus(productId, true);
         assertThat(reactivated.getIsActive()).isTrue();
+        verify(productRepository, times(2)).findByIdForUpdate(productId);
     }
 
     @Test
     @DisplayName("toggleProductStatus: Throws BusinessException 400 when activating product with zero price")
     void toggleProductStatus_ZeroPriceGuard() {
         sampleProduct.setPrice(BigDecimal.ZERO);
-        when(productRepository.findById(productId)).thenReturn(Optional.of(sampleProduct));
+        when(productRepository.findByIdForUpdate(productId)).thenReturn(Optional.of(sampleProduct));
 
         assertThatThrownBy(() -> adminProductService.toggleProductStatus(productId, true))
                 .isInstanceOf(BusinessException.class)
@@ -308,7 +310,7 @@ class AdminProductServiceTest {
     @Test
     @DisplayName("deleteProduct: Permanently hard-deletes product when no order history exists")
     void deleteProduct_HardDelete_WhenNoOrderHistory() {
-        when(productRepository.findById(productId)).thenReturn(Optional.of(sampleProduct));
+        when(productRepository.findByIdForUpdate(productId)).thenReturn(Optional.of(sampleProduct));
         when(orderItemRepository.existsByProductId(productId)).thenReturn(false);
 
         String message = adminProductService.deleteProduct(productId);
@@ -321,7 +323,7 @@ class AdminProductServiceTest {
     @Test
     @DisplayName("deleteProduct: Soft-deletes (archives) product when order history exists")
     void deleteProduct_SoftDelete_WhenOrderHistoryExists() {
-        when(productRepository.findById(productId)).thenReturn(Optional.of(sampleProduct));
+        when(productRepository.findByIdForUpdate(productId)).thenReturn(Optional.of(sampleProduct));
         when(orderItemRepository.existsByProductId(productId)).thenReturn(true);
 
         String message = adminProductService.deleteProduct(productId);

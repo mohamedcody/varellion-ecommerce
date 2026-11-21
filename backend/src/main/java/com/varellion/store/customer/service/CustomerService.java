@@ -170,6 +170,11 @@ public class CustomerService {
     }
 
     private User findUser(String usernameOrEmail) {
+        if (usernameOrEmail != null && usernameOrEmail.contains("@")) {
+            return userRepository.findByEmail(usernameOrEmail.toLowerCase())
+                    .or(() -> userRepository.findByUsername(usernameOrEmail))
+                    .orElseThrow(() -> new ResourceNotFoundException("User not found: " + usernameOrEmail));
+        }
         return userRepository.findByUsername(usernameOrEmail)
                 .or(() -> userRepository.findByEmail(usernameOrEmail))
                 .orElseThrow(() -> new ResourceNotFoundException("User not found: " + usernameOrEmail));

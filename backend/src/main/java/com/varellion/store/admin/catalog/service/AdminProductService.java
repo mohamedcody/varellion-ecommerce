@@ -171,12 +171,13 @@ public class AdminProductService {
     public AdminProductDto updateProduct(UUID productId, UpdateProductRequest request) {
         log.info("Updating product ID: {}", productId);
 
-        Product product = productRepository.findByIdWithDetailsAdmin(productId)
+        Product product = productRepository.findByIdForUpdate(productId)
                 .orElseThrow(() -> new ResourceNotFoundException("المنتج المطلوب غير موجود: " + productId));
 
         // 1. Verify SKU uniqueness if changed
         String cleanSku = request.getSku().trim().toUpperCase();
-        if (!product.getSku().equalsIgnoreCase(cleanSku) && productRepository.existsBySkuIgnoreCase(cleanSku)) {
+        if ((product.getSku() == null || !product.getSku().equalsIgnoreCase(cleanSku))
+                && productRepository.existsBySkuIgnoreCase(cleanSku)) {
             throw new BusinessException("رمز المنتج (SKU) '" + cleanSku + "' مسجل بالفعل لمنتج آخر", HttpStatus.CONFLICT);
         }
 
@@ -241,7 +242,7 @@ public class AdminProductService {
     public AdminProductDto toggleProductStatus(UUID productId, boolean isActive) {
         log.info("Toggling product ID: {} status to: {}", productId, isActive);
 
-        Product product = productRepository.findById(productId)
+        Product product = productRepository.findByIdForUpdate(productId)
                 .orElseThrow(() -> new ResourceNotFoundException("المنتج المطلوب غير موجود: " + productId));
 
         if (isActive && (product.getPrice() == null || product.getPrice().compareTo(BigDecimal.ZERO) <= 0)) {
@@ -260,7 +261,7 @@ public class AdminProductService {
     public String deleteProduct(UUID productId) {
         log.info("Attempting deletion of product ID: {}", productId);
 
-        Product product = productRepository.findById(productId)
+        Product product = productRepository.findByIdForUpdate(productId)
                 .orElseThrow(() -> new ResourceNotFoundException("المنتج المطلوب غير موجود: " + productId));
 
         boolean hasOrderHistory = orderItemRepository.existsByProductId(productId);

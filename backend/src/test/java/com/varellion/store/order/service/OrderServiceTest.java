@@ -139,7 +139,11 @@ class OrderServiceTest {
 
         assertThat(dto).isNotNull();
         assertThat(dto.getOrderNumber()).isEqualTo("VAR-20261028-0001");
-        assertThat(dto.getCustomerName()).isEqualTo("أحمد محمود");
+        // AUD-014: Public tracking redacts sensitive PII while retaining order status & governorate
+        assertThat(dto.getCustomerName()).isEqualTo("أحمد ***");
+        assertThat(dto.getCustomerPhone()).isEqualTo("010****5678");
+        assertThat(dto.getShippingDetailedAddress()).isEqualTo("محمي لحماية الخصوصية");
+        assertThat(dto.getCustomerNotes()).isNull();
         assertThat(dto.getOrderStatus()).isEqualTo(OrderStatus.SHIPPED);
         assertThat(dto.getStatusDisplayAr()).isEqualTo("مع مندوب التوصيل");
         assertThat(dto.getItems()).hasSize(1);
@@ -169,6 +173,9 @@ class OrderServiceTest {
 
         assertThat(dto).isNotNull();
         assertThat(dto.getOrderNumber()).isEqualTo("VAR-20261028-0001");
+        // AUD-014: Also verify +200 and 00200 Egyptian international variants normalize cleanly
+        assertThat(OrderService.normalizeEgyptianPhone("+2001012345678")).isEqualTo("01012345678");
+        assertThat(OrderService.normalizeEgyptianPhone("002001012345678")).isEqualTo("01012345678");
     }
 
     @Test
@@ -804,8 +811,32 @@ class OrderServiceTest {
     }
 
     @Test
-    @DisplayName("createOrder: Preserves non-COD payment method in DTO and admin notes")
-    void createOrder_PaymentMethodCard_ReflectedInDtoAndAdminNotes() {
+    @DisplayName("createOrder: Rejects non-COD payment methods with 400 BusinessException (AUD-009)")
+    void createOrder_NonCodPaymentMethod_ThrowsBadRequest() {
+        UUID prodId = UUID.randomUUID();
+        CreateOrderRequest request = CreateOrderRequest.builder()
+                .customerName("أحمد محمود")
+                .customerPhone("01012345678")
+                .shippingGovernorate("القاهرة")
+                .shippingCityArea("المعادي")
+                .shippingDetailedAddress("شارع 9")
+                .paymentMethod("CARD")
+                .items(List.of(new CreateOrderRequest.CreateOrderItemRequest(prodId, 1)))
+                .build();
+
+        assertThatThrownBy(() -> orderService.createOrder("test@varellion.com", request))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining("CASH_ON_DELIVERY")
+                .extracting(ex -> ((BusinessException) ex).getStatus())
+                .isEqualTo(org.springframework.http.HttpStatus.BAD_REQUEST);
+
+        verify(orderRepository, never()).save(any(Order.class));
+        verify(productRepository, never()).findByIdForUpdate(any());
+    }
+
+    @Test
+    @DisplayName("createOrder: Accepts CASH_ON_DELIVERY without storing payment metadata in adminNotes (AUD-009)")
+    void createOrder_CashOnDelivery_SucceedsWithoutPollutingAdminNotes() {
         UUID prodId = UUID.randomUUID();
         Product mockProduct = Product.builder()
                 .productId(prodId)
@@ -823,7 +854,7 @@ class OrderServiceTest {
                 .shippingGovernorate("القاهرة")
                 .shippingCityArea("المعادي")
                 .shippingDetailedAddress("شارع 9")
-                .paymentMethod("CARD")
+                .paymentMethod("CASH_ON_DELIVERY")
                 .items(List.of(new CreateOrderRequest.CreateOrderItemRequest(prodId, 1)))
                 .build();
 
@@ -835,12 +866,13 @@ class OrderServiceTest {
                 .thenAnswer(invocation -> {
                     Order o = invocation.getArgument(0);
                     o.setOrderId(UUID.randomUUID());
+                    assertThat(o.getAdminNotes()).isNull();
                     return o;
                 });
 
         OrderResponseDto dto = orderService.createOrder("test@varellion.com", request);
 
-        assertThat(dto.getPaymentMethod()).isEqualTo("CARD");
+        assertThat(dto.getPaymentMethod()).isEqualTo("CASH_ON_DELIVERY");
     }
 
     @Test

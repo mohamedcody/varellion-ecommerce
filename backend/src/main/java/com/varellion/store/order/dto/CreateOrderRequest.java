@@ -4,6 +4,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Positive;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -40,6 +41,10 @@ public class CreateOrderRequest {
     private String alternativePhone;
 
     @Builder.Default
+    @Pattern(
+            regexp = "^(?i)CASH_ON_DELIVERY$",
+            message = "الدفع عند الاستلام (CASH_ON_DELIVERY) هو وسيلة الدفع المتاحة حالياً فقط"
+    )
     private String paymentMethod = "CASH_ON_DELIVERY";
 
     private String customerNotes;

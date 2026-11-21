@@ -11,12 +11,14 @@ import com.varellion.store.security.repository.UserRepository;
 import com.varellion.store.security.service.AuthService;
 import com.varellion.store.security.service.CustomUserDetailsService;
 import com.varellion.store.security.service.GoogleTokenVerifier;
+import com.varellion.store.security.service.RefreshTokenRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.LockedException;
@@ -57,6 +59,9 @@ class AuthServiceTest {
     @Mock
     private CustomerService customerService;
 
+    @Spy
+    private RefreshTokenRegistry refreshTokenRegistry = new RefreshTokenRegistry();
+
     @InjectMocks
     private AuthService authService;
 
@@ -88,7 +93,6 @@ class AuthServiceTest {
     @Test
     @DisplayName("Should successfully authenticate and return tokens on valid credentials")
     void testSuccessfulLogin() {
-        when(userRepository.findByUsername("test@varellion.com")).thenReturn(Optional.empty());
         when(userRepository.findByEmail("test@varellion.com")).thenReturn(Optional.of(testUser));
         when(passwordEncoder.matches("correctPassword", testUser.getPassword())).thenReturn(true);
         when(customUserDetailsService.loadUserByUsername(testUser.getEmail())).thenReturn(userDetails);
@@ -110,7 +114,6 @@ class AuthServiceTest {
     @DisplayName("Should NOT auto-provision customer profile when admin logs in")
     void testAdminLoginDoesNotAutoProvisionCustomer() {
         testUser.setRole("ADMIN");
-        when(userRepository.findByUsername("test@varellion.com")).thenReturn(Optional.empty());
         when(userRepository.findByEmail("test@varellion.com")).thenReturn(Optional.of(testUser));
         when(passwordEncoder.matches("correctPassword", testUser.getPassword())).thenReturn(true);
         when(customUserDetailsService.loadUserByUsername(testUser.getEmail())).thenReturn(userDetails);
@@ -127,7 +130,6 @@ class AuthServiceTest {
     @Test
     @DisplayName("Should increment failedAttempts and throw BadCredentialsException on wrong password")
     void testFailedLoginAttempt() {
-        when(userRepository.findByUsername("test@varellion.com")).thenReturn(Optional.empty());
         when(userRepository.findByEmail("test@varellion.com")).thenReturn(Optional.of(testUser));
         when(passwordEncoder.matches("wrongPassword", testUser.getPassword())).thenReturn(false);
 
@@ -145,7 +147,6 @@ class AuthServiceTest {
     @DisplayName("Should lock account for 15 minutes when reaching 5 failed attempts")
     void testAccountLockoutAfterFiveAttempts() {
         testUser.setFailedAttempts(4);
-        when(userRepository.findByUsername("test@varellion.com")).thenReturn(Optional.empty());
         when(userRepository.findByEmail("test@varellion.com")).thenReturn(Optional.of(testUser));
         when(passwordEncoder.matches("wrongPassword", testUser.getPassword())).thenReturn(false);
 
@@ -165,7 +166,6 @@ class AuthServiceTest {
     @DisplayName("Should block login if account is currently locked")
     void testBlockedLoginWhenLocked() {
         testUser.setLockoutTime(LocalDateTime.now().plusMinutes(10));
-        when(userRepository.findByUsername("test@varellion.com")).thenReturn(Optional.empty());
         when(userRepository.findByEmail("test@varellion.com")).thenReturn(Optional.of(testUser));
 
         LoginRequest request = new LoginRequest("test@varellion.com", "anyPassword");
@@ -292,8 +292,7 @@ class AuthServiceTest {
         when(customUserDetailsService.loadUserByUsername("test@varellion.com")).thenReturn(userDetails);
         when(jwtService.isRefreshTokenValid("valid-refresh-token", userDetails)).thenReturn(true);
         when(jwtService.generateToken(userDetails)).thenReturn("new-access-token");
-        when(jwtService.generateRefreshToken(userDetails)).thenReturn("new-refresh-token");
-        when(userRepository.findByUsername("test@varellion.com")).thenReturn(Optional.empty());
+        when(jwtService.generateRefreshToken(eq(userDetails), anyString())).thenReturn("new-refresh-token");
         when(userRepository.findByEmail("test@varellion.com")).thenReturn(Optional.of(testUser));
 
         AuthResult result = authService.refreshToken("valid-refresh-token");
@@ -380,5 +379,114 @@ class AuthServiceTest {
 
         verify(jwtService, never()).generateToken(any());
         verify(jwtService, never()).generateRefreshToken(any());
+    }
+
+    @Test
+    @DisplayName("AUD-004: Register rejects usernames containing '@' to prevent email namespace collision")
+    void testRegisterRejectsAtSymbolInUsername() {
+        RegisterRequest request = new RegisterRequest("victim@varellion.com", "attacker@evil.com", "password123");
+
+        assertThatThrownBy(() -> authService.register(request))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("@");
+
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("AUD-004: Google OAuth invalidates unverified pre-registered password and applies ADMIN allowlist")
+    void testGoogleLoginRotatesPasswordOnPreRegisteredUnverifiedAccount() {
+        User preRegistered = User.builder()
+                .id(99L)
+                .email("admin@varellion.com")
+                .username("attacker_squat")
+                .password("$2a$10$attackerPasswordHash")
+                .role("USER")
+                .enabled(true)
+                .emailVerified(false)
+                .failedAttempts(3)
+                .build();
+
+        com.varellion.store.security.dto.GoogleIdentity identity =
+                new com.varellion.store.security.dto.GoogleIdentity("google-sub-admin", "admin@varellion.com", "Real Admin");
+
+        when(googleTokenVerifier.verify("valid-admin-token")).thenReturn(identity);
+        when(userRepository.findByEmail("admin@varellion.com")).thenReturn(Optional.of(preRegistered));
+        when(passwordEncoder.encode(anyString())).thenReturn("$2a$10$rotatedUnknowableHash");
+        when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(customUserDetailsService.loadUserByUsername("admin@varellion.com")).thenReturn(userDetails);
+        when(jwtService.generateToken(userDetails)).thenReturn("admin-access");
+        when(jwtService.generateRefreshToken(userDetails)).thenReturn("admin-refresh");
+
+        AuthResult result = authService.googleLogin(new com.varellion.store.security.dto.GoogleLoginRequest("valid-admin-token"));
+
+        assertThat(preRegistered.getPassword()).isEqualTo("$2a$10$rotatedUnknowableHash");
+        assertThat(preRegistered.isEmailVerified()).isTrue();
+        assertThat(preRegistered.getRole()).isEqualTo("ADMIN");
+        assertThat(preRegistered.getFailedAttempts()).isEqualTo(0);
+        assertThat(result.response().getRole()).isEqualTo("ADMIN");
+        verify(userRepository).save(preRegistered);
+    }
+
+    @Test
+    @DisplayName("AUD-010: Empty ADMIN_EMAILS never grants ADMIN role even for admin@varellion.com")
+    void testEmptyAdminEmailsNeverGrantsDefaultAdmin() {
+        ReflectionTestUtils.setField(authService, "adminEmails", "");
+        com.varellion.store.security.dto.GoogleIdentity identity =
+                new com.varellion.store.security.dto.GoogleIdentity("sub-1", "admin@varellion.com", "Attempted Admin");
+
+        when(googleTokenVerifier.verify("tok")).thenReturn(identity);
+        when(userRepository.findByEmail("admin@varellion.com")).thenReturn(Optional.empty());
+        when(passwordEncoder.encode(anyString())).thenReturn("$2a$10$hash");
+        when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(customUserDetailsService.loadUserByUsername("admin@varellion.com")).thenReturn(userDetails);
+        when(jwtService.generateToken(userDetails)).thenReturn("a");
+        when(jwtService.generateRefreshToken(userDetails)).thenReturn("r");
+
+        AuthResult result = authService.googleLogin(new com.varellion.store.security.dto.GoogleLoginRequest("tok"));
+
+        assertThat(result.response().getRole()).isEqualTo("USER");
+    }
+
+    @Test
+    @DisplayName("AUD-011: Logout revokes refresh token server-side so replay fails with BadCredentialsException")
+    void testLogoutRevokesRefreshToken() {
+        when(jwtService.extractUsername("revoked-token")).thenReturn("test@varellion.com");
+        when(customUserDetailsService.loadUserByUsername("test@varellion.com")).thenReturn(userDetails);
+        when(jwtService.isRefreshTokenValid("revoked-token", userDetails)).thenReturn(true);
+
+        authService.logout("revoked-token");
+
+        assertThatThrownBy(() -> authService.refreshToken("revoked-token"))
+                .isInstanceOf(BadCredentialsException.class)
+                .hasMessageContaining("revoked");
+    }
+
+    @Test
+    @DisplayName("AUD-011: Replaying an already-rotated refresh token revokes the entire session family")
+    void testRefreshTokenReuseDetectionRevokesFamily() {
+        when(jwtService.extractUsername(anyString())).thenReturn("test@varellion.com");
+        when(jwtService.extractTokenId("rt-1")).thenReturn("jti-1");
+        when(jwtService.extractTokenId("rt-2")).thenReturn("jti-2");
+        when(jwtService.extractTokenFamily(anyString())).thenReturn("fam-1");
+        when(customUserDetailsService.loadUserByUsername("test@varellion.com")).thenReturn(userDetails);
+        when(jwtService.isRefreshTokenValid(anyString(), eq(userDetails))).thenReturn(true);
+        when(jwtService.generateToken(userDetails)).thenReturn("acc-2");
+        when(jwtService.generateRefreshToken(eq(userDetails), eq("fam-1"))).thenReturn("rt-2");
+        when(userRepository.findByEmail("test@varellion.com")).thenReturn(Optional.of(testUser));
+
+        // First legitimate refresh rotates rt-1 -> rt-2
+        AuthResult rotated = authService.refreshToken("rt-1");
+        assertThat(rotated.refreshToken()).isEqualTo("rt-2");
+
+        // Replay of already-rotated rt-1 must fail and revoke fam-1
+        assertThatThrownBy(() -> authService.refreshToken("rt-1"))
+                .isInstanceOf(BadCredentialsException.class)
+                .hasMessageContaining("reuse");
+
+        // Subsequent use of rt-2 from the compromised family must also fail
+        assertThatThrownBy(() -> authService.refreshToken("rt-2"))
+                .isInstanceOf(BadCredentialsException.class)
+                .hasMessageContaining("revoked");
     }
 }

@@ -209,7 +209,8 @@ class AuthControllerTest {
     @Test
     @DisplayName("SEC-02: Logout clears the refresh token cookie with Max-Age 0")
     void logout_ShouldClearHttpOnlyCookieWithMaxAgeZero() throws Exception {
-        mockMvc.perform(post("/api/auth/logout"))
+        mockMvc.perform(post("/api/auth/logout")
+                        .cookie(new Cookie("refresh_token", "active-refresh-token")))
                 .andExpect(status().isOk())
                 .andExpect(header().exists("Set-Cookie"))
                 .andExpect(header().string("Set-Cookie", containsString("refresh_token=")))
@@ -218,6 +219,8 @@ class AuthControllerTest {
                 .andExpect(header().string("Set-Cookie", containsString("Path=/")))
                 .andExpect(header().string("Set-Cookie", containsString("SameSite=Lax")))
                 .andExpect(jsonPath("$.message").value("Logged out successfully"));
+
+        verify(authService).logout("active-refresh-token");
     }
 
     @Test

@@ -267,4 +267,63 @@ class CartServiceTest {
                 .findFirst().orElseThrow();
         assertThat(newItem.getQuantity()).isEqualTo(2);
     }
+
+    @Test
+    @DisplayName("AUD-013: addItem clamps safely without 32-bit int overflow when adding Integer.MAX_VALUE")
+    void addItem_PreventsIntegerOverflow() {
+        CartItem existingItem = CartItem.builder()
+                .cartItemId(UUID.randomUUID())
+                .cart(testCart)
+                .product(testProduct)
+                .quantity(2)
+                .build();
+        testCart.getItems().add(existingItem);
+
+        when(customerService.getOrCreateCustomerForUser("user@test.com")).thenReturn(testCustomer);
+        when(cartRepository.findByCustomer(testCustomer)).thenReturn(Optional.of(testCart));
+        when(productRepository.findByProductId(productId)).thenReturn(Optional.of(testProduct));
+        when(cartRepository.save(any(Cart.class))).thenReturn(testCart);
+
+        AddToCartRequest overflowReq = AddToCartRequest.builder()
+                .productId(productId)
+                .quantity(Integer.MAX_VALUE)
+                .build();
+
+        cartService.addItem("user@test.com", overflowReq);
+
+        assertThat(existingItem.getQuantity()).isEqualTo(8);
+    }
+
+    @Test
+    @DisplayName("AUD-013: updateItemQuantity rejects inactive product and zero available stock instead of writing 0")
+    void updateItemQuantity_RejectsInactiveAndOutOfStockProducts() {
+        UUID cartItemId = UUID.randomUUID();
+        CartItem item = CartItem.builder()
+                .cartItemId(cartItemId)
+                .cart(testCart)
+                .product(testProduct)
+                .quantity(1)
+                .build();
+        testCart.getItems().add(item);
+
+        when(customerService.getOrCreateCustomerForUser("user@test.com")).thenReturn(testCustomer);
+        when(cartRepository.findByCustomer(testCustomer)).thenReturn(Optional.of(testCart));
+
+        // 1. Deactivated product
+        testProduct.setIsActive(false);
+        org.assertj.core.api.Assertions.assertThatThrownBy(
+                () -> cartService.updateItemQuantity("user@test.com", cartItemId, 2))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("غير متاح");
+
+        // 2. Active product whose stock dropped to 0
+        testProduct.setIsActive(true);
+        testProduct.setStockQuantity(2);
+        testProduct.setReservedQuantity(2);
+        org.assertj.core.api.Assertions.assertThatThrownBy(
+                () -> cartService.updateItemQuantity("user@test.com", cartItemId, 2))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("المخزون");
+        assertThat(item.getQuantity()).isEqualTo(1); // Must NOT become 0
+    }
 }

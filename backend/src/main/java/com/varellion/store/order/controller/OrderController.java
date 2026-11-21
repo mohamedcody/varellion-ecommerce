@@ -32,12 +32,14 @@ public class OrderController {
      public ResponseEntity<ApiResponse<OrderResponseDto>> createOrder(
                    @AuthenticationPrincipal UserDetails userDetails,
                    @RequestHeader (value = "Idempotency-Key" , required = false ) String idempotencyKey,
-                   @Valid @RequestBody CreateOrderRequest request 
-        
+                   @Valid @RequestBody CreateOrderRequest request
      ){
+         String userScope = userDetails.getUsername();
          OrderResponseDto created = idempotencyService.execute(
+             userScope,
              idempotencyKey,
-             () -> orderService.createOrder(userDetails.getUsername(), request)
+             request,
+             () -> orderService.createOrder(userScope, request)
          );
          return ResponseEntity.status(HttpStatus.CREATED)
              .body(ApiResponse.success("تم تأكيد وتسجيل طلبك بنجاح", created));
