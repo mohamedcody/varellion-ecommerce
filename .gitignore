@@ -98,3 +98,4 @@ logs/
 *.db
 tmp/
 temp/
+agent-skills/

@@ -1,0 +1,199 @@
+name: VARELLION CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main ]
+    tags: [ 'v*.*.*' ]
+  pull_request:
+    branches: [ main ]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+  packages: write
+  security-events: write
+
+jobs:
+  # ============================================================================
+  # 1. FRONTEND QUALITY GATES (Lint, Type-Check, Unit Tests)
+  # ============================================================================
+  frontend-ci:
+    name: Frontend Quality Gate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Setup Node.js 20.x
+        uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5a1 # v4.1.0
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install Frontend Dependencies
+        working-directory: ./frontend
+        run: npm ci
+
+      - name: Run Frontend Tests (Vitest)
+        working-directory: ./frontend
+        run: npm run test
+
+      - name: Build Next.js Production Bundle
+        working-directory: ./frontend
+        run: npm run build
+
+  # ============================================================================
+  # 2. BACKEND QUALITY GATES (Compile, Unit & Integration Tests, Packaging)
+  # ============================================================================
+  backend-ci:
+    name: Backend Quality Gate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Setup Java 21 (Temurin)
+        uses: actions/setup-java@8df1039502a140fb607b34f18779f5a6b829338d # v4.5.0
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+          cache: 'maven'
+
+      - name: Run Maven Tests
+        working-directory: ./backend
+        run: mvn clean test -B
+
+      - name: Build Backend JAR
+        working-directory: ./backend
+        run: mvn package -DskipTests -B
+
+  # ============================================================================
+  # 3. SECURITY SCANNING (Secret Leaks & Dependency Audits)
+  # ============================================================================
+  security-audit:
+    name: Security & Secret Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+
+      - name: Scan Repository for Leaked Secrets (Gitleaks)
+        uses: gitleaks/gitleaks-action@f62c0733d775ea0ce0649be20d8628b030e2f5b8 # v2.3.8
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Frontend Dependency Audit
+        working-directory: ./frontend
+        run: npm audit --audit-level=high || echo "::warning::High vulnerabilities found in frontend dependencies"
+
+  # ============================================================================
+  # 4. CONTAINER BUILD & REGISTRY PUSH (GHCR)
+  # Only executes on push to main or release tags after all gates pass
+  # ============================================================================
+  build-and-push:
+    name: Build & Push Docker Images
+    needs: [frontend-ci, backend-ci, security-audit]
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v'))
+    runs-on: ubuntu-latest
+    outputs:
+      image_tag: ${{ steps.meta.outputs.tag }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Determine Docker Image Tag
+        id: meta
+        run: |
+          if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+            TAG="${GITHUB_REF_NAME}"
+          else
+            TAG="sha-${GITHUB_SHA::7}"
+          fi
+          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+          echo "IMAGE_TAG=${TAG}" >> "$GITHUB_ENV"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@b5ca514318bd6ebac0fb2aedd5d36ec1b5c232a2 # v3.10.0
+
+      - name: Login to GitHub Container Registry (GHCR)
+        uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3.3.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build & Push Backend Docker Image
+        uses: docker/build-push-action@471d1dc4e07e5cdedd4c2171150001c434f0b7a4 # v6.15.0
+        with:
+          context: ./backend
+          file: ./backend/Dockerfile
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/varellion-backend:${{ env.IMAGE_TAG }}
+            ghcr.io/${{ github.repository_owner }}/varellion-backend:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build & Push Frontend Docker Image
+        uses: docker/build-push-action@471d1dc4e07e5cdedd4c2171150001c434f0b7a4 # v6.15.0
+        with:
+          context: ./frontend
+          file: ./frontend/Dockerfile
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/varellion-frontend:${{ env.IMAGE_TAG }}
+            ghcr.io/${{ github.repository_owner }}/varellion-frontend:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # ============================================================================
+  # 5. CONTINUOUS DEPLOYMENT (SSH + Docker Compose with Healthcheck & Rollback)
+  # ============================================================================
+  deploy:
+    name: Deploy to Production Server
+    needs: [build-and-push]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Deploy via SSH to VPS
+        if: env.DEPLOY_ENABLED == 'true'
+        env:
+          DEPLOY_ENABLED: ${{ secrets.SSH_HOST != '' }}
+        uses: appleboy/ssh-action@7eaf76671a0eb5032435f30964cf737de3402a70 # v1.2.0
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT || 22 }}
+          script_stop: true
+          script: |
+            cd /opt/varellion
+            echo "Pulling latest Docker images from GHCR..."
+            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+            
+            # Backup previous working image tags for automated rollback
+            docker tag ghcr.io/${{ github.repository_owner }}/varellion-backend:latest ghcr.io/${{ github.repository_owner }}/varellion-backend:previous || true
+            docker tag ghcr.io/${{ github.repository_owner }}/varellion-frontend:latest ghcr.io/${{ github.repository_owner }}/varellion-frontend:previous || true
+
+            docker compose -f compose.prod.yml pull
+            docker compose -f compose.prod.yml up -d --remove-orphans
+
+            echo "Verifying service health..."
+            sleep 15
+            if ! docker compose -f compose.prod.yml ps | grep -q "healthy"; then
+              echo "Healthcheck failed! Triggering automatic rollback to previous images..."
+              docker tag ghcr.io/${{ github.repository_owner }}/varellion-backend:previous ghcr.io/${{ github.repository_owner }}/varellion-backend:latest
+              docker tag ghcr.io/${{ github.repository_owner }}/varellion-frontend:previous ghcr.io/${{ github.repository_owner }}/varellion-frontend:latest
+              docker compose -f compose.prod.yml up -d
+              exit 1
+            fi
+            echo "Deployment successfully verified!"
