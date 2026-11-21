@@ -39,6 +39,11 @@ target/
 .sts4-cache
 .apt_generated
 .factorypath
+*.code-workspace
+
+# References & Agent Libraries
+_references/
+agent-skills/
 
 # Logs
 *.log
