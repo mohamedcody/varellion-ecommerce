@@ -14,6 +14,9 @@ import {
   Sparkles,
   LogOut,
   ChevronDown,
+  LayoutDashboard,
+  PackageCheck,
+  Users,
 } from 'lucide-react';
 import { siteConfig } from '@/config/site';
 import { Badge } from '@/components/ui/Badge';
@@ -22,7 +25,6 @@ import { SearchDialog } from '@/components/layout/SearchDialog';
 import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
 import { cn } from '@/lib/utils';
-
 
 interface HeaderProps {
   cartItemCount?: number;
@@ -38,7 +40,8 @@ export function Header({ cartItemCount, onOpenCart }: HeaderProps) {
   const { user, isAuthenticated, logout } = useAuth();
   const [isUserMenuOpen, setIsUserMenuOpen] = React.useState(false);
   const userMenuRef = React.useRef<HTMLDivElement>(null);
-  const effectiveCartCount = cartItemCount !== undefined ? cartItemCount : totalItems;
+  const effectiveCartCount =
+    cartItemCount !== undefined ? cartItemCount : totalItems;
   const handleCartClick = onOpenCart || openCart;
 
   // Close user dropdown menu when clicking outside or pressing Escape
@@ -46,7 +49,10 @@ export function Header({ cartItemCount, onOpenCart }: HeaderProps) {
     if (!isUserMenuOpen) return;
 
     const handleClickOutside = (e: MouseEvent) => {
-      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
+      if (
+        userMenuRef.current &&
+        !userMenuRef.current.contains(e.target as Node)
+      ) {
         setIsUserMenuOpen(false);
       }
     };
@@ -89,7 +95,10 @@ export function Header({ cartItemCount, onOpenCart }: HeaderProps) {
             </span>
             <span className="hidden md:inline text-white/30">|</span>
             <span className="hidden md:inline-flex items-center gap-1.5 text-white/90">
-              <ShieldCheck className="h-3.5 w-3.5 text-gold-500" aria-hidden="true" />
+              <ShieldCheck
+                className="h-3.5 w-3.5 text-gold-500"
+                aria-hidden="true"
+              />
               <span>معاينة المنتج وفحصه قبل الاستلام والدفع عند الاستلام</span>
             </span>
           </div>
@@ -107,7 +116,10 @@ export function Header({ cartItemCount, onOpenCart }: HeaderProps) {
               <RotateCcw className="h-3 w-3 text-gold-500" aria-hidden="true" />
               <span>ضمان استبدال 14 يوماً</span>
             </span>
-            <span className="text-white/80">العملة: <strong className="text-white font-bold">ج.م (EGP)</strong></span>
+            <span className="text-white/80">
+              العملة:{' '}
+              <strong className="text-white font-bold">ج.م (EGP)</strong>
+            </span>
           </div>
         </div>
       </div>
@@ -115,7 +127,6 @@ export function Header({ cartItemCount, onOpenCart }: HeaderProps) {
       {/* 2. Main Sticky Header */}
       <header className="sticky top-0 z-40 w-full border-b border-border/80 bg-background/95 backdrop-blur-md transition-[background-color,border-color,box-shadow] duration-200">
         <div className="container mx-auto flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
-          
           {/* Right Section (in RTL): Mobile Hamburger + Brand Logo */}
           <div className="flex items-center gap-3 lg:gap-8">
             <button
@@ -147,7 +158,10 @@ export function Header({ cartItemCount, onOpenCart }: HeaderProps) {
             </Link>
 
             {/* Desktop Navigation Links */}
-            <nav className="hidden lg:flex items-center gap-6 text-sm font-semibold" aria-label="التنقل الرئيسي">
+            <nav
+              className="hidden lg:flex items-center gap-6 text-sm font-semibold"
+              aria-label="التنقل الرئيسي"
+            >
               {siteConfig.mainNav.map((item) => {
                 const isActive = pathname === item.href;
                 return (
@@ -156,7 +170,9 @@ export function Header({ cartItemCount, onOpenCart }: HeaderProps) {
                     href={item.href}
                     className={cn(
                       'relative py-1 transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm',
-                      isActive ? 'text-foreground font-bold' : 'text-foreground/75'
+                      isActive
+                        ? 'text-foreground font-bold'
+                        : 'text-foreground/75'
                     )}
                   >
                     <span>{item.titleAr}</span>
@@ -176,7 +192,6 @@ export function Header({ cartItemCount, onOpenCart }: HeaderProps) {
 
           {/* Left Section (in RTL): Search, Account, Cart */}
           <div className="flex items-center gap-1.5 sm:gap-2.5">
-            
             {/* Search Trigger Button */}
             <button
               type="button"
@@ -185,7 +200,9 @@ export function Header({ cartItemCount, onOpenCart }: HeaderProps) {
               aria-label="البحث عن منتجات VARELLION"
             >
               <Search className="h-4 w-4" aria-hidden="true" />
-              <span className="hidden md:inline text-xs">ابحث عن ساعة أو محفظة…</span>
+              <span className="hidden md:inline text-xs">
+                ابحث عن ساعة أو محفظة…
+              </span>
               <kbd className="hidden lg:inline-flex items-center rounded border border-border bg-secondary/80 px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">
                 ⌘&nbsp;K
               </kbd>
@@ -198,25 +215,28 @@ export function Header({ cartItemCount, onOpenCart }: HeaderProps) {
                   type="button"
                   onClick={() => setIsUserMenuOpen((prev) => !prev)}
                   className={cn(
-                    "flex min-h-[44px] items-center gap-2 rounded-xl px-2.5 sm:px-3 py-1.5 text-xs font-bold transition-colors cursor-pointer",
-                    "border border-border bg-card hover:bg-secondary shadow-xs",
-                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500",
-                    isUserMenuOpen && "bg-secondary border-gold-500/60 ring-2 ring-gold-500/20"
+                    'flex min-h-[44px] items-center gap-2 rounded-xl px-2.5 sm:px-3 py-1.5 text-xs font-bold transition-colors cursor-pointer',
+                    'border border-border bg-card hover:bg-secondary shadow-xs',
+                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500',
+                    isUserMenuOpen &&
+                      'bg-secondary border-gold-500/60 ring-2 ring-gold-500/20'
                   )}
                   aria-expanded={isUserMenuOpen}
                   aria-haspopup="menu"
                   aria-label={`قائمة حساب المستخدم: ${user.username}`}
                 >
                   <span className="flex h-7 w-7 items-center justify-center rounded-full bg-obsidian-950 text-gold-500 border border-gold-500/40 text-xs font-black shadow-xs shrink-0">
-                    {user.username ? user.username.charAt(0).toUpperCase() : 'V'}
+                    {user.username
+                      ? user.username.charAt(0).toUpperCase()
+                      : 'V'}
                   </span>
                   <span className="hidden md:inline-block max-w-[110px] truncate text-foreground font-semibold">
                     {user.username}
                   </span>
                   <ChevronDown
                     className={cn(
-                      "h-3.5 w-3.5 text-muted-foreground transition-transform duration-200",
-                      isUserMenuOpen && "rotate-180 text-foreground"
+                      'h-3.5 w-3.5 text-muted-foreground transition-transform duration-200',
+                      isUserMenuOpen && 'rotate-180 text-foreground'
                     )}
                     aria-hidden="true"
                   />
@@ -228,26 +248,39 @@ export function Header({ cartItemCount, onOpenCart }: HeaderProps) {
                     role="menu"
                     aria-orientation="vertical"
                     className={cn(
-                      "absolute end-0 mt-2.5 w-64 rounded-xl border border-border bg-card p-2.5 shadow-xl z-50",
-                      "animate-in fade-in-0 zoom-in-95 duration-150 text-xs space-y-1.5",
-                      "ring-1 ring-black/5"
+                      'absolute end-0 mt-2.5 w-64 rounded-xl border border-border bg-card p-2.5 shadow-xl z-50',
+                      'animate-in fade-in-0 zoom-in-95 duration-150 text-xs space-y-1.5',
+                      'ring-1 ring-black/5'
                     )}
                   >
                     {/* User Header Profile Card */}
                     <div className="flex items-center gap-3 p-2.5 rounded-lg bg-secondary/60 border border-border/60 text-start">
                       <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-obsidian-950 text-gold-500 font-serif font-black text-sm border border-gold-500/35">
-                        {user.username ? user.username.charAt(0).toUpperCase() : 'V'}
+                        {user.username
+                          ? user.username.charAt(0).toUpperCase()
+                          : 'V'}
                       </div>
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center justify-between gap-1">
-                          <p className="font-bold text-foreground text-xs truncate">{user.username}</p>
+                          <p className="font-bold text-foreground text-xs truncate">
+                            {user.username}
+                          </p>
                           {user.role === 'ADMIN' ? (
-                            <Badge variant="luxury" className="text-[9px] py-0 px-1.5 shrink-0">أدمن</Badge>
+                            <Badge
+                              variant="luxury"
+                              className="text-[9px] py-0 px-1.5 shrink-0"
+                            >
+                              أدمن
+                            </Badge>
                           ) : (
-                            <span className="text-[10px] text-gold-700 font-bold shrink-0">عميل VARELLION</span>
+                            <span className="text-[10px] text-gold-700 font-bold shrink-0">
+                              عميل VARELLION
+                            </span>
                           )}
                         </div>
-                        <p className="text-[11px] text-muted-foreground truncate mt-0.5">{user.email}</p>
+                        <p className="text-[11px] text-muted-foreground truncate mt-0.5">
+                          {user.email}
+                        </p>
                       </div>
                     </div>
 
@@ -262,8 +295,12 @@ export function Header({ cartItemCount, onOpenCart }: HeaderProps) {
                           <User className="h-4 w-4" aria-hidden="true" />
                         </div>
                         <div className="flex flex-col">
-                          <span className="text-xs font-bold">الملف الشخصي وعناويني</span>
-                          <span className="text-[10px] text-muted-foreground font-normal">إدارة العناوين والبيانات</span>
+                          <span className="text-xs font-bold">
+                            الملف الشخصي وعناويني
+                          </span>
+                          <span className="text-[10px] text-muted-foreground font-normal">
+                            إدارة العناوين والبيانات
+                          </span>
                         </div>
                       </Link>
 
@@ -278,25 +315,81 @@ export function Header({ cartItemCount, onOpenCart }: HeaderProps) {
                         </div>
                         <div className="flex flex-col">
                           <span className="text-xs font-bold">تتبع طلباتي</span>
-                          <span className="text-[10px] text-muted-foreground font-normal">متابعة شحناتك الحالية</span>
+                          <span className="text-[10px] text-muted-foreground font-normal">
+                            متابعة شحناتك الحالية
+                          </span>
                         </div>
                       </Link>
 
                       {user.role === 'ADMIN' && (
-                        <Link
-                          href="/admin"
-                          role="menuitem"
-                          onClick={() => setIsUserMenuOpen(false)}
-                          className="flex items-center justify-between px-3 py-2 rounded-lg text-foreground hover:bg-secondary font-bold transition-colors text-start"
-                        >
-                          <div className="flex items-center gap-2.5">
-                            <div className="h-7 w-7 rounded-md bg-secondary flex items-center justify-center text-foreground shrink-0">
-                              <ShieldCheck className="h-4 w-4" aria-hidden="true" />
+                        <div className="pt-1 space-y-1 border-t border-border/70 mt-1">
+                          <p className="px-3 pt-1 pb-0.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                            إدارة المتجر
+                          </p>
+
+                          <Link
+                            href="/admin/dashboard"
+                            role="menuitem"
+                            onClick={() => setIsUserMenuOpen(false)}
+                            className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-foreground hover:bg-secondary font-semibold transition-colors text-start group"
+                          >
+                            <div className="h-7 w-7 rounded-md bg-secondary flex items-center justify-center text-foreground group-hover:bg-primary group-hover:text-primary-foreground transition-colors shrink-0">
+                              <LayoutDashboard
+                                className="h-4 w-4"
+                                aria-hidden="true"
+                              />
                             </div>
-                            <span>لوحة تحكم الإدارة</span>
-                          </div>
-                          <Badge variant="luxury" className="text-[10px] py-0 px-1.5">أدمن</Badge>
-                        </Link>
+                            <div className="flex flex-col">
+                              <span className="text-xs font-bold">
+                                لوحة تحكم الإدارة
+                              </span>
+                              <span className="text-[10px] text-muted-foreground font-normal">
+                                الإحصائيات ونظرة عامة
+                              </span>
+                            </div>
+                          </Link>
+
+                          <Link
+                            href="/admin/orders"
+                            role="menuitem"
+                            onClick={() => setIsUserMenuOpen(false)}
+                            className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-foreground hover:bg-secondary font-semibold transition-colors text-start group"
+                          >
+                            <div className="h-7 w-7 rounded-md bg-gold-100 flex items-center justify-center text-gold-700 group-hover:bg-gold-500 group-hover:text-obsidian-950 transition-colors shrink-0">
+                              <PackageCheck
+                                className="h-4 w-4"
+                                aria-hidden="true"
+                              />
+                            </div>
+                            <div className="flex flex-col">
+                              <span className="text-xs font-bold">
+                                الطلبات الواردة
+                              </span>
+                              <span className="text-[10px] text-muted-foreground font-normal">
+                                متابعة وتحديث حالات الطلبات
+                              </span>
+                            </div>
+                          </Link>
+
+                          <Link
+                            href="/admin/customers"
+                            role="menuitem"
+                            onClick={() => setIsUserMenuOpen(false)}
+                            className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-foreground hover:bg-secondary font-semibold transition-colors text-start group"
+                          >
+                            <div className="h-7 w-7 rounded-md bg-secondary flex items-center justify-center text-foreground group-hover:bg-primary group-hover:text-primary-foreground transition-colors shrink-0">
+                              <Users className="h-4 w-4" aria-hidden="true" />
+                            </div>
+                            <div className="flex flex-col">
+                              <span className="text-xs font-bold">
+                                بروفايلات العملاء
+                              </span>
+                              <span className="text-[10px] text-muted-foreground font-normal">
+                                إدارة العملاء وحساباتهم
+                              </span>
+                            </div>
+                          </Link>
+                        </div>
                       )}
                     </div>
 
@@ -337,7 +430,10 @@ export function Header({ cartItemCount, onOpenCart }: HeaderProps) {
               className="relative flex min-h-[44px] items-center gap-2 rounded-lg bg-obsidian-950 text-white hover:bg-obsidian-850 px-3.5 transition-colors border border-gold-500/30 shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500 cursor-pointer"
               aria-label={`سلة المشتريات، تحتوي على ${effectiveCartCount} قطع`}
             >
-              <ShoppingBag className="h-4 w-4 text-gold-500" aria-hidden="true" />
+              <ShoppingBag
+                className="h-4 w-4 text-gold-500"
+                aria-hidden="true"
+              />
               <span className="hidden sm:inline text-xs font-bold">السلة</span>
               {effectiveCartCount > 0 ? (
                 <span className="flex h-5 w-5 items-center justify-center rounded-full bg-gold-500 text-obsidian-950 text-[11px] font-black shadow-xs animate-in zoom-in">
@@ -349,9 +445,7 @@ export function Header({ cartItemCount, onOpenCart }: HeaderProps) {
                 </span>
               )}
             </button>
-
           </div>
-
         </div>
       </header>
 

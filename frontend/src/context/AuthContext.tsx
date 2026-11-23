@@ -1,6 +1,13 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+} from 'react';
 import { AuthUser, LoginRequest, RegisterRequest, AuthResponse } from '@/types';
 import { authService } from '@/services/auth';
 import {
@@ -111,34 +118,40 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
    * Sets in-memory user and accessToken.
    * Ignores response.refreshToken (relying solely on the HttpOnly cookie set by backend).
    */
-  const login = useCallback(async (credentials: LoginRequest): Promise<AuthResponse> => {
-    const res = await authService.login(credentials);
-    setApiAccessToken(res.accessToken);
-    setAccessToken(res.accessToken);
-    setUser({
-      email: res.email,
-      username: res.username,
-      role: res.role || 'USER',
-    });
-    return res;
-  }, []);
+  const login = useCallback(
+    async (credentials: LoginRequest): Promise<AuthResponse> => {
+      const res = await authService.login(credentials);
+      setApiAccessToken(res.accessToken);
+      setAccessToken(res.accessToken);
+      setUser({
+        email: res.email,
+        username: res.username,
+        role: res.role || 'USER',
+      });
+      return res;
+    },
+    []
+  );
 
   /**
    * Register handler:
    * Backend automatically authenticates upon registration and issues tokens + HttpOnly cookie.
    * Sets in-memory user and accessToken.
    */
-  const register = useCallback(async (data: RegisterRequest): Promise<AuthResponse> => {
-    const res = await authService.register(data);
-    setApiAccessToken(res.accessToken);
-    setAccessToken(res.accessToken);
-    setUser({
-      email: res.email,
-      username: res.username,
-      role: res.role || 'USER',
-    });
-    return res;
-  }, []);
+  const register = useCallback(
+    async (data: RegisterRequest): Promise<AuthResponse> => {
+      const res = await authService.register(data);
+      setApiAccessToken(res.accessToken);
+      setAccessToken(res.accessToken);
+      setUser({
+        email: res.email,
+        username: res.username,
+        role: res.role || 'USER',
+      });
+      return res;
+    },
+    []
+  );
 
   /**
    * Google OAuth Login handler:
@@ -146,17 +159,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
    * Sets in-memory user and accessToken.
    * Ignores response.refreshToken (relying solely on the HttpOnly cookie set by backend).
    */
-  const loginWithGoogle = useCallback(async (idToken: string): Promise<AuthResponse> => {
-    const res = await authService.googleLogin(idToken);
-    setApiAccessToken(res.accessToken);
-    setAccessToken(res.accessToken);
-    setUser({
-      email: res.email,
-      username: res.username,
-      role: res.role || 'USER',
-    });
-    return res;
-  }, []);
+  const loginWithGoogle = useCallback(
+    async (idToken: string): Promise<AuthResponse> => {
+      const res = await authService.googleLogin(idToken);
+      setApiAccessToken(res.accessToken);
+      setAccessToken(res.accessToken);
+      setUser({
+        email: res.email,
+        username: res.username,
+        role: res.role || 'USER',
+      });
+      return res;
+    },
+    []
+  );
 
   /**
    * Logout handler:

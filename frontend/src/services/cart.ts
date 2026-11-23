@@ -89,7 +89,10 @@ export const cartService = {
   /**
    * Adds an item to the authenticated customer's cart
    */
-  async addItem(productId: string, quantity: number = 1): Promise<BackendCartDto> {
+  async addItem(
+    productId: string,
+    quantity: number = 1
+  ): Promise<BackendCartDto> {
     const res = await requestApi<ApiResponse<BackendCartDto>>('/cart/items', {
       method: 'POST',
       body: JSON.stringify({ productId, quantity }),
@@ -100,11 +103,17 @@ export const cartService = {
   /**
    * Updates an item's quantity in the customer's cart
    */
-  async updateQuantity(cartItemId: string, quantity: number): Promise<BackendCartDto> {
-    const res = await requestApi<ApiResponse<BackendCartDto>>(`/cart/items/${cartItemId}`, {
-      method: 'PUT',
-      body: JSON.stringify({ quantity }),
-    });
+  async updateQuantity(
+    cartItemId: string,
+    quantity: number
+  ): Promise<BackendCartDto> {
+    const res = await requestApi<ApiResponse<BackendCartDto>>(
+      `/cart/items/${cartItemId}`,
+      {
+        method: 'PUT',
+        body: JSON.stringify({ quantity }),
+      }
+    );
     return res.data;
   },
 
@@ -112,9 +121,12 @@ export const cartService = {
    * Deletes an item from the customer's cart
    */
   async removeItem(cartItemId: string): Promise<BackendCartDto> {
-    const res = await requestApi<ApiResponse<BackendCartDto>>(`/cart/items/${cartItemId}`, {
-      method: 'DELETE',
-    });
+    const res = await requestApi<ApiResponse<BackendCartDto>>(
+      `/cart/items/${cartItemId}`,
+      {
+        method: 'DELETE',
+      }
+    );
     return res.data;
   },
 

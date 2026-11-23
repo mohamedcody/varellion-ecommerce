@@ -33,7 +33,8 @@ export default function AdminOrdersPage() {
   const [statusFilter, setStatusFilter] = useState<OrderStatus | ''>('');
   const [searchInput, setSearchInput] = useState<string>('');
   const [activeSearch, setActiveSearch] = useState<string>('');
-  const [selectedOrderForUpdate, setSelectedOrderForUpdate] = useState<Order | null>(null);
+  const [selectedOrderForUpdate, setSelectedOrderForUpdate] =
+    useState<Order | null>(null);
   const [successBanner, setSuccessBanner] = useState<string | null>(null);
 
   const fetchOrders = useCallback(async () => {
@@ -48,7 +49,9 @@ export default function AdminOrdersPage() {
       });
       setData(res);
     } catch (err: any) {
-      setError(err?.message || 'فشل في تحميل قائمة الطلبات. يرجى المحاولة مرة أخرى.');
+      setError(
+        err?.message || 'فشل في تحميل قائمة الطلبات. يرجى المحاولة مرة أخرى.'
+      );
     } finally {
       setIsLoading(false);
     }
@@ -65,7 +68,9 @@ export default function AdminOrdersPage() {
   };
 
   const handleStatusChangeSuccess = (updatedOrder: Order) => {
-    setSuccessBanner(`تم تحديث حالة الطلب ${updatedOrder.orderNumber} بنجاح إلى "${updatedOrder.statusDisplayAr || updatedOrder.orderStatus}"`);
+    setSuccessBanner(
+      `تم تحديث حالة الطلب ${updatedOrder.orderNumber} بنجاح إلى "${updatedOrder.statusDisplayAr || updatedOrder.orderStatus}"`
+    );
     setTimeout(() => setSuccessBanner(null), 5000);
 
     // Update locally in list to avoid full page reload jitter
@@ -108,7 +113,10 @@ export default function AdminOrdersPage() {
             disabled={isLoading}
             className="self-start sm:self-auto gap-2"
           >
-            <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} aria-hidden="true" />
+            <RefreshCw
+              className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`}
+              aria-hidden="true"
+            />
             <span>تحديث القائمة</span>
           </Button>
         </div>
@@ -131,9 +139,15 @@ export default function AdminOrdersPage() {
 
         {/* Filters Bar */}
         <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 bg-card p-4 rounded-xl border border-border shadow-xs">
-          <form onSubmit={handleSearchSubmit} className="sm:col-span-7 flex gap-2">
+          <form
+            onSubmit={handleSearchSubmit}
+            className="sm:col-span-7 flex gap-2"
+          >
             <div className="relative flex-1">
-              <Search className="w-4 h-4 text-muted-foreground absolute right-3.5 top-1/2 -translate-y-1/2" aria-hidden="true" />
+              <Search
+                className="w-4 h-4 text-muted-foreground absolute right-3.5 top-1/2 -translate-y-1/2"
+                aria-hidden="true"
+              />
               <Input
                 type="text"
                 placeholder="ابحث برقم الطلب، هاتف العميل، أو الاسم..."
@@ -142,13 +156,21 @@ export default function AdminOrdersPage() {
                 className="pr-10 h-10 text-sm"
               />
             </div>
-            <Button type="submit" size="sm" variant="secondary" className="h-10 px-4">
+            <Button
+              type="submit"
+              size="sm"
+              variant="secondary"
+              className="h-10 px-4"
+            >
               بحث
             </Button>
           </form>
 
           <div className="sm:col-span-5 flex items-center gap-2">
-            <label htmlFor="filter-status" className="text-xs font-semibold text-muted-foreground shrink-0">
+            <label
+              htmlFor="filter-status"
+              className="text-xs font-semibold text-muted-foreground shrink-0"
+            >
               الحالة:
             </label>
             <select
@@ -192,34 +214,64 @@ export default function AdminOrdersPage() {
             <table className="w-full text-start border-collapse text-sm">
               <thead>
                 <tr className="bg-secondary/60 border-b border-border text-muted-foreground text-xs font-bold uppercase tracking-wider">
-                  <th scope="col" className="py-3 px-4 text-start">رقم الطلب</th>
-                  <th scope="col" className="py-3 px-4 text-start">بيانات العميل</th>
-                  <th scope="col" className="py-3 px-4 text-start">التاريخ</th>
-                  <th scope="col" className="py-3 px-4 text-start">الإجمالي</th>
-                  <th scope="col" className="py-3 px-4 text-start">الحالة الحالية</th>
-                  <th scope="col" className="py-3 px-4 text-center">الإجراءات</th>
+                  <th scope="col" className="py-3 px-4 text-start">
+                    رقم الطلب
+                  </th>
+                  <th scope="col" className="py-3 px-4 text-start">
+                    بيانات العميل
+                  </th>
+                  <th scope="col" className="py-3 px-4 text-start">
+                    التاريخ
+                  </th>
+                  <th scope="col" className="py-3 px-4 text-start">
+                    الإجمالي
+                  </th>
+                  <th scope="col" className="py-3 px-4 text-start">
+                    الحالة الحالية
+                  </th>
+                  <th scope="col" className="py-3 px-4 text-center">
+                    الإجراءات
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
                 {isLoading ? (
                   Array.from({ length: 5 }).map((_, idx) => (
                     <tr key={`skeleton-${idx}`} className="animate-pulse">
-                      <td className="py-4 px-4"><Skeleton className="h-4 w-28 bg-muted/60" /></td>
+                      <td className="py-4 px-4">
+                        <Skeleton className="h-4 w-28 bg-muted/60" />
+                      </td>
                       <td className="py-4 px-4 space-y-1">
                         <Skeleton className="h-4 w-32 bg-muted/60" />
                         <Skeleton className="h-3 w-24 bg-muted/40" />
                       </td>
-                      <td className="py-4 px-4"><Skeleton className="h-4 w-20 bg-muted/50" /></td>
-                      <td className="py-4 px-4"><Skeleton className="h-4 w-16 bg-muted/60" /></td>
-                      <td className="py-4 px-4"><Skeleton className="h-6 w-24 rounded-full bg-muted/50" /></td>
-                      <td className="py-4 px-4 text-center"><Skeleton className="h-8 w-24 mx-auto rounded-lg bg-muted/60" /></td>
+                      <td className="py-4 px-4">
+                        <Skeleton className="h-4 w-20 bg-muted/50" />
+                      </td>
+                      <td className="py-4 px-4">
+                        <Skeleton className="h-4 w-16 bg-muted/60" />
+                      </td>
+                      <td className="py-4 px-4">
+                        <Skeleton className="h-6 w-24 rounded-full bg-muted/50" />
+                      </td>
+                      <td className="py-4 px-4 text-center">
+                        <Skeleton className="h-8 w-24 mx-auto rounded-lg bg-muted/60" />
+                      </td>
                     </tr>
                   ))
                 ) : data?.orders.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="py-12 text-center text-muted-foreground">
-                      <PackageCheck className="w-10 h-10 mx-auto text-muted-foreground/60 mb-2" aria-hidden="true" />
-                      <p className="font-semibold text-base text-foreground">لا توجد طلبات مطابقة</p>
+                    <td
+                      colSpan={6}
+                      className="py-12 text-center text-muted-foreground"
+                    >
+                      <PackageCheck
+                        className="w-10 h-10 mx-auto text-muted-foreground/60 mb-2"
+                        aria-hidden="true"
+                      />
+                      <p className="font-semibold text-base text-foreground">
+                        لا توجد طلبات مطابقة
+                      </p>
                       <p className="text-xs text-muted-foreground mt-1">
                         جرب تغيير معايير البحث أو اختيار حالة أخرى.
                       </p>
@@ -228,14 +280,19 @@ export default function AdminOrdersPage() {
                 ) : (
                   data?.orders.map((order) => {
                     const statusMeta = ORDER_STATUS_META[order.orderStatus];
-                    const dateFormatted = new Date(order.createdAt).toLocaleDateString('ar-EG', {
+                    const dateFormatted = new Date(
+                      order.createdAt
+                    ).toLocaleDateString('ar-EG', {
                       year: 'numeric',
                       month: 'short',
                       day: 'numeric',
                     });
 
                     return (
-                      <tr key={order.orderId} className="hover:bg-secondary/20 transition-colors">
+                      <tr
+                        key={order.orderId}
+                        className="hover:bg-secondary/20 transition-colors"
+                      >
                         {/* Order Number */}
                         <td className="py-4 px-4 font-mono font-bold text-foreground text-xs dir-ltr text-end sm:text-start">
                           {order.orderNumber}
@@ -244,11 +301,17 @@ export default function AdminOrdersPage() {
                         {/* Customer */}
                         <td className="py-4 px-4">
                           <div className="font-semibold text-foreground text-sm flex items-center gap-1.5">
-                            <User className="w-3.5 h-3.5 text-muted-foreground" aria-hidden="true" />
+                            <User
+                              className="w-3.5 h-3.5 text-muted-foreground"
+                              aria-hidden="true"
+                            />
                             <span>{order.customerName}</span>
                           </div>
                           <div className="font-mono text-xs text-muted-foreground flex items-center gap-1.5 mt-0.5 dir-ltr justify-end sm:justify-start">
-                            <Phone className="w-3 h-3 text-muted-foreground" aria-hidden="true" />
+                            <Phone
+                              className="w-3 h-3 text-muted-foreground"
+                              aria-hidden="true"
+                            />
                             <span>{order.customerPhone}</span>
                           </div>
                         </td>
@@ -256,20 +319,29 @@ export default function AdminOrdersPage() {
                         {/* Date */}
                         <td className="py-4 px-4 text-xs text-muted-foreground whitespace-nowrap">
                           <div className="flex items-center gap-1.5">
-                            <Calendar className="w-3.5 h-3.5 text-muted-foreground" aria-hidden="true" />
+                            <Calendar
+                              className="w-3.5 h-3.5 text-muted-foreground"
+                              aria-hidden="true"
+                            />
                             <span>{dateFormatted}</span>
                           </div>
                         </td>
 
                         {/* Total Amount */}
                         <td className="py-4 px-4 font-bold text-foreground text-sm whitespace-nowrap">
-                          {order.totalAmount.toLocaleString('en-US')} {order.currency}
+                          {order.totalAmount.toLocaleString('en-US')}{' '}
+                          {order.currency}
                         </td>
 
                         {/* Status Badge */}
                         <td className="py-4 px-4 whitespace-nowrap">
-                          <Badge variant={statusMeta?.variant || 'secondary'} className="font-semibold">
-                            {statusMeta?.ar || order.statusDisplayAr || order.orderStatus}
+                          <Badge
+                            variant={statusMeta?.variant || 'secondary'}
+                            className="font-semibold"
+                          >
+                            {statusMeta?.ar ||
+                              order.statusDisplayAr ||
+                              order.orderStatus}
                           </Badge>
                         </td>
 
@@ -296,8 +368,14 @@ export default function AdminOrdersPage() {
           {data && data.totalPages > 1 && (
             <div className="flex items-center justify-between px-4 py-3 border-t border-border bg-secondary/30 text-xs">
               <span className="text-muted-foreground">
-                صفحة <span className="font-bold text-foreground">{data.currentPage + 1}</span> من{' '}
-                <span className="font-bold text-foreground">{data.totalPages}</span>
+                صفحة{' '}
+                <span className="font-bold text-foreground">
+                  {data.currentPage + 1}
+                </span>{' '}
+                من{' '}
+                <span className="font-bold text-foreground">
+                  {data.totalPages}
+                </span>
               </span>
 
               <div className="flex items-center gap-2">
@@ -314,8 +392,12 @@ export default function AdminOrdersPage() {
                 <Button
                   size="sm"
                   variant="outline"
-                  onClick={() => setPage((p) => Math.min(data.totalPages - 1, p + 1))}
-                  disabled={data.currentPage >= data.totalPages - 1 || isLoading}
+                  onClick={() =>
+                    setPage((p) => Math.min(data.totalPages - 1, p + 1))
+                  }
+                  disabled={
+                    data.currentPage >= data.totalPages - 1 || isLoading
+                  }
                   className="h-8 px-2.5"
                 >
                   <span>التالي</span>
