@@ -1,20 +1,32 @@
 services:
   backend:
     build:
-      context: ./backend
+      context: ..
       dockerfile: Dockerfile
+    image: varellion-backend:latest
+    container_name: varellion-backend-prod
     restart: always
     environment:
       - SERVER_PORT=8080
+      - SPRING_PROFILES_ACTIVE=prod
       - SPRING_DATASOURCE_URL=${SPRING_DATASOURCE_URL}
       - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME}
       - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD}
       - JWT_SECRET=${JWT_SECRET}
-      - FRONTEND_URL=${FRONTEND_URL:-http://localhost}
+      - JWT_EXPIRATION=${JWT_EXPIRATION:-900000}
+      - JWT_REFRESH_EXPIRATION=${JWT_REFRESH_EXPIRATION:-604800000}
+      - FRONTEND_URL=${FRONTEND_URL}
+      - CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS:-${FRONTEND_URL}}
       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - COOKIE_SECURE=${COOKIE_SECURE:-true}
+      - COOKIE_SAME_SITE=${COOKIE_SAME_SITE:-Lax}
+      - ADMIN_EMAILS=${ADMIN_EMAILS}
       - APP_TRUSTED_PROXIES=${APP_TRUSTED_PROXIES:-127.0.0.1,::1,172.28.0.10/32}
+      - STORE_CURRENCY=${STORE_CURRENCY:-EGP}
+      - ORDER_RESERVATION_HOURS=${ORDER_RESERVATION_HOURS:-24}
+      - LOW_STOCK_THRESHOLD=${LOW_STOCK_THRESHOLD:-5}
     networks:
-      varellion-network:
+      varellion-backend-network:
         ipv4_address: 172.28.0.20
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/actuator/health"]
@@ -22,28 +34,15 @@ services:
       timeout: 5s
       retries: 3
       start_period: 45s
-
-  frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-    restart: always
-    environment:
-      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-/api}
-      - NEXT_PUBLIC_GOOGLE_CLIENT_ID=${NEXT_PUBLIC_GOOGLE_CLIENT_ID}
-      - NEXT_PUBLIC_USE_MOCK_API=false
-    networks:
-      varellion-network:
-        ipv4_address: 172.28.0.30
-    healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000"]
-      interval: 30s
-      timeout: 5s
-      retries: 3
-      start_period: 20s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "20m"
+        max-file: "5"
 
   proxy:
     image: nginx:alpine
+    container_name: varellion-backend-proxy
     restart: always
     ports:
       - "80:80"
@@ -51,14 +50,19 @@ services:
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
     depends_on:
-      - backend
-      - frontend
+      backend:
+        condition: service_healthy
     networks:
-      varellion-network:
+      varellion-backend-network:
         ipv4_address: 172.28.0.10
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
 networks:
-  varellion-network:
+  varellion-backend-network:
     driver: bridge
     ipam:
       config:

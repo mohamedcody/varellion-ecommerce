@@ -26,6 +26,9 @@ public class AuthController {
     @Value("${app.security.cookie.secure:true}")
     private boolean cookieSecure;
 
+    @Value("${app.security.cookie.same-site:Lax}")
+    private String cookieSameSite = "Lax";
+
     @Value("${jwt.refresh-expiration:604800000}")
     private long refreshExpirationMs;
 
@@ -92,7 +95,7 @@ public class AuthController {
                 .secure(cookieSecure)
                 .path("/")
                 .maxAge(maxAgeSeconds)
-                .sameSite("Lax")
+                .sameSite(cookieSameSite)
                 .build();
     }
 }

@@ -2,6 +2,11 @@
 .gitignore
 .superpowers
 _references
+agent-skills
+awesome-agent-skills-main
+ai-software-company
+bruno
+deploy
 docs
 *.md
 .env

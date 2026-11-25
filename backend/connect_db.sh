@@ -3,10 +3,12 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-ENV_FILE="$SCRIPT_DIR/backend/.env"
-
-if [ ! -f "$ENV_FILE" ]; then
-    echo "❌ Error: backend/.env not found!"
+if [ -f "$SCRIPT_DIR/.env" ]; then
+    ENV_FILE="$SCRIPT_DIR/.env"
+elif [ -f "$SCRIPT_DIR/backend/.env" ]; then
+    ENV_FILE="$SCRIPT_DIR/backend/.env"
+else
+    echo "❌ Error: .env file not found in $SCRIPT_DIR or $SCRIPT_DIR/backend"
     exit 1
 fi
 
