@@ -22,25 +22,34 @@ export interface UpdateOrderStatusParams {
   reason?: string;
 }
 
-export const PERMITTED_STATUS_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
-  PENDING_CUSTOMER_CONFIRMATION: ['CONFIRMED', 'CANCELLED', 'EXPIRED'],
-  CONFIRMED: ['PREPARING', 'SHIPPED', 'CANCELLED'],
-  PREPARING: ['SHIPPED', 'CANCELLED'],
-  SHIPPED: ['DELIVERED', 'DELIVERY_FAILED', 'RETURNED', 'CANCELLED'],
-  DELIVERY_FAILED: ['SHIPPED', 'DELIVERED', 'RETURNED', 'CANCELLED'],
-  DELIVERED: [],
-  CANCELLED: [],
-  EXPIRED: [],
-  RETURNED: [],
-  EXCHANGED: [],
-};
+export const PERMITTED_STATUS_TRANSITIONS: Record<OrderStatus, OrderStatus[]> =
+  {
+    PENDING_CUSTOMER_CONFIRMATION: ['CONFIRMED', 'CANCELLED', 'EXPIRED'],
+    CONFIRMED: ['PREPARING', 'SHIPPED', 'CANCELLED'],
+    PREPARING: ['SHIPPED', 'CANCELLED'],
+    SHIPPED: ['DELIVERED', 'DELIVERY_FAILED', 'RETURNED', 'CANCELLED'],
+    DELIVERY_FAILED: ['SHIPPED', 'DELIVERED', 'RETURNED', 'CANCELLED'],
+    DELIVERED: [],
+    CANCELLED: [],
+    EXPIRED: [],
+    RETURNED: [],
+    EXCHANGED: [],
+  };
 
 export const ORDER_STATUS_META: Record<
   OrderStatus,
   {
     ar: string;
     en: string;
-    variant: 'default' | 'luxury' | 'gold' | 'secondary' | 'destructive' | 'outline' | 'success' | 'warning';
+    variant:
+      | 'default'
+      | 'luxury'
+      | 'gold'
+      | 'secondary'
+      | 'destructive'
+      | 'outline'
+      | 'success'
+      | 'warning';
   }
 > = {
   PENDING_CUSTOMER_CONFIRMATION: {
@@ -95,12 +104,16 @@ export const ORDER_STATUS_META: Record<
   },
 };
 
-export function getPermittedNextStatuses(currentStatus: OrderStatus): OrderStatus[] {
+export function getPermittedNextStatuses(
+  currentStatus: OrderStatus
+): OrderStatus[] {
   return PERMITTED_STATUS_TRANSITIONS[currentStatus] || [];
 }
 
 export const adminOrdersService = {
-  async getOrders(params: AdminOrdersFilterParams = {}): Promise<PagedOrdersResponse> {
+  async getOrders(
+    params: AdminOrdersFilterParams = {}
+  ): Promise<PagedOrdersResponse> {
     const { page = 0, limit = 10, status, search } = params;
     const query = new URLSearchParams();
     query.set('page', String(page));
@@ -108,11 +121,13 @@ export const adminOrdersService = {
     if (status) query.set('status', status);
     if (search && search.trim()) query.set('search', search.trim());
 
-    const res = await requestApi<{ data?: PagedOrdersResponse } | PagedOrdersResponse>(
-      `/admin/orders?${query.toString()}`,
-      { method: 'GET' }
+    const res = await requestApi<
+      { data?: PagedOrdersResponse } | PagedOrdersResponse
+    >(`/admin/orders?${query.toString()}`, { method: 'GET' });
+    return (
+      (res as { data?: PagedOrdersResponse }).data ??
+      (res as PagedOrdersResponse)
     );
-    return (res as { data?: PagedOrdersResponse }).data ?? (res as PagedOrdersResponse);
   },
 
   async getOrderByNumber(orderNumber: string): Promise<Order> {

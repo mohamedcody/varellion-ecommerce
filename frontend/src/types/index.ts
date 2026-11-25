@@ -181,7 +181,11 @@ export type OrderStatus =
   | 'RETURNED'
   | 'EXCHANGED';
 
-export type PaymentMethod = 'CASH_ON_DELIVERY' | 'CARD' | 'INSTAPAY' | 'VODAFONE_CASH';
+export type PaymentMethod =
+  | 'CASH_ON_DELIVERY'
+  | 'CARD'
+  | 'INSTAPAY'
+  | 'VODAFONE_CASH';
 
 export interface PaymobPaymentInitiation {
   paymentUrl: string;

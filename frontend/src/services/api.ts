@@ -1,5 +1,15 @@
-import { ApiResponse, Category, Product, ProductFilterParams, ShippingZone } from '@/types';
-import { mockCategories, mockProducts, mockShippingZones } from '@/data/mockProducts';
+import {
+  ApiResponse,
+  Category,
+  Product,
+  ProductFilterParams,
+  ShippingZone,
+} from '@/types';
+import {
+  mockCategories,
+  mockProducts,
+  mockShippingZones,
+} from '@/data/mockProducts';
 
 /**
  * Resolves API base URL depending on execution environment (Node.js SSR vs Browser)
@@ -10,7 +20,8 @@ export function resolveApiBaseUrl(): string {
     const internalUrl = process.env.INTERNAL_API_URL || process.env.BACKEND_URL;
     if (internalUrl) return internalUrl.replace(/\/+$/, '');
 
-    const publicUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api';
+    const publicUrl =
+      process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api';
     if (publicUrl.startsWith('http://') || publicUrl.startsWith('https://')) {
       return publicUrl.replace(/\/+$/, '');
     }
@@ -19,22 +30,29 @@ export function resolveApiBaseUrl(): string {
   }
 
   // Client-side (Browser runtime)
-  const clientUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api';
+  const clientUrl =
+    process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api';
   return clientUrl.replace(/\/+$/, '');
 }
 
 export const API_BASE_URL = resolveApiBaseUrl();
 const USE_MOCK = process.env.NEXT_PUBLIC_USE_MOCK_API === 'true'; // Default to false: Backend-Driven Architecture
 
-/**
+/*
  * Standardized API Error carrying HTTP status and backend validation errors
  */
+
 export class ApiError extends Error {
   status: number;
   errorData?: unknown;
   validationErrors?: Record<string, string>;
 
-  constructor(message: string, status: number, errorData?: unknown, validationErrors?: Record<string, string>) {
+  constructor(
+    message: string,
+    status: number,
+    errorData?: unknown,
+    validationErrors?: Record<string, string>
+  ) {
     super(message);
     this.name = 'ApiError';
     this.status = status;
@@ -96,7 +114,7 @@ function processQueue(error: unknown | null, newToken: string | null = null) {
       req.reject(error);
     } else {
       const replayedHeaders: Record<string, string> = {
-        ...(req.options?.headers as Record<string, string> || {}),
+        ...((req.options?.headers as Record<string, string>) || {}),
       };
       if (newToken) {
         replayedHeaders['Authorization'] = `Bearer ${newToken}`;
@@ -112,7 +130,10 @@ function processQueue(error: unknown | null, newToken: string | null = null) {
 /**
  * Universal safe fetcher with credentials support for HTTP cookies and direct type T
  */
-export async function requestApi<T>(endpoint: string, options?: RequestApiOptions): Promise<T> {
+export async function requestApi<T>(
+  endpoint: string,
+  options?: RequestApiOptions
+): Promise<T> {
   const url = buildEndpointUrl(endpoint);
 
   const headers: Record<string, string> = {
@@ -135,7 +156,9 @@ export async function requestApi<T>(endpoint: string, options?: RequestApiOption
     if (typeof AbortSignal.any === 'function') {
       signal = AbortSignal.any([controller.signal, options.signal]);
     } else {
-      options.signal.addEventListener('abort', () => controller.abort(), { once: true });
+      options.signal.addEventListener('abort', () => controller.abort(), {
+        once: true,
+      });
       signal = controller.signal;
     }
   } else {
@@ -144,7 +167,12 @@ export async function requestApi<T>(endpoint: string, options?: RequestApiOption
 
   let res: Response;
   try {
-    const { signal: _callerSignal, timeoutMs: _timeoutMs, headers: _optionsHeaders, ...restOptions } = options || {};
+    const {
+      signal: _callerSignal,
+      timeoutMs: _timeoutMs,
+      headers: _optionsHeaders,
+      ...restOptions
+    } = options || {};
     res = await fetch(url, {
       ...restOptions,
       credentials: 'include',
@@ -157,7 +185,10 @@ export async function requestApi<T>(endpoint: string, options?: RequestApiOption
       if (options?.signal?.aborted) {
         throw err;
       }
-      throw new ApiError('Request timeout: Server took too long to respond', 408);
+      throw new ApiError(
+        'Request timeout: Server took too long to respond',
+        408
+      );
     }
     throw err;
   } finally {
@@ -190,9 +221,12 @@ export async function requestApi<T>(endpoint: string, options?: RequestApiOption
         if (tokenRefreshHandler) {
           freshToken = await tokenRefreshHandler();
         } else {
-          const refreshRes = await requestApi<{ accessToken: string }>('/auth/refresh', {
-            method: 'POST',
-          });
+          const refreshRes = await requestApi<{ accessToken: string }>(
+            '/auth/refresh',
+            {
+              method: 'POST',
+            }
+          );
           freshToken = refreshRes.accessToken;
         }
 
@@ -203,26 +237,39 @@ export async function requestApi<T>(endpoint: string, options?: RequestApiOption
         processQueue(null, freshToken);
 
         const replayedHeaders: Record<string, string> = {
-          ...(options?.headers as Record<string, string> || {}),
+          ...((options?.headers as Record<string, string>) || {}),
         };
         if (freshToken) {
           replayedHeaders['Authorization'] = `Bearer ${freshToken}`;
         }
-        return await requestApi<T>(endpoint, { ...options, headers: replayedHeaders });
+        return await requestApi<T>(endpoint, {
+          ...options,
+          headers: replayedHeaders,
+        });
       } catch (refreshErr) {
         isRefreshing = false;
         processQueue(refreshErr, null);
         onAuthExpiredCallback?.();
         const errorData = await res.json().catch(() => null);
-        throw new ApiError(errorData?.message || 'Authentication session expired', 401, errorData);
+        throw new ApiError(
+          errorData?.message || 'Authentication session expired',
+          401,
+          errorData
+        );
       }
     }
   }
 
   if (!res.ok) {
     const errorData = await res.json().catch(() => null);
-    const message = errorData?.message || `API request failed with status ${res.status}`;
-    throw new ApiError(message, res.status, errorData, errorData?.validationErrors);
+    const message =
+      errorData?.message || `API request failed with status ${res.status}`;
+    throw new ApiError(
+      message,
+      res.status,
+      errorData,
+      errorData?.validationErrors
+    );
   }
 
   if (res.status === 204) {
@@ -235,12 +282,18 @@ export async function requestApi<T>(endpoint: string, options?: RequestApiOption
 /**
  * Legacy fetcher for ApiResponse<T> wrapped payloads (catalog endpoints)
  */
-async function fetchApi<T>(endpoint: string, options?: RequestInit): Promise<ApiResponse<T>> {
+async function fetchApi<T>(
+  endpoint: string,
+  options?: RequestInit
+): Promise<ApiResponse<T>> {
   try {
     return await requestApi<ApiResponse<T>>(endpoint, options);
   } catch (error) {
     if (process.env.NODE_ENV === 'development') {
-      console.warn(`[API Client] Remote fetch to "${endpoint}" failed, falling back to mock fixtures.`, error);
+      console.warn(
+        `[API Client] Remote fetch to "${endpoint}" failed, falling back to mock fixtures.`,
+        error
+      );
     }
     throw error;
   }
@@ -254,26 +307,34 @@ export function mapProductDto(dto: any): Product {
   return {
     productId: dto.productId,
     categoryId: dto.categoryId,
-    category: dto.categorySlug ? {
-      categoryId: dto.categoryId,
-      slug: dto.categorySlug,
-      nameAr: dto.categoryNameAr || '',
-      nameEn: dto.categoryNameEn || '',
-      isActive: true,
-    } : undefined,
+    category: dto.categorySlug
+      ? {
+          categoryId: dto.categoryId,
+          slug: dto.categorySlug,
+          nameAr: dto.categoryNameAr || '',
+          nameEn: dto.categoryNameEn || '',
+          isActive: true,
+        }
+      : undefined,
     slug: dto.sku || dto.productId,
     sku: dto.sku,
     nameAr: dto.nameAr,
     nameEn: dto.nameEn,
     descriptionAr: dto.descriptionAr || '',
     descriptionEn: dto.descriptionEn || '',
-    price: typeof dto.price === 'number' ? dto.price : parseFloat(dto.price || '0'),
-    costPrice: dto.costPrice ? (typeof dto.costPrice === 'number' ? dto.costPrice : parseFloat(dto.costPrice)) : undefined,
+    price:
+      typeof dto.price === 'number' ? dto.price : parseFloat(dto.price || '0'),
+    costPrice: dto.costPrice
+      ? typeof dto.costPrice === 'number'
+        ? dto.costPrice
+        : parseFloat(dto.costPrice)
+      : undefined,
     stockQuantity: dto.stockQuantity ?? dto.availableStock ?? 0,
     reservedQuantity: dto.reservedQuantity ?? 0,
-    availableStock: dto.availableStock !== undefined
-      ? dto.availableStock
-      : Math.max(0, (dto.stockQuantity ?? 0) - (dto.reservedQuantity ?? 0)),
+    availableStock:
+      dto.availableStock !== undefined
+        ? dto.availableStock
+        : Math.max(0, (dto.stockQuantity ?? 0) - (dto.reservedQuantity ?? 0)),
     isActive: dto.isActive ?? true,
     isFeatured: dto.isFeatured,
     isBestSeller: dto.isBestSeller,
@@ -307,7 +368,9 @@ export const catalogService = {
   /**
    * Fetch products with optional filters, pagination, and sorting
    */
-  async getProducts(params?: ProductFilterParams): Promise<{ products: Product[]; total: number }> {
+  async getProducts(
+    params?: ProductFilterParams
+  ): Promise<{ products: Product[]; total: number }> {
     if (USE_MOCK) {
       let filtered = [...mockProducts].filter((p) => p.isActive);
 
@@ -360,11 +423,14 @@ export const catalogService = {
     }
 
     const query = new URLSearchParams();
-    if (params?.categorySlug && params.categorySlug !== 'all') query.append('category', params.categorySlug);
+    if (params?.categorySlug && params.categorySlug !== 'all')
+      query.append('category', params.categorySlug);
     if (params?.searchQuery) query.append('q', params.searchQuery.trim());
     if (params?.sortBy) query.append('sort', params.sortBy);
-    if (params?.page !== undefined) query.append('page', params.page.toString());
-    if (params?.limit !== undefined) query.append('limit', params.limit.toString());
+    if (params?.page !== undefined)
+      query.append('page', params.page.toString());
+    if (params?.limit !== undefined)
+      query.append('limit', params.limit.toString());
 
     const res = await fetchApi<{
       products: any[];
@@ -407,7 +473,9 @@ export const catalogService = {
     }
 
     try {
-      const res = await fetchApi<any>(`/products/${encodeURIComponent(cleanSlug)}`);
+      const res = await fetchApi<any>(
+        `/products/${encodeURIComponent(cleanSlug)}`
+      );
       return res.data ? mapProductDto(res.data) : null;
     } catch (error) {
       if (error instanceof ApiError && error.status === 404) {
@@ -451,7 +519,9 @@ export const catalogService = {
   calculateShippingFee(governorate: string): number {
     const trimmed = governorate.trim();
     for (const zone of mockShippingZones) {
-      if (zone.governorates.some((g) => g.toLowerCase() === trimmed.toLowerCase())) {
+      if (
+        zone.governorates.some((g) => g.toLowerCase() === trimmed.toLowerCase())
+      ) {
         return zone.fee;
       }
     }

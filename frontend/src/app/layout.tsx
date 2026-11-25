@@ -1,5 +1,5 @@
-import type { Metadata } from 'next';
 import '@/styles/globals.css';
+import type { Metadata } from 'next';
 import { AuthProvider } from '@/context/AuthContext';
 import { CartProvider } from '@/context/CartContext';
 import { Header } from '@/components/layout/Header';
@@ -33,7 +33,11 @@ export default function RootLayout({
     <html lang="ar" dir="rtl" className="scroll-smooth">
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          rel="preconnect"
+          href="https://fonts.gstatic.com"
+          crossOrigin="anonymous"
+        />
         <link
           href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=Tajawal:wght@400;500;700;800&display=swap"
           rel="stylesheet"
@@ -54,7 +58,11 @@ export default function RootLayout({
           <CartProvider>
             <UtmTracker />
             <Header />
-            <main id="main-content" className="flex-1 scroll-mt-24 focus:outline-none" tabIndex={-1}>
+            <main
+              id="main-content"
+              className="flex-1 scroll-mt-24 focus:outline-none"
+              tabIndex={-1}
+            >
               {children}
             </main>
             <Footer />
